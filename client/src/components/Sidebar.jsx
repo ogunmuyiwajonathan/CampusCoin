@@ -3,7 +3,7 @@ import Icon from "./Icon.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 
 const NAV_ITEMS = [
-  { to: "/dashboard", label: "Home", icon: "house" },
+  { to: "/", label: "Home", icon: "house", end: true },
   { to: "/transactions", label: "Transactions", icon: "arrow-left-right" },
   { to: "/budgets", label: "Budgets", icon: "target" },
   { to: "/insights", label: "Insights", icon: "chart-column" },
@@ -12,7 +12,6 @@ const NAV_ITEMS = [
   { to: "/settings", label: "Settings", icon: "settings" },
 ];
 
-/** Fixed app sidebar - forest green, active pill, off-canvas below md. */
 export default function Sidebar({ open, onClose }) {
   const { user, logout } = useAuth();
 
@@ -30,9 +29,9 @@ export default function Sidebar({ open, onClose }) {
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="mb-7 flex items-center gap-2.5 px-2">
-          <img src="/logo.png" alt="" width="30" height="30" />
-          <span className="text-lg font-bold tracking-wide">Campus Coin</span>
+        <div className="mb-7 flex items-center gap-1 px-2">
+          <img src="/logo.png" alt="" className="h-10 w-10 shrink-0 object-contain" />
+          <span className="text-xl font-bold tracking-wide">Campus Coin</span>
         </div>
 
         <nav className="flex flex-1 flex-col gap-1" aria-label="App">
@@ -40,6 +39,7 @@ export default function Sidebar({ open, onClose }) {
             <NavLink
               key={item.to}
               to={item.to}
+              end={item.end}
               onClick={onClose}
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
