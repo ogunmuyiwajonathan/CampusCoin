@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import GoogleG from "../components/GoogleG.jsx";
 import Icon from "../components/Icon.jsx";
+import ThemeToggle from "../components/ThemeToggle.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 
 const FEATURES = [
@@ -114,7 +115,8 @@ export default function Signup() {
       </aside>
 
       <main className="flex w-full items-center justify-center px-4 py-8 md:w-1/2 md:overflow-y-auto md:p-8">
-        <div className="w-full max-w-xl rounded-card bg-surface p-7 shadow-card lg:p-8">
+        <div className="relative w-full max-w-xl rounded-card bg-surface p-7 shadow-card lg:p-8">
+          <ThemeToggle className="absolute right-3.5 top-3.5" />
           <div className="flex flex-col items-center text-center">
             <div className="flex items-center gap-2.5">
               <img src="/logo.png" alt="" className="h-9 w-9 object-contain" />
