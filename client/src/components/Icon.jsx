@@ -1,6 +1,8 @@
 import {
+  ArrowDown,
   ArrowDownRight,
   ArrowLeftRight,
+  ArrowUp,
   Bell,
   Bot,
   BookOpen,
@@ -27,10 +29,11 @@ import {
   Wallet,
 } from "lucide-react";
 
-/** Name -> component registry (lucide-react, bundled offline - no icon API). */
 const ICONS = {
+  "arrow-down": ArrowDown,
   "arrow-down-right": ArrowDownRight,
   "arrow-left-right": ArrowLeftRight,
+  "arrow-up": ArrowUp,
   bell: Bell,
   bot: Bot,
   "book-open": BookOpen,
@@ -57,10 +60,6 @@ const ICONS = {
   wallet: Wallet,
 };
 
-/**
- * Single icon entry point: <Icon name="wallet" size={18} />.
- * Keeps lucide-react in one file - swapping libraries touches only this file.
- */
 export default function Icon({ name, size = 18, className }) {
   const Component = ICONS[name];
   if (!Component) return null;

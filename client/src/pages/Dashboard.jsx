@@ -23,12 +23,10 @@ export default function Dashboard() {
   const { user } = useAuth();
   const displayName = user?.name ?? mockUser.name;
 
-  // All figures derived from the mock array - wired to the API later
   const totals = computeTotals(transactions);
   const balance = totals.income - totals.expense;
   const savings = mockUser.monthly_savings_goal;
   const breakdown = expenseBreakdown(transactions);
-  const topCategory = breakdown[0];
 
   const lookup = categoryLookup();
   const recent = [...transactions]
@@ -51,7 +49,6 @@ export default function Dashboard() {
 
       <div className="md:pl-60">
         <main className="mx-auto max-w-7xl space-y-4 px-4 py-5">
-          {/* Top bar */}
           <header className="flex items-center gap-3">
             <button
               type="button"
@@ -99,56 +96,49 @@ export default function Dashboard() {
             </div>
           </header>
 
-          {/* Hero banner */}
-          <section className="overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-100/80 via-emerald-50 to-white p-6 ring-1 ring-emerald-100">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="md:max-w-md">
+          <section className="flex overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-100/80 via-emerald-50 to-white p-6 ring-1 ring-emerald-100 min-h-[220px]">
+            <div className="flex w-full flex-col gap-4 md:flex-row md:justify-between">
+              <div className="max-w-md md:self-center">
                 <h1 className="text-2xl font-extrabold text-forest-900 md:text-3xl">
-                  Hello, {displayName} 👋
+                  Hello, {displayName}
                 </h1>
                 <p className="mt-1.5 text-sm text-ink-500 md:text-base">
                   Take control of your money. Build your future.
                 </p>
               </div>
-              <div className="flex items-end justify-between gap-3 self-stretch md:self-auto">
-                <div className="relative mb-6">
+              <div className="flex flex-col items-center gap-1 self-end md:-mb-6 md:mr-8 md:self-stretch md:justify-between">
+                <div className="flex flex-col items-center gap-1">
                   <p className="-rotate-3 font-['Segoe_Script','Comic_Sans_MS',cursive] text-lg font-bold text-brand-600 md:text-xl">
                     Small Steps
                     <br />
                     Big Goals
                   </p>
-                  <Icon
-                    name="arrow-down-right"
-                    size={34}
-                    className="mt-1 rotate-12 text-brand-600"
-                  />
+                  <Icon name="arrow-down" size={26} className="text-brand-600" />
                 </div>
                 <img
                   src={campusboy}
                   alt="Student holding a laptop"
                   loading="lazy"
-                  className="h-40 w-auto self-end object-contain object-bottom md:h-48"
+                  className="h-35 w-auto object-contain object-bottom md:h-40"
                 />
               </div>
             </div>
           </section>
 
-          {/* Stat cards */}
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard label="Total Balance" value={formatCurrency(balance)} icon="wallet" tone="mint" />
-            <StatCard label="Total Income" value={formatCurrency(totals.income)} icon="trending-up" tone="blue" />
-            <StatCard label="Total Expenses" value={formatCurrency(totals.expense)} icon="trending-down" tone="coral" />
+            <StatCard label="Total Income" value={formatCurrency(totals.income)} icon="arrow-up" tone="blue" />
+            <StatCard label="Total Expenses" value={formatCurrency(totals.expense)} icon="arrow-down" tone="coral" />
             <StatCard label="Savings" value={formatCurrency(savings)} icon="piggy-bank" tone="purple" />
           </section>
 
-          {/* Bottom row: donut 40 / recent 35 / AI 25 */}
           <section className="grid grid-cols-1 gap-4 lg:grid-cols-[40fr_35fr_25fr]">
             <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
               <h2 className="mb-4 text-base font-bold text-ink-900">Spending Overview</h2>
               <SpendingDonut breakdown={breakdown} totalExpense={totals.expense} />
             </div>
             <RecentTransactions items={recent} />
-            <AIAssistantCard topCategory={topCategory} />
+            <AIAssistantCard breakdown={breakdown} recent={recent} />
           </section>
         </main>
       </div>
