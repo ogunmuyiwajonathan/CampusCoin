@@ -3,7 +3,7 @@ import Icon from "./Icon.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Home", icon: "house", end: true },
+  { to: "/dashboard", label: "Home", icon: "house", end: true },
   { to: "/transactions", label: "Transactions", icon: "arrow-left-right" },
   { to: "/budgets", label: "Budgets", icon: "target" },
   { to: "/insights", label: "Insights", icon: "chart-column" },

@@ -3,6 +3,7 @@ import { AuthProvider } from "./hooks/AuthProvider.jsx";
 import Placeholder from "./components/Placeholder.jsx";
 import Assistant from "./pages/Assistant.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import LandingPage from "./pages/LandingPage.jsx";
 import Login from "./pages/Login.jsx";
 
 const STUDENT_ROUTES = [
@@ -11,6 +12,9 @@ const STUDENT_ROUTES = [
   { path: "/insights", title: "Insights", note: "Monthly narrative, history and reports - coming next." },
   { path: "/profile", title: "Profile", note: "Academic year, allowance baseline and savings goal - coming next." },
   { path: "/settings", title: "Settings", note: "Dark mode, font size and breadcrumbs - coming next." },
+  { path: "/faq", title: "FAQ", note: "Frequently asked questions - coming next." },
+  { path: "/privacy", title: "Privacy Policy", note: "How CampusCoin stores and protects your data - coming next." },
+  { path: "/terms", title: "Terms of Service", note: "Terms for using CampusCoin - coming next." },
 ];
 
 export default function App() {
@@ -18,7 +22,8 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/assistant" element={<Assistant />} />
           <Route path="/login" element={<Login />} />
           {STUDENT_ROUTES.map((route) => (

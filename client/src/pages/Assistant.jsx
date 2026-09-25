@@ -189,7 +189,7 @@ export default function Assistant() {
                 AI Assistant
               </h2>
               <Link
-                to="/"
+                to="/dashboard"
                 aria-label="Close assistant"
                 className="ml-auto rounded-lg p-1.5 text-ink-500 transition hover:bg-slate-100"
               >

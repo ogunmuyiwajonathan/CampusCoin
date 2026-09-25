@@ -7,7 +7,7 @@ export default function Placeholder({ title, note = "Part of the build order - c
       <h1 className="text-2xl font-bold">{title}</h1>
       <p className="max-w-md text-ink-500">{note}</p>
       <Link
-        to="/"
+        to="/dashboard"
         className="rounded-lg bg-brand-500 px-5 py-2.5 font-semibold text-white transition hover:bg-brand-600"
       >
         Back to home

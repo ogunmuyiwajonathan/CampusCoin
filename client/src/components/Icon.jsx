@@ -10,7 +10,10 @@ import {
   Briefcase,
   Bus,
   ChartColumn,
+  Check,
   ChevronDown,
+  ChevronRight,
+  Coins,
   Ellipsis,
   Eye,
   EyeOff,
@@ -28,6 +31,10 @@ import {
   Search,
   Send,
   Settings,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
+  Tag,
   Target,
   TrendingDown,
   TrendingUp,
@@ -36,6 +43,7 @@ import {
   Utensils,
   Wallet,
   X,
+  Zap,
 } from "lucide-react";
 
 const ICONS = {
@@ -50,7 +58,10 @@ const ICONS = {
   briefcase: Briefcase,
   bus: Bus,
   "chart-column": ChartColumn,
+  check: Check,
   "chevron-down": ChevronDown,
+  "chevron-right": ChevronRight,
+  coins: Coins,
   ellipsis: Ellipsis,
   eye: Eye,
   "eye-off": EyeOff,
@@ -68,6 +79,10 @@ const ICONS = {
   search: Search,
   send: Send,
   settings: Settings,
+  "shield-check": ShieldCheck,
+  smartphone: Smartphone,
+  sparkles: Sparkles,
+  tag: Tag,
   target: Target,
   "trending-down": TrendingDown,
   "trending-up": TrendingUp,
@@ -76,6 +91,7 @@ const ICONS = {
   utensils: Utensils,
   wallet: Wallet,
   x: X,
+  zap: Zap,
 };
 
 export default function Icon({ name, size = 18, className }) {

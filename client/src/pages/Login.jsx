@@ -52,7 +52,7 @@ export default function Login() {
     setError("");
     try {
       await handleLogin(email.trim(), password);
-      navigate("/");
+      navigate("/dashboard");
     } catch (err) {
       setError(err.message);
     }
