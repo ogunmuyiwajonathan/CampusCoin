@@ -164,7 +164,7 @@ export default function Assistant() {
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="md:pl-60">
-        <main className="mx-auto flex min-h-svh max-w-xl flex-col px-4 py-5">
+        <main className="flex min-h-svh flex-col px-4 py-5">
           <header className="mb-4 flex items-center gap-3">
             <button
               type="button"
