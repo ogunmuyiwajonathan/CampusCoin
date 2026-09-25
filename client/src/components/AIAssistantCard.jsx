@@ -36,12 +36,7 @@ export default function AIAssistantCard({ breakdown, recent }) {
   return (
     <div className="flex h-full flex-col rounded-card bg-white p-5 shadow-card">
       <div className="mb-3 flex items-center gap-2">
-        <BotAvatar
-          className="h-9 w-9"
-          shake={status === "ready"}
-          typing={status === "loading"}
-          key={status === "ready" ? answer : status}
-        />
+        <BotAvatar className="h-12 w-12" />
         <h2 className="font-display text-base font-bold tracking-tight text-ink-900">AI Assistant</h2>
       </div>
 
