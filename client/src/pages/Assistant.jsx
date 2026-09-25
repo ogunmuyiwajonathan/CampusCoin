@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
+import BotAvatar from "../components/BotAvatar.jsx";
 import Sidebar from "../components/Sidebar.jsx";
 import { askAssistant } from "../lib/aiAssistant.js";
 import {
@@ -85,6 +86,9 @@ export default function Assistant() {
     () => [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
     [],
   );
+  const botReadyCount = messages.filter(
+    (m) => m.role === "assistant" && m.kind !== "typing",
+  ).length;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -182,9 +186,7 @@ export default function Assistant() {
             className="flex min-h-0 flex-1 flex-col rounded-card bg-white p-4 shadow-card sm:p-5"
           >
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-purple-600">
-                <Icon name="bot" size={18} />
-              </span>
+              <BotAvatar key={botReadyCount} className="h-9 w-9" shake />
               <h2 className="font-display text-base font-bold tracking-tight text-ink-900">
                 AI Assistant
               </h2>
@@ -211,9 +213,7 @@ export default function Assistant() {
                 if (message.kind === "typing") {
                   return (
                     <div key={message.id} className="flex items-center gap-2" aria-busy="true" aria-label="Assistant is typing">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-600">
-                        <Icon name="bot" size={16} />
-                      </span>
+                      <BotAvatar typing />
                       <span className="flex gap-1" aria-hidden="true">
                         {[0, 1, 2].map((dot) => (
                           <span
@@ -229,9 +229,7 @@ export default function Assistant() {
                 if (message.kind === "error") {
                   return (
                     <div key={message.id} className="flex items-center gap-2">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-600">
-                        <Icon name="bot" size={16} />
-                      </span>
+                      <BotAvatar shake />
                       <p className="text-sm text-red-500">
                         Couldn&apos;t reach the assistant.{" "}
                         <button type="button" onClick={retry} className="font-semibold underline">
@@ -245,9 +243,7 @@ export default function Assistant() {
                   return (
                     <div key={message.id} className="space-y-3">
                       <div className="flex items-start gap-2">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-600">
-                          <Icon name="bot" size={16} />
-                        </span>
+                        <BotAvatar shake />
                         <p className="rounded-2xl rounded-tl-md bg-slate-100 px-4 py-2.5 text-sm text-ink-900">
                           Got it! I&apos;ve categorized this as{" "}
                           <strong>{message.category}</strong>.
@@ -275,9 +271,7 @@ export default function Assistant() {
                 }
                 return (
                   <div key={message.id} className="flex items-start gap-2">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-600">
-                      <Icon name="bot" size={16} />
-                    </span>
+                    <BotAvatar shake />
                     <p className="rounded-2xl rounded-tl-md bg-slate-100 px-4 py-2.5 text-sm leading-relaxed text-ink-900">
                       {message.text}
                     </p>

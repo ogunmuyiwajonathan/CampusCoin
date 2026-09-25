@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import BotAvatar from "./BotAvatar.jsx";
 import Icon from "./Icon.jsx";
 import { askAssistant } from "../lib/aiAssistant.js";
 
@@ -35,13 +36,16 @@ export default function AIAssistantCard({ breakdown, recent }) {
   return (
     <div className="flex h-full flex-col rounded-card bg-white p-5 shadow-card">
       <div className="mb-3 flex items-center gap-2">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-purple-600">
-          <Icon name="bot" size={18} />
-        </span>
+        <BotAvatar
+          className="h-9 w-9"
+          shake={status === "ready"}
+          typing={status === "loading"}
+          key={status === "ready" ? answer : status}
+        />
         <h2 className="font-display text-base font-bold tracking-tight text-ink-900">AI Assistant</h2>
       </div>
 
-      <div className="min-h-[92px] flex-1" aria-live="polite">
+      <div className="min-h-23 flex-1" aria-live="polite">
         {status === "loading" && (
           <div className="animate-pulse space-y-2.5" aria-busy="true">
             <div className="h-3 w-full rounded bg-slate-200" />

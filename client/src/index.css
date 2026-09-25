@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* stylelint-disable-next-line at-rule-no-unknown -- Tailwind CSS v4 theme directive. */
 @theme {
   --color-forest-900: #123b2d;
   --color-forest-800: #164a38;
@@ -14,6 +15,16 @@
   --font-display: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
   --radius-card: 1rem;
   --shadow-card: 0 1px 2px rgb(15 23 42 / 0.05), 0 1px 3px rgb(15 23 42 / 0.04);
+  --animate-bot-shake: bot-shake 0.6s ease-in-out;
+  --animate-bot-shake-loop: bot-shake 0.7s ease-in-out infinite;
+
+  @keyframes bot-shake {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    20% { transform: rotate(-10deg) scale(1.06); }
+    40% { transform: rotate(10deg) scale(1.06); }
+    60% { transform: rotate(-7deg) scale(1.03); }
+    80% { transform: rotate(7deg) scale(1.03); }
+  }
 }
 
 body {
