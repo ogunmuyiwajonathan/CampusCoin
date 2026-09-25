@@ -106,14 +106,18 @@ export default function Dashboard() {
                   Take control of your money. Build your future.
                 </p>
               </div>
-              <div className="flex flex-col items-center gap-1 self-end md:-mb-6 md:mr-8 md:self-stretch md:justify-between">
-                <div className="flex flex-col items-center gap-1">
+              <div className="flex items-end gap-2 self-end md:-mb-6 md:mr-8">
+                <div className="flex flex-col items-start gap-1 self-start">
                   <p className="-rotate-3 font-['Segoe_Script','Comic_Sans_MS',cursive] text-lg font-bold text-brand-600 md:text-xl">
                     Small Steps
                     <br />
                     Big Goals
                   </p>
-                  <Icon name="arrow-down" size={26} className="text-brand-600" />
+                  <Icon
+                    name="arrow-down-right"
+                    size={30}
+                    className="self-end rotate-12 text-brand-600"
+                  />
                 </div>
                 <img
                   src={campusboy}
