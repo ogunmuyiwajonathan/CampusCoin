@@ -58,7 +58,7 @@ export default function Login() {
 
   return (
     <div className="flex min-h-svh bg-slate-50 md:h-svh md:overflow-hidden">
-      <aside className="relative hidden w-1/2 flex-col overflow-hidden bg-gradient-to-br from-emerald-100/80 via-emerald-50 to-teal-50 p-10 md:flex lg:p-12">
+      <aside className="relative hidden w-1/2 flex-col overflow-hidden bg-gradient-to-br from-emerald-100/80 via-emerald-50 to-teal-50 p-8 md:flex lg:p-10">
         <div
           className="absolute -right-12 top-14 h-44 w-44 rounded-full bg-white/60 blur-2xl"
           aria-hidden="true"
@@ -70,29 +70,29 @@ export default function Login() {
 
         <div className="relative z-10 flex flex-1 flex-col">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="" className="h-11 w-11 object-contain" />
+            <img src="/logo.png" alt="" className="h-10 w-10 object-contain" />
             <div>
               <p className="font-display text-xl font-extrabold text-forest-900">Campus Coin</p>
               <p className="text-sm text-ink-500">Smart Spending. Student Style.</p>
             </div>
           </div>
 
-          <h1 className="mt-10 font-display text-4xl font-extrabold tracking-tight text-ink-900 lg:text-6xl">
+          <h1 className="mt-8 font-display text-4xl font-extrabold tracking-tight text-ink-900 lg:text-5xl">
             Take Control of
             <br />
             <span className="text-brand-500">Your Money</span>
           </h1>
 
-          <p className="mt-5 max-w-lg text-base leading-relaxed text-ink-500 lg:text-lg">
+          <p className="mt-4 max-w-lg text-base leading-relaxed text-ink-500">
             Track your income, manage your expenses, and build a brighter financial future &mdash;
             made for students, by students.
           </p>
 
-          <ul className="mt-8 flex max-w-md flex-col gap-4 pl-4 lg:pl-8">
+          <ul className="mt-7 flex max-w-md flex-col gap-3.5 pl-4 lg:pl-6">
             {FEATURES.map((feature) => (
               <li key={feature.title} className="flex items-center gap-3.5">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                  <Icon name={feature.icon} size={19} />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                  <Icon name={feature.icon} size={18} />
                 </span>
                 <div>
                   <p className="text-sm font-bold text-ink-900">{feature.title}</p>
@@ -102,25 +102,25 @@ export default function Login() {
             ))}
           </ul>
 
-          <div className="mt-8 flex items-center gap-2 pl-4 lg:pl-8">
-            <p className="-rotate-2 font-['Segoe_Script','Comic_Sans_MS',cursive] text-2xl font-bold text-brand-500 lg:text-3xl">
+          <div className="mt-6 flex items-center gap-2 pl-4 lg:pl-6">
+            <p className="-rotate-2 font-['Segoe_Script','Comic_Sans_MS',cursive] text-2xl font-bold text-brand-500">
               Small Steps
               <br />
               Big Goals
             </p>
-            <Icon name="arrow-right" size={44} className="rotate-12 text-brand-500" />
+            <Icon name="arrow-right" size={40} className="rotate-12 text-brand-500" />
           </div>
 
           <div
             id="hero-illustration-slot"
-            className="mt-auto aspect-[16/10] w-full max-w-xl"
+            className="min-h-0 w-full max-w-xl flex-1"
             aria-hidden="true"
           />
         </div>
       </aside>
 
-      <main className="flex w-full items-center justify-center px-4 py-8 md:h-svh md:w-1/2 md:overflow-y-auto md:p-8">
-        <div className="w-full max-w-md rounded-card bg-white p-8 shadow-card lg:p-10">
+      <main className="flex w-full items-center justify-center px-4 py-8 md:w-1/2 md:overflow-y-auto md:p-8">
+        <div className="w-full max-w-md rounded-card bg-white p-7 shadow-card lg:p-8">
           <div className="flex flex-col items-center text-center">
             <div className="flex items-center gap-2.5">
               <img src="/logo.png" alt="" className="h-9 w-9 object-contain" />
@@ -129,7 +129,7 @@ export default function Login() {
                 <p className="text-xs text-ink-500">Smart Spending. Student Style.</p>
               </div>
             </div>
-            <h2 className="mt-7 font-display text-3xl font-extrabold tracking-tight text-ink-900 lg:text-4xl">
+            <h2 className="mt-6 font-display text-3xl font-extrabold tracking-tight text-ink-900">
               Welcome Back!
             </h2>
             <p className="mt-2 text-sm text-ink-500">
@@ -137,7 +137,7 @@ export default function Login() {
             </p>
           </div>
 
-          <form onSubmit={submit} className="mt-8 flex flex-col gap-5">
+          <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
             <div>
               <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-ink-900">
                 Email Address
@@ -231,7 +231,7 @@ export default function Login() {
 
             <button
               type="button"
-              className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-white py-3 text-sm font-semibold text-ink-900 transition hover:bg-slate-50"
+              className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-semibold text-ink-900 transition hover:bg-slate-50"
             >
               <GoogleG />
               Continue with Google
