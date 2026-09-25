@@ -15,10 +15,12 @@ import {
   Gift,
   GraduationCap,
   House,
+  Lightbulb,
   LogOut,
   Menu,
   PiggyBank,
   Search,
+  Send,
   Settings,
   Target,
   TrendingDown,
@@ -27,6 +29,7 @@ import {
   User,
   Utensils,
   Wallet,
+  X,
 } from "lucide-react";
 
 const ICONS = {
@@ -46,10 +49,12 @@ const ICONS = {
   gift: Gift,
   "graduation-cap": GraduationCap,
   house: House,
+  lightbulb: Lightbulb,
   "log-out": LogOut,
   menu: Menu,
   "piggy-bank": PiggyBank,
   search: Search,
+  send: Send,
   settings: Settings,
   target: Target,
   "trending-down": TrendingDown,
@@ -58,6 +63,7 @@ const ICONS = {
   user: User,
   utensils: Utensils,
   wallet: Wallet,
+  x: X,
 };
 
 export default function Icon({ name, size = 18, className }) {

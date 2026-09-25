@@ -1,13 +1,13 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./hooks/AuthProvider.jsx";
 import Placeholder from "./components/Placeholder.jsx";
+import Assistant from "./pages/Assistant.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 
 const STUDENT_ROUTES = [
   { path: "/transactions", title: "Transactions", note: "Quick-add, recurring entries and CSV import - next in the build order." },
   { path: "/budgets", title: "Budgets", note: "Per-category monthly limits with progress bars and alerts - coming next." },
   { path: "/insights", title: "Insights", note: "Monthly narrative, history and reports - coming next." },
-  { path: "/assistant", title: "AI Assistant", note: "Suggest-as-you-type categorization - optional module, built after core." },
   { path: "/profile", title: "Profile", note: "Academic year, allowance baseline and savings goal - coming next." },
   { path: "/settings", title: "Settings", note: "Dark mode, font size and breadcrumbs - coming next." },
 ];
@@ -18,6 +18,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/assistant" element={<Assistant />} />
           {STUDENT_ROUTES.map((route) => (
             <Route
               key={route.path}
