@@ -1,12 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { AuthContext, STORAGE_KEY } from "./authContext.js";
 
-/**
- * Session auth state for the frontend.
- * DEMO MODE: stores a local session so pages can be built before the server exists.
- * TODO: replace with POST /auth/login, POST /auth/register, POST /auth/logout
- * (bcrypt + session cookie) when the Express backend is live - SRS security rules.
- */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {

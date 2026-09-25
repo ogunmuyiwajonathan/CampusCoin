@@ -1,7 +1,3 @@
-/**
- * Shared Naira currency formatting (single source of truth - SRS reports and
- * dashboard must render amounts identically). Configurable for other locales.
- */
 export function formatCurrency(amount, options = {}) {
   const {
     locale = "en-NG",

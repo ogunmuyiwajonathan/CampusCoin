@@ -1,10 +1,6 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { formatCurrency } from "../lib/formatCurrency.js";
 
-/**
- * Donut chart of expense categories. Percentages are passed in already
- * derived from the mock/API data - never hardcoded here.
- */
 export default function SpendingDonut({ breakdown, totalExpense }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">

@@ -7,7 +7,6 @@ const TONES = {
   purple: "bg-purple-100 text-purple-600",
 };
 
-/** Dashboard stat card: label above, bold Naira amount, icon in colored circle. */
 export default function StatCard({ label, value, icon, tone }) {
   return (
     <div className="flex items-center gap-3.5 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">

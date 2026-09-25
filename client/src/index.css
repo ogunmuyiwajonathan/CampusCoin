@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* CampusCoin design tokens — from approved home.png reference */
 @theme {
   --color-forest-900: #123b2d;
   --color-forest-800: #164a38;

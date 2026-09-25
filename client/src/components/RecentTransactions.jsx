@@ -12,7 +12,6 @@ function relativeDate(isoDate) {
   return date.toLocaleDateString("en-NG", { day: "numeric", month: "short" });
 }
 
-/** Latest transactions: category square + description + relative date, amount right. */
 export default function RecentTransactions({ items }) {
   return (
     <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">

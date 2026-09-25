@@ -1,10 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.js";
 
-/**
- * Guards student routes. Visitors are redirected to /login
- * (SRS: visitors must register before using anything).
- */
 export default function ProtectedRoute({ children, requireAdmin = false }) {
   const { user, status } = useAuth();
   const location = useLocation();

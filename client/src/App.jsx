@@ -1,6 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./hooks/AuthProvider.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Placeholder from "./components/Placeholder.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 
@@ -18,32 +17,15 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route
-            path="/"
-            element={<Placeholder title="Landing page" note="Public home with sitemap - next build step." />}
-          />
-          <Route path="/login" element={<Placeholder title="Log in" note="Auth screens - next build step." />} />
-          <Route path="/register" element={<Placeholder title="Create account" note="Auth screens - next build step." />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/" element={<Dashboard />} />
           {STUDENT_ROUTES.map((route) => (
             <Route
               key={route.path}
               path={route.path}
-              element={
-                <ProtectedRoute>
-                  <Placeholder title={route.title} note={route.note} />
-                </ProtectedRoute>
-              }
+              element={<Placeholder title={route.title} note={route.note} />}
             />
           ))}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
