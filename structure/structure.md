@@ -7,7 +7,7 @@ CampusCoin/
 │       ├── components/            # reusable UI (PascalCase files, e.g. BudgetCard.jsx)
 │       │                          #   + Sidebar, StatCard, SpendingDonut, RecentTransactions
 │       │                          #   + Icon.jsx (single lucide-react registry)
-│       ├── pages/                 # Login, Dashboard, Logging, Budgets, Reports,
+│       ├── pages/                 # Login, Signup, Dashboard, Logging, Budgets, Reports,
 │       │                          #   Insights, Admin, Profile...
 │       ├── hooks/                 # AuthProvider/useAuth, useBudgets, useTransactions (camelCase)
 │       ├── data/                  # mock seed data — snake_case fields, derived totals

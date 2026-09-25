@@ -35,13 +35,15 @@ export function AuthProvider({ children }) {
   );
 
   const register = useCallback(
-    async ({ name, email, password }) => {
+    async ({ name, email, password, phone, academic_year }) => {
       if (!name || !email || !password) throw new Error("Fill in every field.");
       if (password.length < 6) throw new Error("Password must be at least 6 characters.");
       persist({
         user_id: "demo-student",
         name,
         email,
+        phone: phone || null,
+        academic_year: academic_year || null,
         role: "student",
         monthly_savings_goal: 15000,
       });

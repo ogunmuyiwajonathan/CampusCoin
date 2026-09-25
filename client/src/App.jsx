@@ -4,6 +4,7 @@ import Placeholder from "./components/Placeholder.jsx";
 import Assistant from "./pages/Assistant.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Login from "./pages/Login.jsx";
+import Signup from "./pages/Signup.jsx";
 
 const STUDENT_ROUTES = [
   { path: "/transactions", title: "Transactions", note: "Quick-add, recurring entries and CSV import - next in the build order." },
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/assistant" element={<Assistant />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           {STUDENT_ROUTES.map((route) => (
             <Route
               key={route.path}
