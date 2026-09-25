@@ -11,21 +11,14 @@ const FEATURES = [
   { icon: "bot", title: "AI Assistant", description: "Auto-categorize and simplify your finances" },
 ];
 
-const ACADEMIC_YEARS = ["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Postgraduate"];
-
 const inputClass =
   "w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-11 text-sm text-ink-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
-
-const selectClass =
-  "w-full appearance-none rounded-lg border border-slate-200 bg-surface py-2.5 pl-11 pr-9 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
 
 export default function Signup() {
   const { register } = useAuth();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [academicYear, setAcademicYear] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -47,8 +40,6 @@ export default function Signup() {
         name: fullName.trim(),
         email: email.trim(),
         password,
-        phone: phone.trim(),
-        academic_year: academicYear,
       });
       navigate("/");
     } catch (err) {
@@ -56,8 +47,7 @@ export default function Signup() {
     }
   };
 
-  const canSubmit =
-    fullName.trim() && email.trim() && academicYear && password && confirmPassword && agreed;
+  const canSubmit = fullName.trim() && email.trim() && password && confirmPassword && agreed;
 
   return (
     <div className="flex min-h-svh bg-slate-50 md:h-svh md:overflow-hidden">
@@ -165,50 +155,6 @@ export default function Signup() {
                   onChange={(event) => setEmail(event.target.value)}
                   placeholder="Email Address"
                   className={`${inputClass} pr-4`}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-              <div className="relative">
-                <Icon
-                  name="phone"
-                  size={17}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500"
-                />
-                <input
-                  type="tel"
-                  autoComplete="tel"
-                  aria-label="Phone Number"
-                  value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
-                  placeholder="Phone Number (optional)"
-                  className={`${inputClass} pr-4`}
-                />
-              </div>
-              <div className="relative">
-                <Icon
-                  name="graduation-cap"
-                  size={17}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500"
-                />
-                <select
-                  aria-label="Academic Year"
-                  value={academicYear}
-                  onChange={(event) => setAcademicYear(event.target.value)}
-                  className={`${selectClass} ${academicYear ? "" : "text-slate-400"}`}
-                >
-                  <option value="">Select Academic Year</option>
-                  {ACADEMIC_YEARS.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-                <Icon
-                  name="chevron-down"
-                  size={16}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-500"
                 />
               </div>
             </div>
