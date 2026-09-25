@@ -11,6 +11,14 @@
       content="CampusCoin - a student budget tracker. Log income and expenses, set budgets, and get plain-language insights. Smart spending, student style."
     />
     <title>CampusCoin - Smart Spending, Student Style</title>
+    <script>
+      document.documentElement.classList.toggle(
+        "dark",
+        localStorage.getItem("campuscoin.theme") === "dark" ||
+          (localStorage.getItem("campuscoin.theme") !== "light" &&
+            matchMedia("(prefers-color-scheme: dark)").matches),
+      );
+    </script>
   </head>
   <body>
     <div id="root"></div>

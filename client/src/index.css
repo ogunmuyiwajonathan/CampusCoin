@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 /* stylelint-disable-next-line at-rule-no-unknown -- Tailwind CSS v4 theme directive. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* stylelint-disable-next-line at-rule-no-unknown -- Tailwind CSS v4 theme directive. */
 @theme {
   --color-forest-900: #123b2d;
   --color-forest-800: #164a38;
@@ -12,6 +15,7 @@
   --color-brand-600: #059669;
   --color-ink-900: #0f172a;
   --color-ink-500: #64748b;
+  --color-surface: #ffffff;
   --font-display: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
   --radius-card: 1rem;
   --shadow-card: 0 1px 2px rgb(15 23 42 / 0.05), 0 1px 3px rgb(15 23 42 / 0.04);
@@ -25,6 +29,34 @@
     16% { transform: rotate(7deg) scale(1.03); }
     20%, 100% { transform: rotate(0deg) scale(1); }
   }
+}
+
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+  --color-surface: #13211b;
+  --color-mint-50: #0a1512;
+  --color-ink-900: #e9f1ec;
+  --color-ink-500: #a0b5ab;
+  --color-slate-50: #182a23;
+  --color-slate-100: #1e312a;
+  --color-slate-200: #26392f;
+  --color-slate-300: #3a5347;
+  --color-slate-400: #8fa79a;
+  --color-emerald-50: #122620;
+  --color-emerald-100: #17352c;
+  --color-emerald-600: #34d399;
+  --color-emerald-700: #6ee7b7;
+  --color-teal-50: #122824;
+  --color-red-100: #3b1e1e;
+  --color-sky-50: #14262e;
+  --color-blue-100: #1a2b45;
+  --color-blue-600: #60a5fa;
+  --color-purple-100: #2a2244;
+  --color-purple-600: #a78bfa;
 }
 
 body {

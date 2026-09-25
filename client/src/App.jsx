@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./hooks/AuthProvider.jsx";
+import { ThemeProvider } from "./hooks/ThemeProvider.jsx";
 import Placeholder from "./components/Placeholder.jsx";
 import Assistant from "./pages/Assistant.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -15,24 +16,26 @@ const STUDENT_ROUTES = [
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/assistant" element={<Assistant />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/settings" element={<Settings />} />
-          {STUDENT_ROUTES.map((route) => (
-            <Route
-              key={route.path}
-              path={route.path}
-              element={<Placeholder title={route.title} note={route.note} />}
-            />
-          ))}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/assistant" element={<Assistant />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/settings" element={<Settings />} />
+            {STUDENT_ROUTES.map((route) => (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={<Placeholder title={route.title} note={route.note} />}
+              />
+            ))}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
