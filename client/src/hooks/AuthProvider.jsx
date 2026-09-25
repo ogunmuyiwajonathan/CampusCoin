@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { AuthContext, STORAGE_KEY } from "./authContext.js";
+import { mockUser } from "../data/mockData.js";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
@@ -35,15 +36,13 @@ export function AuthProvider({ children }) {
   );
 
   const register = useCallback(
-    async ({ name, email, password, phone, academic_year }) => {
+    async ({ name, email, password }) => {
       if (!name || !email || !password) throw new Error("Fill in every field.");
       if (password.length < 6) throw new Error("Password must be at least 6 characters.");
       persist({
         user_id: "demo-student",
         name,
         email,
-        phone: phone || null,
-        academic_year: academic_year || null,
         role: "student",
         monthly_savings_goal: 15000,
       });
@@ -55,9 +54,28 @@ export function AuthProvider({ children }) {
     persist(null);
   }, [persist]);
 
+  const updateProfile = useCallback(
+    (patch) => {
+      if (user) {
+        persist({ ...user, ...patch });
+        return;
+      }
+      persist({
+        user_id: mockUser.user_id,
+        name: mockUser.name,
+        email: mockUser.email,
+        academic_year: mockUser.academic_year,
+        monthly_savings_goal: mockUser.monthly_savings_goal,
+        role: mockUser.role,
+        ...patch,
+      });
+    },
+    [user, persist],
+  );
+
   const value = useMemo(
-    () => ({ user, status, login, register, logout }),
-    [user, status, login, register, logout],
+    () => ({ user, status, login, register, updateProfile, logout }),
+    [user, status, login, register, updateProfile, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

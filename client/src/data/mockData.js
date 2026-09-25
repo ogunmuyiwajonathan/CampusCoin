@@ -16,14 +16,14 @@ export const mockUser = {
   user_id: "demo-student",
   name: "Alex",
   email: "alex@example.com",
-  phone: "+234 810 123 4567",
-  school: "University of Lagos",
   academic_year: "Year 2",
   allowance_baseline: 20000,
   monthly_savings_goal: 15000,
   role: "student",
   joined: "Oct 2025",
 };
+
+export const ACADEMIC_YEARS = ["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Postgraduate"];
 
 export const notifications = [
   {

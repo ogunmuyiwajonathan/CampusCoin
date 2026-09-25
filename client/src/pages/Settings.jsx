@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Icon from "../components/Icon.jsx";
 import PageHeader from "../components/PageHeader.jsx";
+import ProfileEditor from "../components/ProfileEditor.jsx";
 import Sidebar from "../components/Sidebar.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import { useTheme } from "../hooks/useTheme.js";
@@ -14,23 +15,26 @@ const QUICK_ROWS = [
   { icon: "shield", title: "Data & Privacy", subtitle: "Control your data and privacy settings" },
 ];
 
+const NOT_ADDED = "Not added";
+
 export default function Settings() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [twoFactor, setTwoFactor] = useState(false);
-  const { user } = useAuth();
+  const [editorOpen, setEditorOpen] = useState(false);
+  const { user, updateProfile } = useAuth();
   const { theme, toggle } = useTheme();
 
   const displayName = user?.name ?? mockUser.name;
   const email = user?.email ?? mockUser.email;
-  const phone = user?.phone ?? mockUser.phone;
-  const academicYear = user?.academic_year ?? mockUser.academic_year;
-  const savingsGoal = formatCurrency(user?.monthly_savings_goal ?? mockUser.monthly_savings_goal);
+  const academicYear = user ? user.academic_year || null : mockUser.academic_year;
+  const savingsGoal = user ? user.monthly_savings_goal ?? null : mockUser.monthly_savings_goal;
+  const academicLabel = academicYear ?? NOT_ADDED;
+  const savingsLabel = savingsGoal == null ? NOT_ADDED : formatCurrency(savingsGoal);
 
   const accountRows = [
     { icon: "mail", label: "Email Address", value: email },
-    { icon: "phone", label: "Phone Number", value: phone },
-    { icon: "graduation-cap", label: "Academic Year", value: academicYear },
-    { icon: "target", label: "Monthly Savings Goal", value: savingsGoal },
+    { icon: "graduation-cap", label: "Academic Year", value: academicLabel },
+    { icon: "target", label: "Monthly Savings Goal", value: savingsLabel },
   ];
 
   return (
@@ -64,6 +68,7 @@ export default function Settings() {
                   </h2>
                   <button
                     type="button"
+                    onClick={() => setEditorOpen(true)}
                     className="flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-surface px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
                   >
                     <Icon name="pencil" size={13} />
@@ -75,9 +80,14 @@ export default function Settings() {
                     <span className="flex h-28 w-28 items-center justify-center rounded-full bg-forest-700 text-4xl font-extrabold text-white">
                       {displayName.charAt(0)}
                     </span>
-                    <span className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-surface text-ink-900 shadow-card">
+                    <button
+                      type="button"
+                      onClick={() => setEditorOpen(true)}
+                      aria-label="Edit profile"
+                      className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-surface text-ink-900 shadow-card transition hover:text-emerald-600"
+                    >
                       <Icon name="camera" size={14} />
-                    </span>
+                    </button>
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2.5">
@@ -91,10 +101,6 @@ export default function Settings() {
                       <li className="flex items-center gap-2">
                         <Icon name="user" size={15} className="text-emerald-600" />
                         Student
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Icon name="graduation-cap" size={15} className="text-emerald-600" />
-                        {mockUser.school}
                       </li>
                       <li className="flex items-center gap-2">
                         <Icon name="calendar" size={15} className="text-emerald-600" />
@@ -179,6 +185,7 @@ export default function Settings() {
                     <button
                       key={row.label}
                       type="button"
+                      onClick={() => setEditorOpen(true)}
                       className="flex w-full items-center gap-3.5 px-5 py-4 text-left transition hover:bg-slate-50"
                     >
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
@@ -186,7 +193,13 @@ export default function Settings() {
                       </span>
                       <span className="flex min-w-0 flex-1 items-center justify-between gap-3">
                         <span className="text-sm font-medium text-ink-900">{row.label}</span>
-                        <span className="truncate text-sm text-ink-500">{row.value}</span>
+                        <span
+                          className={`truncate text-sm ${
+                            row.value === NOT_ADDED ? "text-slate-400" : "text-ink-500"
+                          }`}
+                        >
+                          {row.value}
+                        </span>
                       </span>
                       <Icon name="chevron-right" size={16} className="shrink-0 text-slate-400" />
                     </button>
@@ -291,6 +304,21 @@ export default function Settings() {
           </div>
         </main>
       </div>
+
+      {editorOpen && (
+        <ProfileEditor
+          initial={{
+            email,
+            academic_year: academicYear ?? "",
+            monthly_savings_goal: savingsGoal == null ? "" : String(savingsGoal),
+          }}
+          onClose={() => setEditorOpen(false)}
+          onSave={(patch) => {
+            updateProfile(patch);
+            setEditorOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

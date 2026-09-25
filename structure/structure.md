@@ -64,6 +64,9 @@ Relations: User 1—M Transactions/Budgets/Insights, Category 1—M Transactions
 
 ## Backend reminders (agreed during frontend phase)
 - **User avatar:** `users.profile_image_url TEXT NULL` + `updated_at`. Avatar rule everywhere (header, Settings): use `profile_image_url` if set, else first letter of `name` in a forest-700 circle. Photo upload + storage land in the backend phase (badge on the Settings profile card is the entry point).
+- **Phone:** intentionally not collected anywhere (SRS password reset = email token). Add `users.phone TEXT NULL` only if SMS/OTP ever lands.
+- **Academic year + savings goal:** `users.academic_year TEXT NULL`, `users.monthly_savings_goal INT NULL` — set via profile update (`PATCH /api/users/me`), never at signup. Settings shows "Not added" until set.
+- **Joined date:** the "Joined Oct 2025" profile line maps to `users.created_at` formatted "Mon YYYY" once the backend exists.
 
 ## What the SRS says to build (CampusCoin — 14 modules)
 
