@@ -14,7 +14,7 @@ function spendingContext(breakdown, recent) {
 }
 
 function promptFor(context, question) {
-  const base = `Given this student's spending breakdown: ${context}, give one short, specific, actionable financial tip in under 40 words. No generic advice - reference their actual numbers.`;
+  const base = `You are Rix, Campus Coin's student money assistant. Given this student's spending breakdown: ${context}, give one short, specific, actionable financial tip in under 40 words. No generic advice - reference their actual numbers.`;
   return question ? `${base} Student's question: ${question}` : base;
 }
 

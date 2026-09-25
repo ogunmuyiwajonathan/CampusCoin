@@ -175,7 +175,7 @@ export default function Assistant() {
             >
               <Icon name="menu" size={20} />
             </button>
-            <h1 className="sr-only">AI Assistant</h1>
+            <h1 className="sr-only">Rix, AI Assistant</h1>
           </header>
 
           <section
@@ -183,9 +183,9 @@ export default function Assistant() {
             className="flex min-h-0 flex-1 flex-col rounded-card bg-white p-4 shadow-card sm:p-5"
           >
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <BotAvatar className="h-12 w-12" />
+              <BotAvatar className="h-12 w-12" animate={false} />
               <h2 className="font-display text-base font-bold tracking-tight text-ink-900">
-                AI Assistant
+                Rix
               </h2>
               <Link
                 to="/"
@@ -209,7 +209,7 @@ export default function Assistant() {
                 }
                 if (message.kind === "typing") {
                   return (
-                    <div key={message.id} className="flex items-center gap-2" aria-busy="true" aria-label="Assistant is typing">
+                    <div key={message.id} className="flex items-center gap-2" aria-busy="true" aria-label="Rix is typing">
                       <BotAvatar />
                       <span className="flex gap-1" aria-hidden="true">
                         {[0, 1, 2].map((dot) => (
@@ -228,7 +228,7 @@ export default function Assistant() {
                     <div key={message.id} className="flex items-center gap-2">
                       <BotAvatar />
                       <p className="text-sm text-red-500">
-                        Couldn&apos;t reach the assistant.{" "}
+                        Couldn&apos;t reach Rix.{" "}
                         <button type="button" onClick={retry} className="font-semibold underline">
                           Try again
                         </button>

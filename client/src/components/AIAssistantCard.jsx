@@ -37,7 +37,7 @@ export default function AIAssistantCard({ breakdown, recent }) {
     <div className="flex h-full flex-col rounded-card bg-white p-5 shadow-card">
       <div className="mb-3 flex items-center gap-2">
         <BotAvatar className="h-12 w-12" />
-        <h2 className="font-display text-base font-bold tracking-tight text-ink-900">AI Assistant</h2>
+        <h2 className="font-display text-base font-bold tracking-tight text-ink-900">Rix</h2>
       </div>
 
       <div className="min-h-23 flex-1" aria-live="polite">
@@ -50,7 +50,7 @@ export default function AIAssistantCard({ breakdown, recent }) {
         )}
         {status === "error" && (
           <p className="text-sm text-red-500">
-            Couldn&apos;t reach the assistant.{" "}
+            Couldn&apos;t reach Rix.{" "}
             <button
               type="button"
               onClick={() => load(question.trim())}
