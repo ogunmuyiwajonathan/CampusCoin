@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import Icon from "./Icon.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
 
 export default function Sidebar({ open, onClose }) {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -55,15 +56,29 @@ export default function Sidebar({ open, onClose }) {
           ))}
         </nav>
 
-        <button
-          type="button"
-          onClick={logout}
-          className="mt-4 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sage-400 transition hover:bg-forest-800 hover:text-white"
-        >
-          <Icon name="log-out" size={18} />
-          Log out
-          <span className="sr-only">, {user?.name}</span>
-        </button>
+        {user ? (
+          <button
+            type="button"
+            onClick={() => {
+              logout();
+              navigate("/login");
+            }}
+            className="mt-4 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sage-400 transition hover:bg-forest-800 hover:text-white"
+          >
+            <Icon name="log-out" size={18} />
+            Log out
+            <span className="sr-only">, {user.name}</span>
+          </button>
+        ) : (
+          <NavLink
+            to="/login"
+            onClick={onClose}
+            className="mt-4 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sage-400 transition hover:bg-forest-800 hover:text-white"
+          >
+            <Icon name="log-in" size={18} />
+            Log in
+          </NavLink>
+        )}
       </aside>
     </>
   );

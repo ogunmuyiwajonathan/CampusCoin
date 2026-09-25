@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 
@@ -37,6 +37,7 @@ function GoogleG() {
 
 export default function Login() {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -51,6 +52,7 @@ export default function Login() {
     setError("");
     try {
       await handleLogin(email.trim(), password);
+      navigate("/");
     } catch (err) {
       setError(err.message);
     }
@@ -69,15 +71,7 @@ export default function Login() {
         />
 
         <div className="relative z-10 flex flex-1 flex-col">
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="" className="h-10 w-10 object-contain" />
-            <div>
-              <p className="font-display text-xl font-extrabold text-forest-900">Campus Coin</p>
-              <p className="text-sm text-ink-500">Smart Spending. Student Style.</p>
-            </div>
-          </div>
-
-          <h1 className="mt-8 font-display text-4xl font-extrabold tracking-tight text-ink-900 lg:text-5xl">
+          <h1 className="font-display text-4xl font-extrabold tracking-tight text-ink-900 md:text-5xl lg:text-6xl">
             Take Control of
             <br />
             <span className="text-brand-500">Your Money</span>
