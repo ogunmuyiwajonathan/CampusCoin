@@ -96,7 +96,7 @@ export default function Dashboard() {
             </div>
           </header>
 
-          <section className="flex overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-100/80 via-emerald-50 to-white p-6 ring-1 ring-emerald-100 min-h-[220px]">
+          <section className="flex min-h-[150px] overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-100/80 via-emerald-50 to-white px-6 py-3 ring-1 ring-emerald-100">
             <div className="flex w-full flex-col gap-4 md:flex-row md:justify-between">
               <div className="max-w-md md:self-center">
                 <h1 className="text-2xl font-extrabold text-forest-900 md:text-3xl">
@@ -106,7 +106,7 @@ export default function Dashboard() {
                   Take control of your money. Build your future.
                 </p>
               </div>
-              <div className="flex items-end gap-2 self-end md:-mb-6 md:mr-8">
+              <div className="flex items-end gap-2 self-end md:-mb-3 md:mr-6">
                 <div className="flex flex-col items-start gap-1 self-start">
                   <p className="-rotate-3 font-['Segoe_Script','Comic_Sans_MS',cursive] text-lg font-bold text-brand-600 md:text-xl">
                     Small Steps
@@ -123,7 +123,7 @@ export default function Dashboard() {
                   src={campusboy}
                   alt="Student holding a laptop"
                   loading="lazy"
-                  className="h-35 w-auto object-contain object-bottom md:h-40"
+                  className="h-35 w-auto object-contain object-bottom md:h-44"
                 />
               </div>
             </div>
