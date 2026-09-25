@@ -1,12 +1,36 @@
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
 import Icon from "./Icon.jsx";
+import { askAssistant } from "../lib/aiAssistant.js";
 
-/**
- * AI insight card - tip derived from the top expense category (advisory only,
- * SRS: insights are guidance, never certified financial advice).
- */
-export default function AIAssistantCard({ topCategory }) {
-  if (!topCategory) return null;
+export default function AIAssistantCard({ breakdown, recent }) {
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [status, setStatus] = useState("loading");
+
+  const load = useCallback(
+    (q) =>
+      askAssistant(q, breakdown, recent)
+        .then((res) => {
+          setAnswer(res);
+          setStatus("ready");
+        })
+        .catch(() => setStatus("error")),
+    [breakdown, recent],
+  );
+
+  useEffect(() => {
+    load("");
+  }, [load]);
+
+  const submit = (event) => {
+    event.preventDefault();
+    const q = question.trim();
+    if (!q) return;
+    setStatus("loading");
+    load(q);
+  };
+
+  if (!breakdown?.length) return null;
 
   return (
     <div className="flex h-full flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
@@ -17,18 +41,50 @@ export default function AIAssistantCard({ topCategory }) {
         <h2 className="text-base font-bold text-ink-900">AI Assistant</h2>
       </div>
 
-      <p className="flex-1 text-sm italic leading-relaxed text-ink-500">
-        You spent {topCategory.percentage}% of your money on {topCategory.name.toLowerCase()} this
-        month - your top category. Consider cooking more or using student discounts to keep it
-        lower next month.
-      </p>
+      <div className="min-h-[92px] flex-1" aria-live="polite">
+        {status === "loading" && (
+          <div className="animate-pulse space-y-2.5" aria-busy="true">
+            <div className="h-3 w-full rounded bg-slate-200" />
+            <div className="h-3 w-5/6 rounded bg-slate-200" />
+            <div className="h-3 w-2/3 rounded bg-slate-200" />
+          </div>
+        )}
+        {status === "error" && (
+          <p className="text-sm text-red-500">
+            Couldn&apos;t reach the assistant.{" "}
+            <button
+              type="button"
+              onClick={() => load(question.trim())}
+              className="font-semibold underline"
+            >
+              Try again
+            </button>
+          </p>
+        )}
+        {status === "ready" && (
+          <p className="text-sm italic leading-relaxed text-ink-500">{answer}</p>
+        )}
+      </div>
 
-      <Link
-        to="/insights"
-        className="mt-4 block rounded-lg bg-brand-500 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-brand-600"
+      <form
+        onSubmit={submit}
+        className="mt-4 flex items-center gap-2 rounded-full bg-slate-100 py-1.5 pl-4 pr-1.5 ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-brand-500"
       >
-        View Full Insights
-      </Link>
+        <input
+          value={question}
+          onChange={(event) => setQuestion(event.target.value)}
+          placeholder="Ask a question about your spending..."
+          aria-label="Ask the AI assistant a question"
+          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-ink-500"
+        />
+        <button
+          type="submit"
+          aria-label="Send question"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white transition hover:bg-brand-600"
+        >
+          <Icon name="arrow-up" size={16} />
+        </button>
+      </form>
     </div>
   );
 }
