@@ -14,9 +14,9 @@ function relativeDate(isoDate) {
 
 export default function RecentTransactions({ items }) {
   return (
-    <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
+    <div className="rounded-card bg-white p-5 shadow-card">
       <div className="mb-3 flex items-start justify-between gap-2">
-        <h2 className="text-base font-bold text-ink-900">Recent Transactions</h2>
+        <h2 className="font-display text-base font-bold tracking-tight text-ink-900">Recent Transactions</h2>
         <Link to="/transactions" className="text-sm font-semibold text-brand-600 hover:underline">
           View All
         </Link>
@@ -40,7 +40,7 @@ export default function RecentTransactions({ items }) {
               </p>
             </div>
             <span
-              className={`shrink-0 text-sm font-bold ${
+              className={`shrink-0 text-sm font-bold tabular-nums ${
                 t.type === "income" ? "text-brand-600" : "text-red-500"
               }`}
             >

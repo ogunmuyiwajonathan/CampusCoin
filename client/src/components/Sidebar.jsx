@@ -31,7 +31,7 @@ export default function Sidebar({ open, onClose }) {
       >
         <div className="mb-7 flex items-center gap-1 px-2">
           <img src="/logo.png" alt="" className="h-10 w-10 shrink-0 object-contain" />
-          <span className="text-xl font-bold tracking-wide">Campus Coin</span>
+          <span className="font-display text-xl font-bold tracking-wide">Campus Coin</span>
         </div>
 
         <nav className="flex flex-1 flex-col gap-1" aria-label="App">

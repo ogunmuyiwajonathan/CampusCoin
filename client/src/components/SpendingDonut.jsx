@@ -24,7 +24,7 @@ export default function SpendingDonut({ breakdown, totalExpense }) {
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-lg font-bold text-ink-900">{formatCurrency(totalExpense)}</span>
+          <span className="text-lg font-bold tabular-nums text-ink-900">{formatCurrency(totalExpense)}</span>
           <span className="text-[11px] text-ink-500">Total Expenses</span>
         </div>
       </div>
@@ -38,7 +38,7 @@ export default function SpendingDonut({ breakdown, totalExpense }) {
               aria-hidden="true"
             />
             <span className="flex-1 truncate text-ink-900">{entry.name}</span>
-            <span className="text-ink-500">{entry.percentage}%</span>
+            <span className="tabular-nums text-ink-500">{entry.percentage}%</span>
           </li>
         ))}
       </ul>

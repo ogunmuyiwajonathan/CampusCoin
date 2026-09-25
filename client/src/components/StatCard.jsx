@@ -9,13 +9,13 @@ const TONES = {
 
 export default function StatCard({ label, value, icon, tone }) {
   return (
-    <div className="flex items-center gap-3.5 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
+    <div className="flex items-center gap-3.5 rounded-card bg-white p-4 shadow-card">
       <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${TONES[tone]}`}>
         <Icon name={icon} size={20} />
       </span>
       <div className="min-w-0">
         <p className="text-xs text-ink-500">{label}</p>
-        <p className="truncate text-lg font-bold text-ink-900">{value}</p>
+        <p className="truncate text-lg font-bold tabular-nums text-ink-900">{value}</p>
       </div>
     </div>
   );

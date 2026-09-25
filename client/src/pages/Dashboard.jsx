@@ -96,10 +96,10 @@ export default function Dashboard() {
             </div>
           </header>
 
-          <section className="flex min-h-[150px] overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-100/80 via-emerald-50 to-white px-6 py-3 ring-1 ring-emerald-100">
+          <section className="flex min-h-[150px] overflow-hidden rounded-card bg-gradient-to-r from-emerald-100/80 via-emerald-50 to-white px-6 py-3 ring-1 ring-emerald-100">
             <div className="flex w-full flex-col gap-4 md:flex-row md:justify-between">
               <div className="max-w-md md:self-center">
-                <h1 className="text-2xl font-extrabold text-forest-900 md:text-3xl">
+                <h1 className="font-display text-2xl font-extrabold tracking-tight text-forest-900 md:text-3xl">
                   Hello, {displayName}
                 </h1>
                 <p className="mt-1.5 text-sm text-ink-500 md:text-base">
@@ -137,8 +137,8 @@ export default function Dashboard() {
           </section>
 
           <section className="grid grid-cols-1 gap-4 lg:grid-cols-[40fr_35fr_25fr]">
-            <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
-              <h2 className="mb-4 text-base font-bold text-ink-900">Spending Overview</h2>
+            <div className="rounded-card bg-white p-5 shadow-card">
+              <h2 className="mb-4 font-display text-base font-bold tracking-tight text-ink-900">Spending Overview</h2>
               <SpendingDonut breakdown={breakdown} totalExpense={totals.expense} />
             </div>
             <RecentTransactions items={recent} />

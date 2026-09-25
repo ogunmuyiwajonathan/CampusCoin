@@ -11,6 +11,9 @@
   --color-brand-600: #059669;
   --color-ink-900: #0f172a;
   --color-ink-500: #64748b;
+  --font-display: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --radius-card: 1rem;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.05), 0 1px 3px rgb(15 23 42 / 0.04);
 }
 
 body {

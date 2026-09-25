@@ -33,12 +33,12 @@ export default function AIAssistantCard({ breakdown, recent }) {
   if (!breakdown?.length) return null;
 
   return (
-    <div className="flex h-full flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
+    <div className="flex h-full flex-col rounded-card bg-white p-5 shadow-card">
       <div className="mb-3 flex items-center gap-2">
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-purple-600">
           <Icon name="bot" size={18} />
         </span>
-        <h2 className="text-base font-bold text-ink-900">AI Assistant</h2>
+        <h2 className="font-display text-base font-bold tracking-tight text-ink-900">AI Assistant</h2>
       </div>
 
       <div className="min-h-[92px] flex-1" aria-live="polite">
@@ -68,7 +68,7 @@ export default function AIAssistantCard({ breakdown, recent }) {
 
       <form
         onSubmit={submit}
-        className="mt-4 flex items-center gap-2 rounded-full bg-slate-100 py-1.5 pl-4 pr-1.5 ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-brand-500"
+        className="mt-4 flex items-center gap-2 rounded-card bg-slate-100 py-1.5 pl-4 pr-1.5 ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-brand-500"
       >
         <input
           value={question}
