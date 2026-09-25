@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import Icon from "./Icon.jsx";
+import bushSide from "../assets/bush-side.png";
 import { useAuth } from "../hooks/useAuth.js";
 
 const NAV_ITEMS = [
@@ -8,7 +9,6 @@ const NAV_ITEMS = [
   { to: "/budgets", label: "Budgets", icon: "target" },
   { to: "/insights", label: "Insights", icon: "chart-column" },
   { to: "/assistant", label: "AI Assistant", icon: "bot" },
-  { to: "/profile", label: "Profile", icon: "user" },
   { to: "/settings", label: "Settings", icon: "settings" },
 ];
 
@@ -55,6 +55,15 @@ export default function Sidebar({ open, onClose }) {
             </NavLink>
           ))}
         </nav>
+
+        <div className="-mx-4 mt-4">
+          <img
+            src={bushSide}
+            alt=""
+            aria-hidden="true"
+            className="max-h-48 w-full select-none object-contain object-bottom"
+          />
+        </div>
 
         {user ? (
           <button
