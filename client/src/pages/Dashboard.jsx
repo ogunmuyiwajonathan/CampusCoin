@@ -15,8 +15,8 @@ import {
   computeTotals,
   expenseBreakdown,
   mockUser,
-  transactions,
 } from "../data/mockData.js";
+import { useTransactions } from "../hooks/useTransactions.js";
 import { formatCurrency } from "../lib/formatCurrency.js";
 
 export default function Dashboard() {
@@ -24,13 +24,14 @@ export default function Dashboard() {
   const { user } = useAuth();
   const displayName = user?.name ?? mockUser.name;
 
-  const totals = computeTotals(transactions);
+  const { items } = useTransactions();
+  const totals = computeTotals(items);
   const balance = totals.income - totals.expense;
   const savings = mockUser.monthly_savings_goal;
-  const breakdown = expenseBreakdown(transactions);
+  const breakdown = expenseBreakdown(items);
 
   const lookup = categoryLookup();
-  const recent = [...transactions]
+  const recent = [...items]
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5)
     .map((t) => {

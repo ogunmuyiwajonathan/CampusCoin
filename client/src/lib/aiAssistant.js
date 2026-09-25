@@ -19,6 +19,9 @@ function promptFor(context, question) {
 }
 
 function localTip(question, breakdown) {
+  if (breakdown.length === 0) {
+    return "Log a few transactions first and I will break down exactly where your money is going.";
+  }
   const top = breakdown[0];
   const match = question
     ? breakdown.find((c) => question.toLowerCase().includes(c.name.toLowerCase()))

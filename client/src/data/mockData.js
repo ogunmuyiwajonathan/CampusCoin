@@ -56,7 +56,7 @@ export const notifications = [
 ];
 
 export const transactions = [
-  { transaction_id: "t1", user_id: "demo-student", category_id: "c1", type: "income", amount: 20000, description: "Allowance", date: "2026-09-20" },
+  { transaction_id: "t1", user_id: "demo-student", category_id: "c1", type: "income", amount: 20000, description: "Allowance", date: "2026-09-20", is_recurring: true },
   { transaction_id: "t2", user_id: "demo-student", category_id: "c3", type: "income", amount: 30000, description: "Part-time Gig", date: "2026-09-15" },
   { transaction_id: "t3", user_id: "demo-student", category_id: "c2", type: "income", amount: 15000, description: "Scholarship Stipend", date: "2026-09-05" },
   { transaction_id: "t4", user_id: "demo-student", category_id: "c4", type: "income", amount: 10000, description: "Birthday Gift", date: "2026-09-01" },
@@ -68,8 +68,8 @@ export const transactions = [
   { transaction_id: "t10", user_id: "demo-student", category_id: "c6", type: "expense", amount: 1000, description: "Bike to campus", date: "2026-09-10" },
   { transaction_id: "t11", user_id: "demo-student", category_id: "c7", type: "expense", amount: 3900, description: "Hostel share", date: "2026-09-01" },
   { transaction_id: "t12", user_id: "demo-student", category_id: "c8", type: "expense", amount: 3000, description: "Textbook", date: "2026-09-18" },
-  { transaction_id: "t13", user_id: "demo-student", category_id: "c9", type: "expense", amount: 1200, description: "Netflix", date: "2026-09-03" },
-  { transaction_id: "t14", user_id: "demo-student", category_id: "c9", type: "expense", amount: 1200, description: "Data bundle", date: "2026-09-08" },
+  { transaction_id: "t13", user_id: "demo-student", category_id: "c9", type: "expense", amount: 1200, description: "Netflix", date: "2026-09-03", is_recurring: true },
+  { transaction_id: "t14", user_id: "demo-student", category_id: "c9", type: "expense", amount: 1200, description: "Data bundle", date: "2026-09-08", is_recurring: true },
   { transaction_id: "t15", user_id: "demo-student", category_id: "c10", type: "expense", amount: 1100, description: "Movie night", date: "2026-09-14" },
   { transaction_id: "t16", user_id: "demo-student", category_id: "c10", type: "expense", amount: 1000, description: "Game credit", date: "2026-09-09" },
   { transaction_id: "t17", user_id: "demo-student", category_id: "c11", type: "expense", amount: 900, description: "Laundry", date: "2026-09-06" },

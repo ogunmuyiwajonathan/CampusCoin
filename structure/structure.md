@@ -6,12 +6,13 @@ CampusCoin/
 │   └── src/
 │       ├── components/            # reusable UI (PascalCase files, e.g. BudgetCard.jsx)
 │       │                          #   + Sidebar, StatCard, SpendingDonut, RecentTransactions
+│       │                          #   + TransactionForm, ProfileEditor, PageHeader, ThemeToggle
 │       │                          #   + Icon.jsx (single lucide-react registry)
-│       ├── pages/                 # Login, Signup, Dashboard, Logging, Budgets, Reports,
-│       │                          #   Insights, Admin, Profile...
+│       ├── pages/                 # Login, Signup, Dashboard, Transactions, Settings,
+│       │                          #   Assistant, Budgets, Reports, Insights, Admin...
 │       ├── hooks/                 # AuthProvider/useAuth, useBudgets, useTransactions (camelCase)
 │       ├── data/                  # mock seed data — snake_case fields, derived totals
-│       ├── lib/                   # formatCurrency, API client, CSV import, date utils
+│       ├── lib/                   # formatCurrency, formatMonth, API client, CSV import, date utils
 │       ├── assets/                # logo.png, campusboy.png
 │       └── App.jsx · main.jsx
 ├── server/                        # Node + Express + Mongoose (planned MERN)
@@ -67,6 +68,7 @@ Relations: User 1—M Transactions/Budgets/Insights, Category 1—M Transactions
 - **Phone:** intentionally not collected anywhere (SRS password reset = email token). Add `users.phone TEXT NULL` only if SMS/OTP ever lands.
 - **Academic year + savings goal:** `users.academic_year TEXT NULL`, `users.monthly_savings_goal INT NULL` — set via profile update (`PATCH /api/users/me`), never at signup. Settings shows "Not added" until set.
 - **Joined date:** the "Joined Oct 2025" profile line maps to `users.created_at` formatted "Mon YYYY" once the backend exists.
+- **Transactions (live in `hooks/useTransactions.js`):** `GET /api/transactions?month=YYYY-MM&type=` (sorted `date` desc), `POST /api/transactions`, `PATCH /api/transactions/:id`, `DELETE /api/transactions/:id`. Fields per SRS: `amount`, `type`, `description`, `date`, `is_recurring`, plus `ai_suggested_category` (SRS module 8, later). The hook reads/writes localStorage today (synchronous first read, so no empty-state flash); swapping `readStore`/`commit` for fetch calls is the entire backend change - start `status` at `"loading"` and the table skeleton + error alert render themselves.
 
 ## What the SRS says to build (CampusCoin — 14 modules)
 
