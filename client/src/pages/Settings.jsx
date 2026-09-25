@@ -3,6 +3,7 @@ import Icon from "../components/Icon.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import Sidebar from "../components/Sidebar.jsx";
 import { useAuth } from "../hooks/useAuth.js";
+import { useTheme } from "../hooks/useTheme.js";
 import { mockUser } from "../data/mockData.js";
 import { formatCurrency } from "../lib/formatCurrency.js";
 
@@ -17,6 +18,7 @@ export default function Settings() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [twoFactor, setTwoFactor] = useState(false);
   const { user } = useAuth();
+  const { theme, toggle } = useTheme();
 
   const displayName = user?.name ?? mockUser.name;
   const email = user?.email ?? mockUser.email;
@@ -55,14 +57,14 @@ export default function Settings() {
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="flex flex-col gap-4">
-              <section className="overflow-hidden rounded-card bg-white shadow-card">
-                <div className="flex items-center justify-between border-b border-emerald-100 bg-linear-to-r from-emerald-100/80 via-emerald-50 to-white px-5 py-3.5">
+              <section className="overflow-hidden rounded-card bg-surface shadow-card">
+                <div className="flex items-center justify-between border-b border-emerald-100 bg-linear-to-r from-emerald-100/80 via-emerald-50 to-surface px-5 py-3.5">
                   <h2 className="font-display text-base font-bold text-ink-900">
                     Profile Information
                   </h2>
                   <button
                     type="button"
-                    className="flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                    className="flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-surface px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
                   >
                     <Icon name="pencil" size={13} />
                     Edit Profile
@@ -73,7 +75,7 @@ export default function Settings() {
                     <span className="flex h-28 w-28 items-center justify-center rounded-full bg-forest-700 text-4xl font-extrabold text-white">
                       {displayName.charAt(0)}
                     </span>
-                    <span className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-white text-ink-900 shadow-card">
+                    <span className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-surface text-ink-900 shadow-card">
                       <Icon name="camera" size={14} />
                     </span>
                   </div>
@@ -103,35 +105,67 @@ export default function Settings() {
                 </div>
               </section>
 
-              <section className="overflow-hidden rounded-card bg-white shadow-card">
-                <div className="border-b border-emerald-100 bg-linear-to-r from-emerald-100/80 via-emerald-50 to-white px-5 py-3.5">
+              <section className="overflow-hidden rounded-card bg-surface shadow-card">
+                <div className="border-b border-emerald-100 bg-linear-to-r from-emerald-100/80 via-emerald-50 to-surface px-5 py-3.5">
                   <h2 className="font-display text-base font-bold text-ink-900">Quick Settings</h2>
                 </div>
                 <div className="divide-y divide-slate-100">
-                  {QUICK_ROWS.map((row) => (
-                    <button
-                      key={row.title}
-                      type="button"
-                      className="flex w-full items-center gap-3.5 px-5 py-4 text-left transition hover:bg-slate-50"
-                    >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                        <Icon name={row.icon} size={17} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-semibold text-ink-900">
-                          {row.title}
+                  {QUICK_ROWS.map((row) =>
+                    row.title === "Appearance" ? (
+                      <button
+                        key={row.title}
+                        type="button"
+                        role="switch"
+                        aria-checked={theme === "dark"}
+                        onClick={toggle}
+                        className="flex w-full items-center gap-3.5 px-5 py-4 text-left transition hover:bg-slate-50"
+                      >
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                          <Icon name={row.icon} size={17} />
                         </span>
-                        <span className="mt-0.5 block text-xs text-ink-500">{row.subtitle}</span>
-                      </span>
-                      <Icon name="chevron-right" size={16} className="shrink-0 text-slate-400" />
-                    </button>
-                  ))}
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold text-ink-900">
+                            {row.title}
+                          </span>
+                          <span className="mt-0.5 block text-xs text-ink-500">{row.subtitle}</span>
+                        </span>
+                        <span
+                          className={`flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition ${
+                            theme === "dark" ? "bg-brand-500" : "bg-slate-300"
+                          }`}
+                        >
+                          <span
+                            className={`h-5 w-5 rounded-full bg-surface dark:bg-white shadow transition-transform ${
+                              theme === "dark" ? "translate-x-5" : "translate-x-0"
+                            }`}
+                          />
+                        </span>
+                      </button>
+                    ) : (
+                      <button
+                        key={row.title}
+                        type="button"
+                        className="flex w-full items-center gap-3.5 px-5 py-4 text-left transition hover:bg-slate-50"
+                      >
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                          <Icon name={row.icon} size={17} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold text-ink-900">
+                            {row.title}
+                          </span>
+                          <span className="mt-0.5 block text-xs text-ink-500">{row.subtitle}</span>
+                        </span>
+                        <Icon name="chevron-right" size={16} className="shrink-0 text-slate-400" />
+                      </button>
+                    ),
+                  )}
                 </div>
               </section>
             </div>
 
             <div className="flex flex-col gap-4">
-              <section className="overflow-hidden rounded-card bg-white shadow-card">
+              <section className="overflow-hidden rounded-card bg-surface shadow-card">
                 <div className="flex items-center gap-2.5 px-5 py-4">
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                     <Icon name="user" size={17} />
@@ -160,7 +194,7 @@ export default function Settings() {
                 </div>
               </section>
 
-              <section className="overflow-hidden rounded-card bg-white shadow-card">
+              <section className="overflow-hidden rounded-card bg-surface shadow-card">
                 <div className="flex items-center gap-2.5 px-5 py-4">
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                     <Icon name="shield" size={17} />
@@ -208,7 +242,7 @@ export default function Settings() {
                       }`}
                     >
                       <span
-                        className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                        className={`h-5 w-5 rounded-full bg-surface dark:bg-white shadow transition-transform ${
                           twoFactor ? "translate-x-5" : "translate-x-0"
                         }`}
                       />
@@ -234,8 +268,8 @@ export default function Settings() {
                 </div>
               </section>
 
-              <section className="flex flex-wrap items-center gap-4 rounded-card bg-linear-to-r from-emerald-100/80 via-emerald-50 to-white p-5 ring-1 ring-emerald-100">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-emerald-600 shadow-card">
+              <section className="flex flex-wrap items-center gap-4 rounded-card bg-linear-to-r from-emerald-100/80 via-emerald-50 to-surface p-5 ring-1 ring-emerald-100">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface text-emerald-600 shadow-card">
                   <Icon name="graduation-cap" size={22} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -247,7 +281,7 @@ export default function Settings() {
                 </div>
                 <a
                   href="mailto:support@campuscoin.app"
-                  className="flex items-center gap-2 rounded-lg border border-emerald-300 bg-white px-4 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                  className="flex items-center gap-2 rounded-lg border border-emerald-300 bg-surface px-4 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
                 >
                   <Icon name="mail" size={14} />
                   Contact Support
