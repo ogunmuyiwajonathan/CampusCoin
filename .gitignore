@@ -11,6 +11,11 @@ build/
 .env.*.local
 !.env.example
 
+# Study notes / reference material (local only, NOT for submission repo)
+instructions/
+structure/*
+!structure/structure.md
+
 # Logs
 *.log
 npm-debug.log*
