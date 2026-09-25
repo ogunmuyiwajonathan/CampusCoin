@@ -3,6 +3,7 @@ import { AuthProvider } from "./hooks/AuthProvider.jsx";
 import Placeholder from "./components/Placeholder.jsx";
 import Assistant from "./pages/Assistant.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import Login from "./pages/Login.jsx";
 
 const STUDENT_ROUTES = [
   { path: "/transactions", title: "Transactions", note: "Quick-add, recurring entries and CSV import - next in the build order." },
@@ -19,6 +20,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/assistant" element={<Assistant />} />
+          <Route path="/login" element={<Login />} />
           {STUDENT_ROUTES.map((route) => (
             <Route
               key={route.path}
