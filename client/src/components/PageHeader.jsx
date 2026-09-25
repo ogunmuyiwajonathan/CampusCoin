@@ -12,7 +12,7 @@ export default function PageHeader({ onMenu }) {
     <header className="flex items-center gap-3">
       <button
         type="button"
-        className="rounded-lg p-2 hover:bg-white md:hidden"
+        className="rounded-lg p-2 hover:bg-surface md:hidden"
         onClick={onMenu}
         aria-label="Open navigation menu"
       >
@@ -28,7 +28,7 @@ export default function PageHeader({ onMenu }) {
           type="search"
           placeholder="Search anything..."
           aria-label="Search transactions"
-          className="w-full max-w-md rounded-full bg-white py-2.5 pl-10 pr-4 text-sm ring-1 ring-slate-200/70 placeholder:text-ink-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="w-full max-w-md rounded-full bg-surface py-2.5 pl-10 pr-4 text-sm ring-1 ring-slate-200/70 placeholder:text-ink-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
         />
       </div>
       <div className="ml-auto flex items-center gap-3">
@@ -36,7 +36,7 @@ export default function PageHeader({ onMenu }) {
         <Link
           to="/settings"
           aria-label="Open profile settings"
-          className="flex items-center gap-2 rounded-lg p-1 transition hover:bg-white"
+          className="flex items-center gap-2 rounded-lg p-1 transition hover:bg-surface"
         >
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-forest-700 text-sm font-bold text-white">
             {displayName.charAt(0)}

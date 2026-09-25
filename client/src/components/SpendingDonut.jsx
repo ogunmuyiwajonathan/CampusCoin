@@ -20,7 +20,14 @@ export default function SpendingDonut({ breakdown, totalExpense }) {
                 <Cell key={entry.category_id} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip formatter={(value) => formatCurrency(value)} />
+            <Tooltip
+              formatter={(value) => formatCurrency(value)}
+              contentStyle={{
+                backgroundColor: "var(--color-surface)",
+                borderColor: "var(--color-slate-200)",
+                color: "var(--color-ink-900)",
+              }}
+            />
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">

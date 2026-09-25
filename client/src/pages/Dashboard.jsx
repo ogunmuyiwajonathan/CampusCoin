@@ -52,10 +52,10 @@ export default function Dashboard() {
         <main className="mx-auto max-w-7xl space-y-4 px-4 py-5">
           <PageHeader onMenu={() => setSidebarOpen(true)} />
 
-          <section className="flex min-h-37.5 overflow-hidden rounded-card bg-linear-to-r from-emerald-100/80 via-emerald-50 to-white px-6 py-3 ring-1 ring-emerald-100">
+          <section className="flex min-h-37.5 overflow-hidden rounded-card bg-linear-to-r from-emerald-100/80 via-emerald-50 to-surface px-6 py-3 ring-1 ring-emerald-100">
             <div className="flex w-full flex-col gap-4 md:flex-row md:justify-between">
               <div className="max-w-md md:self-center">
-                <h1 className="font-display text-2xl font-extrabold tracking-tight text-forest-900 md:text-3xl">
+                <h1 className="font-display text-2xl font-extrabold tracking-tight text-forest-900 dark:text-sage-100 md:text-3xl">
                   Hello, {displayName}
                 </h1>
                 <p className="mt-1.5 text-sm text-ink-500 md:text-base">
@@ -93,7 +93,7 @@ export default function Dashboard() {
           </section>
 
           <section className="grid grid-cols-1 gap-4 lg:grid-cols-[40fr_35fr_25fr]">
-            <div className="rounded-card bg-white p-5 shadow-card">
+            <div className="rounded-card bg-surface p-5 shadow-card">
               <h2 className="mb-4 font-display text-base font-bold tracking-tight text-ink-900">Spending Overview</h2>
               <SpendingDonut breakdown={breakdown} totalExpense={totals.expense} />
             </div>

@@ -13,10 +13,10 @@ const FEATURES = [
 const ACADEMIC_YEARS = ["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Postgraduate"];
 
 const inputClass =
-  "w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-11 text-sm text-ink-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
+  "w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-11 text-sm text-ink-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
 
 const selectClass =
-  "w-full appearance-none rounded-lg border border-slate-200 bg-white py-2.5 pl-11 pr-9 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
+  "w-full appearance-none rounded-lg border border-slate-200 bg-surface py-2.5 pl-11 pr-9 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
 
 export default function Signup() {
   const { register } = useAuth();
@@ -62,7 +62,7 @@ export default function Signup() {
     <div className="flex min-h-svh bg-slate-50 md:h-svh md:overflow-hidden">
       <aside className="relative hidden w-1/2 flex-col overflow-hidden bg-gradient-to-br from-emerald-100/80 via-emerald-50 to-teal-50 p-8 md:flex lg:p-10">
         <div
-          className="absolute -right-12 top-14 h-44 w-44 rounded-full bg-white/60 blur-2xl"
+          className="absolute -right-12 top-14 h-44 w-44 rounded-full bg-surface/60 blur-2xl"
           aria-hidden="true"
         />
         <div
@@ -114,12 +114,12 @@ export default function Signup() {
       </aside>
 
       <main className="flex w-full items-center justify-center px-4 py-8 md:w-1/2 md:overflow-y-auto md:p-8">
-        <div className="w-full max-w-xl rounded-card bg-white p-7 shadow-card lg:p-8">
+        <div className="w-full max-w-xl rounded-card bg-surface p-7 shadow-card lg:p-8">
           <div className="flex flex-col items-center text-center">
             <div className="flex items-center gap-2.5">
               <img src="/logo.png" alt="" className="h-9 w-9 object-contain" />
               <div className="text-left">
-                <p className="font-display text-lg font-extrabold text-forest-900">Campus Coin</p>
+                <p className="font-display text-lg font-extrabold text-forest-900 dark:text-sage-100">Campus Coin</p>
                 <p className="text-xs text-ink-500">Smart Spending. Student Style.</p>
               </div>
             </div>
@@ -303,7 +303,7 @@ export default function Signup() {
 
             <button
               type="button"
-              className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-semibold text-ink-900 transition hover:bg-slate-50"
+              className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-surface py-2.5 text-sm font-semibold text-ink-900 transition hover:bg-slate-50"
             >
               <GoogleG />
               Sign up with Google

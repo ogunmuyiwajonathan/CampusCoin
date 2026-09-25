@@ -169,7 +169,7 @@ export default function Assistant() {
           <header className="mb-4 flex items-center gap-3">
             <button
               type="button"
-              className="rounded-lg p-2 hover:bg-white md:hidden"
+              className="rounded-lg p-2 hover:bg-surface md:hidden"
               onClick={() => setSidebarOpen(true)}
               aria-label="Open navigation menu"
             >
@@ -180,7 +180,7 @@ export default function Assistant() {
 
           <section
             aria-label="AI assistant chat"
-            className="flex min-h-0 flex-1 flex-col rounded-card bg-white p-4 shadow-card sm:p-5"
+            className="flex min-h-0 flex-1 flex-col rounded-card bg-surface p-4 shadow-card sm:p-5"
           >
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <BotAvatar className="h-12 w-12" animate={false} />

@@ -9,7 +9,7 @@ const TONES = {
 
 export default function StatCard({ label, value, icon, tone }) {
   return (
-    <div className="flex items-center gap-3.5 rounded-card bg-white p-4 shadow-card">
+    <div className="flex items-center gap-3.5 rounded-card bg-surface p-4 shadow-card">
       <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${TONES[tone]}`}>
         <Icon name={icon} size={20} />
       </span>

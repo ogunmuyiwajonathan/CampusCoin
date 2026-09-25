@@ -49,7 +49,7 @@ export default function NotificationBell() {
         aria-expanded={open}
         aria-haspopup="true"
         aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
-        className="relative rounded-lg p-2 transition hover:bg-white"
+        className="relative rounded-lg p-2 transition hover:bg-surface"
       >
         <Icon name="bell" size={19} />
         {unread > 0 && (
@@ -61,7 +61,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-card bg-white p-2 shadow-card ring-1 ring-slate-200/70">
+        <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-card bg-surface p-2 shadow-card ring-1 ring-slate-200/70">
           <div className="flex items-center justify-between px-2 py-1.5">
             <p className="font-display text-sm font-bold text-ink-900">Notifications</p>
             <button
