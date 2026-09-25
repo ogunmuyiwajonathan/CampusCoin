@@ -16,12 +16,44 @@ export const mockUser = {
   user_id: "demo-student",
   name: "Alex",
   email: "alex@example.com",
+  phone: "+234 810 123 4567",
   school: "University of Lagos",
   academic_year: "Year 2",
   allowance_baseline: 20000,
   monthly_savings_goal: 15000,
   role: "student",
+  joined: "Oct 2025",
 };
+
+export const notifications = [
+  {
+    notification_id: "n1",
+    title: "New spending insight",
+    body: "Food is your top spending category this month.",
+    created_at: "2 hours ago",
+    icon: "chart-column",
+    to: "/insights",
+    is_read: false,
+  },
+  {
+    notification_id: "n2",
+    title: "Allowance received",
+    body: "₦20,000 allowance logged on Sep 20.",
+    created_at: "2 days ago",
+    icon: "wallet",
+    to: "/",
+    is_read: true,
+  },
+  {
+    notification_id: "n3",
+    title: "Fresh tip from Rix",
+    body: "Ask your AI assistant for this week's money tip.",
+    created_at: "3 days ago",
+    icon: "bot",
+    to: "/assistant",
+    is_read: true,
+  },
+];
 
 export const transactions = [
   { transaction_id: "t1", user_id: "demo-student", category_id: "c1", type: "income", amount: 20000, description: "Allowance", date: "2026-09-20" },

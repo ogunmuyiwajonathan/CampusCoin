@@ -6,6 +6,7 @@ import StatCard from "../components/StatCard.jsx";
 import SpendingDonut from "../components/SpendingDonut.jsx";
 import RecentTransactions from "../components/RecentTransactions.jsx";
 import AIAssistantCard from "../components/AIAssistantCard.jsx";
+import PageHeader from "../components/PageHeader.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import {
   CATEGORY_COLORS,
@@ -49,54 +50,9 @@ export default function Dashboard() {
 
       <div className="md:pl-60">
         <main className="mx-auto max-w-7xl space-y-4 px-4 py-5">
-          <header className="flex items-center gap-3">
-            <button
-              type="button"
-              className="rounded-lg p-2 hover:bg-white md:hidden"
-              onClick={() => setSidebarOpen(true)}
-              aria-label="Open navigation menu"
-            >
-              <Icon name="menu" size={20} />
-            </button>
-            <div className="relative hidden flex-1 sm:block">
-              <Icon
-                name="search"
-                size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500"
-              />
-              <input
-                type="search"
-                placeholder="Search anything..."
-                aria-label="Search transactions"
-                className="w-full max-w-md rounded-full bg-white py-2.5 pl-10 pr-4 text-sm ring-1 ring-slate-200/70 placeholder:text-ink-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
-            </div>
-            <div className="ml-auto flex items-center gap-3">
-              <button
-                type="button"
-                className="relative rounded-lg p-2 hover:bg-white"
-                aria-label="Notifications, 1 unread"
-              >
-                <Icon name="bell" size={19} />
-                <span
-                  className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500"
-                  aria-hidden="true"
-                />
-              </button>
-              <div className="flex items-center gap-2">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-forest-700 text-sm font-bold text-white">
-                  {displayName.charAt(0)}
-                </span>
-                <span className="hidden leading-tight sm:block">
-                  <span className="block text-sm font-semibold text-ink-900">Hi, Student!</span>
-                  <span className="block text-[11px] text-ink-500">Level 1</span>
-                </span>
-                <Icon name="chevron-down" size={15} className="text-ink-500" />
-              </div>
-            </div>
-          </header>
+          <PageHeader onMenu={() => setSidebarOpen(true)} />
 
-          <section className="flex min-h-[150px] overflow-hidden rounded-card bg-gradient-to-r from-emerald-100/80 via-emerald-50 to-white px-6 py-3 ring-1 ring-emerald-100">
+          <section className="flex min-h-37.5 overflow-hidden rounded-card bg-linear-to-r from-emerald-100/80 via-emerald-50 to-white px-6 py-3 ring-1 ring-emerald-100">
             <div className="flex w-full flex-col gap-4 md:flex-row md:justify-between">
               <div className="max-w-md md:self-center">
                 <h1 className="font-display text-2xl font-extrabold tracking-tight text-forest-900 md:text-3xl">

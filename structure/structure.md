@@ -62,6 +62,9 @@ Secrets: real `.env` gitignored, commit only `.env.example`. Linters (oxlint) to
 
 Relations: User 1—M Transactions/Budgets/Insights, Category 1—M Transactions.
 
+## Backend reminders (agreed during frontend phase)
+- **User avatar:** `users.profile_image_url TEXT NULL` + `updated_at`. Avatar rule everywhere (header, Settings): use `profile_image_url` if set, else first letter of `name` in a forest-700 circle. Photo upload + storage land in the backend phase (badge on the Settings profile card is the entry point).
+
 ## What the SRS says to build (CampusCoin — 14 modules)
 
 **Must-build (scored):**
