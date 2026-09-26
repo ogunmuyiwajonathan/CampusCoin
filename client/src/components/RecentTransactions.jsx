@@ -34,7 +34,7 @@ export default function RecentTransactions({ items }) {
               <Icon name={t.icon} size={16} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-ink-900">{t.description}</p>
+              <p className="line-clamp-2 text-sm font-semibold text-ink-900">{t.description}</p>
               <p className="truncate text-xs text-ink-500">
                 {relativeDate(t.date)} · {t.category_name}
               </p>
