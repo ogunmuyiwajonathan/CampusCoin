@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import Icon from "./Icon.jsx";
 import AssistantChat from "./AssistantChat.jsx";
+import BotAvatar from "./BotAvatar.jsx";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -71,9 +71,9 @@ export default function AssistantFab() {
         aria-label="Open AI Assistant"
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="fixed bottom-20 right-4 z-40 flex h-13 w-13 items-center justify-center rounded-full bg-brand-500 text-white shadow-lg transition hover:bg-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 md:bottom-6 md:right-6 lg:hidden"
+        className="fixed bottom-20 right-4 z-40 flex h-13 w-13 items-center justify-center rounded-full bg-brand-500 shadow-lg transition hover:bg-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 md:bottom-6 md:right-6 lg:hidden"
       >
-        <Icon name="bot" size={24} />
+        <BotAvatar className="h-9 w-9" />
       </button>
 
       {open && (
