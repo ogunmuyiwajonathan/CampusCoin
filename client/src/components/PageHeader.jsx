@@ -6,13 +6,15 @@ import { mockUser } from "../data/mockData.js";
 
 export default function PageHeader({ onMenu }) {
   const { user } = useAuth();
-  const displayName = user?.name ?? mockUser.name;
+  const userName = user?.name?.trim();
+  const displayName = userName || mockUser.name;
+  const greeting = userName ? `Hi, ${userName}!` : "Hi there!";
 
   return (
     <header className="flex items-center gap-3">
       <button
         type="button"
-        className="rounded-lg p-2 hover:bg-surface md:hidden"
+        className="rounded-lg p-2 hover:bg-surface lg:hidden"
         onClick={onMenu}
         aria-label="Open navigation menu"
       >
@@ -42,8 +44,10 @@ export default function PageHeader({ onMenu }) {
             {displayName.charAt(0)}
           </span>
           <span className="hidden leading-tight sm:block">
-            <span className="block text-sm font-semibold text-ink-900">Hi, Student!</span>
-            <span className="block text-[11px] text-ink-500">Level 1</span>
+            <span className="block max-w-[140px] truncate text-sm font-semibold text-ink-900">
+              {greeting}
+            </span>
+            <span className="block max-w-[140px] truncate text-[11px] text-ink-500">Level 1</span>
           </span>
           <Icon name="chevron-down" size={15} className="text-ink-500" />
         </Link>

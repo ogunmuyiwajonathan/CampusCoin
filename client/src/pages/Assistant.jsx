@@ -164,12 +164,12 @@ export default function Assistant() {
     <div className="min-h-svh">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="md:pl-60">
+      <div className="lg:pl-60">
         <main className="flex min-h-svh flex-col px-4 py-5">
           <header className="mb-4 flex items-center gap-3">
             <button
               type="button"
-              className="rounded-lg p-2 hover:bg-surface md:hidden"
+              className="rounded-lg p-2 hover:bg-surface lg:hidden"
               onClick={() => setSidebarOpen(true)}
               aria-label="Open navigation menu"
             >
@@ -201,7 +201,7 @@ export default function Assistant() {
                 if (message.role === "user") {
                   return (
                     <div key={message.id} className="flex justify-end">
-                      <p className="max-w-[85%] rounded-2xl rounded-br-md bg-brand-500 px-4 py-2.5 text-sm font-medium text-white">
+                      <p className="max-w-[85%] break-words rounded-2xl rounded-br-md bg-brand-500 px-4 py-2.5 text-sm font-medium text-white">
                         {message.text}
                       </p>
                     </div>
@@ -241,7 +241,7 @@ export default function Assistant() {
                     <div key={message.id} className="space-y-3">
                       <div className="flex items-start gap-2">
                         <BotAvatar />
-                        <p className="rounded-2xl rounded-tl-md bg-slate-100 px-4 py-2.5 text-sm text-ink-900">
+                        <p className="break-words rounded-2xl rounded-tl-md bg-slate-100 px-4 py-2.5 text-sm text-ink-900">
                           Got it! I&apos;ve categorized this as{" "}
                           <strong>{message.category}</strong>.
                         </p>

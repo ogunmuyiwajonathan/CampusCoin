@@ -49,7 +49,7 @@ export default function Dashboard() {
     <div className="min-h-svh">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="md:pl-60">
+      <div className="lg:pl-60">
         <main className="mx-auto max-w-7xl space-y-4 px-4 py-5">
           <PageHeader onMenu={() => setSidebarOpen(true)} />
 
@@ -80,20 +80,20 @@ export default function Dashboard() {
                   src={campusboy}
                   alt="Student holding a laptop"
                   loading="lazy"
-                  className="h-35 w-auto object-contain object-bottom md:h-44"
+                  className="hidden h-35 w-auto shrink-0 object-contain object-bottom sm:block md:h-40 lg:h-44"
                 />
               </div>
             </div>
           </section>
 
-          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
             <StatCard label="Total Balance" value={formatCurrency(balance)} icon="wallet" tone="mint" />
             <StatCard label="Total Income" value={formatCurrency(totals.income)} icon="arrow-up" tone="blue" />
             <StatCard label="Total Expenses" value={formatCurrency(totals.expense)} icon="arrow-down" tone="coral" />
             <StatCard label="Savings" value={formatCurrency(savings)} icon="piggy-bank" tone="purple" />
           </section>
 
-          <section className="grid grid-cols-1 gap-4 lg:grid-cols-[40fr_35fr_25fr]">
+          <section className="grid grid-cols-1 gap-4 xl:grid-cols-[40fr_35fr_25fr]">
             <div className="rounded-card bg-surface p-5 shadow-card">
               <h2 className="mb-4 font-display text-base font-bold tracking-tight text-ink-900">Spending Overview</h2>
               <SpendingDonut breakdown={breakdown} totalExpense={totals.expense} />

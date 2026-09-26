@@ -41,7 +41,7 @@ export default function Settings() {
     <div className="min-h-svh">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="md:pl-60">
+      <div className="lg:pl-60">
         <main className="mx-auto max-w-7xl space-y-5 px-4 py-5">
           <PageHeader onMenu={() => setSidebarOpen(true)} />
 
@@ -91,7 +91,7 @@ export default function Settings() {
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2.5">
-                      <p className="font-display text-lg font-bold text-ink-900">{displayName}</p>
+                      <p className="min-w-0 max-w-full truncate font-display text-lg font-bold text-ink-900">{displayName}</p>
                       <span className="rounded-full bg-brand-500 px-2.5 py-0.5 text-xs font-bold text-white">
                         Level 1
                       </span>

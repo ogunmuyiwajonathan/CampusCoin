@@ -123,7 +123,7 @@ export default function Transactions() {
   };
 
   const statCards = (
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
       <StatCard
         label="Total Income"
         value={formatCurrency(totals.income)}
@@ -205,7 +205,7 @@ export default function Transactions() {
     <div className="min-h-svh">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="md:pl-60">
+      <div className="lg:pl-60">
         <main className="mx-auto max-w-7xl space-y-5 px-4 py-5">
           <PageHeader onMenu={() => setSidebarOpen(true)} />
 
@@ -305,7 +305,7 @@ export default function Transactions() {
             ) : rows.length === 0 ? (
               emptyState
             ) : (
-              <div className="px-5 py-4">
+              <div className="overflow-x-auto px-5 py-4">
                 <table className="w-full border-collapse text-left">
                   <thead>
                     <tr className="text-xs text-ink-500">
@@ -364,14 +364,14 @@ export default function Transactions() {
                               >
                                 <Icon name={icon} size={13} />
                               </span>
-                              {name}
+                              <span className="min-w-0 max-w-[130px] truncate">{name}</span>
                             </span>
                           </td>
                           <td className="px-3 py-3">
-                            <p className="text-sm font-semibold text-ink-900">
+                            <p className="max-w-[220px] truncate text-sm font-semibold text-ink-900">
                               {item.description || name}
                             </p>
-                            <p className="mt-0.5 text-xs text-ink-500 sm:hidden">
+                            <p className="mt-0.5 truncate text-xs text-ink-500 sm:hidden">
                               {formatDate(item.date)} · {isIncome ? "Income" : "Expense"} · {name}
                             </p>
                           </td>

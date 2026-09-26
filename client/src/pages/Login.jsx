@@ -50,7 +50,7 @@ export default function Login() {
         />
 
         <div className="relative z-10 flex flex-1 flex-col">
-          <h1 className="font-display text-4xl font-extrabold tracking-tight text-ink-900 md:text-5xl lg:text-6xl">
+          <h1 className="font-display text-4xl font-extrabold tracking-tight text-ink-900 lg:text-5xl xl:text-6xl">
             Take Control of
             <br />
             <span className="text-brand-500">Your Money</span>

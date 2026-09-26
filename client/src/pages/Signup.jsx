@@ -62,7 +62,7 @@ export default function Signup() {
         />
 
         <div className="relative z-10 flex flex-1 flex-col">
-          <h1 className="font-display text-4xl font-extrabold tracking-tight text-ink-900 md:text-5xl lg:text-6xl">
+          <h1 className="font-display text-4xl font-extrabold tracking-tight text-ink-900 lg:text-5xl xl:text-6xl">
             Your Financial
             <br />
             <span className="text-brand-500">Journey Starts Here</span>
@@ -134,10 +134,10 @@ export default function Signup() {
                 <input
                   type="text"
                   autoComplete="name"
-                  aria-label="Full Name"
+                  aria-label="Name"
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
-                  placeholder="Full Name"
+                  placeholder="Name"
                   className={`${inputClass} pr-4`}
                 />
               </div>
