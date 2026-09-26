@@ -59,6 +59,10 @@
   --color-purple-50: #241d3d;
   --color-purple-100: #2a2244;
   --color-purple-600: #a78bfa;
+  --color-amber-50: #2b2214;
+  --color-amber-100: #3b2f1a;
+  --color-amber-200: #5a4623;
+  --color-amber-600: #fbbf24;
 }
 
 body {

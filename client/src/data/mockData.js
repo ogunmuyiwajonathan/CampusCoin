@@ -77,6 +77,25 @@ export const transactions = [
   { transaction_id: "t19", user_id: "demo-student", category_id: "c11", type: "expense", amount: 1000, description: "Misc", date: "2026-09-16" },
 ];
 
+// September 2026 = current month (live spend from the transactions above);
+// October 2026 = next month, planned limits with no spend yet.
+export const budgets = [
+  { budget_id: "b1", user_id: "demo-student", category_id: "c5", month: "2026-09", limit_amount: 12000 },
+  { budget_id: "b2", user_id: "demo-student", category_id: "c6", month: "2026-09", limit_amount: 4000 },
+  { budget_id: "b3", user_id: "demo-student", category_id: "c7", month: "2026-09", limit_amount: 5000 },
+  { budget_id: "b4", user_id: "demo-student", category_id: "c8", month: "2026-09", limit_amount: 6000 },
+  { budget_id: "b5", user_id: "demo-student", category_id: "c9", month: "2026-09", limit_amount: 3000 },
+  { budget_id: "b6", user_id: "demo-student", category_id: "c10", month: "2026-09", limit_amount: 5000 },
+  { budget_id: "b7", user_id: "demo-student", category_id: "c11", month: "2026-09", limit_amount: 2000 },
+  { budget_id: "b8", user_id: "demo-student", category_id: "c5", month: "2026-10", limit_amount: 12000 },
+  { budget_id: "b9", user_id: "demo-student", category_id: "c6", month: "2026-10", limit_amount: 4000 },
+  { budget_id: "b10", user_id: "demo-student", category_id: "c7", month: "2026-10", limit_amount: 5000 },
+  { budget_id: "b11", user_id: "demo-student", category_id: "c8", month: "2026-10", limit_amount: 6000 },
+  { budget_id: "b12", user_id: "demo-student", category_id: "c9", month: "2026-10", limit_amount: 3000 },
+  { budget_id: "b13", user_id: "demo-student", category_id: "c10", month: "2026-10", limit_amount: 5000 },
+  { budget_id: "b14", user_id: "demo-student", category_id: "c11", month: "2026-10", limit_amount: 2000 },
+];
+
 export const CATEGORY_ICONS = {
   Allowance: "wallet",
   Scholarships: "graduation-cap",
