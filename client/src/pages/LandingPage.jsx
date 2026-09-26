@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
+import Reveal from "../components/Reveal.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import SpendingDonut from "../components/SpendingDonut.jsx";
 import { CATEGORY_COLORS } from "../data/mockData.js";
@@ -85,7 +86,7 @@ const ACCOUNT_LINKS = [
   { label: "Register", to: "/signup" },
 ];
 
-// TODO: build the /faq, /privacy and /terms pages; these buttons already point at their future routes.
+// TODO: /faq, /privacy and /terms have no pages yet — the footer links 404.
 const RESOURCE_LINKS = [
   { label: "FAQ", to: "/faq" },
   { label: "Privacy Policy", to: "/privacy" },
@@ -143,22 +144,43 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const handlePointerDown = (event) => {
+      if (event.target instanceof Element && !event.target.closest("[data-landing-header]")) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [menuOpen]);
+
   return (
     <div id="top" className="min-h-svh bg-mint-50 text-ink-900">
-      <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-surface/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2"
-            aria-label="Campus Coin home"
-          >
-            <img src="/logo.png" alt="" className="h-8 w-8 object-contain" />
-            <span className="font-display text-lg font-extrabold tracking-tight">
-              Campus <span className="text-brand-600">Coin</span>
-            </span>
-          </button>
-          <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
+      <header
+        data-landing-header
+        className="sticky top-0 z-50 border-b border-slate-200/70 bg-surface/95 backdrop-blur"
+      >
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
+          {/* Zone 1: logo */}
+          <div className="flex flex-1 items-center">
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
+                navigate("/");
+              }}
+              className="flex items-center gap-2"
+              aria-label="Campus Coin home"
+            >
+              <img src="/logo.png" alt="" className="h-8 w-8 object-contain" />
+              <span className="font-display text-lg font-extrabold tracking-tight">
+                Campus <span className="text-brand-600">Coin</span>
+              </span>
+            </button>
+          </div>
+          {/* Zone 2: primary links, centered (hidden below lg → hamburger) */}
+          <nav className="hidden items-center justify-center gap-8 lg:flex" aria-label="Primary">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.label}
@@ -169,38 +191,39 @@ export default function LandingPage() {
               </a>
             ))}
           </nav>
-          <div className="hidden items-center gap-5 md:flex">
-            <ThemeToggle />
+          {/* Zone 3: action group */}
+          <div className="flex flex-1 items-center justify-end gap-4">
+            <ThemeToggle className="mr-1" />
             <button
               type="button"
               onClick={() => navigate("/login")}
-              className="text-sm font-semibold text-ink-500 transition hover:text-ink-900"
+              className="hidden text-sm font-semibold text-ink-500 transition hover:text-ink-900 md:block"
             >
               Login
             </button>
             <button
               type="button"
               onClick={() => navigate("/signup")}
-              className="rounded-full bg-forest-900 px-5 py-2 text-sm font-bold text-white transition hover:bg-forest-800"
+              className="hidden rounded-full bg-forest-900 px-5 py-2 text-sm font-bold text-white transition hover:bg-forest-800 md:inline-flex"
             >
               Get Started
             </button>
-          </div>
-          <div className="flex items-center gap-1">
-            <ThemeToggle className="md:hidden" />
             <button
               type="button"
               onClick={() => setMenuOpen((open) => !open)}
               aria-expanded={menuOpen}
               aria-label={menuOpen ? "Close menu" : "Open menu"}
-              className="rounded-lg p-2 text-ink-900 hover:bg-slate-100 md:hidden"
+              className="rounded-lg p-2 text-ink-900 hover:bg-slate-100 lg:hidden"
             >
               <Icon name={menuOpen ? "x" : "menu"} size={22} />
             </button>
           </div>
         </div>
         {menuOpen && (
-          <nav className="border-t border-slate-200/70 bg-surface px-4 py-3 md:hidden" aria-label="Mobile">
+          <nav
+            className="absolute inset-x-0 top-full z-50 border-t border-slate-200/70 bg-surface px-4 py-3 shadow-card lg:hidden"
+            aria-label="Menu"
+          >
             {NAV_LINKS.map((link) => (
               <a
                 key={link.label}
@@ -211,7 +234,7 @@ export default function LandingPage() {
                 {link.label}
               </a>
             ))}
-            <div className="mt-2 flex items-center gap-3 border-t border-slate-200/70 pt-3">
+            <div className="mt-2 flex items-center gap-3 border-t border-slate-200/70 pt-3 md:hidden">
               <button
                 type="button"
                 onClick={() => navigate("/login")}
@@ -233,7 +256,7 @@ export default function LandingPage() {
 
       <main>
         <section className="mx-auto grid max-w-7xl items-center gap-10 px-4 pb-14 pt-10 lg:grid-cols-2 lg:pt-16">
-          <div>
+          <Reveal>
             <p className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-1.5 text-xs font-bold text-brand-600">
               Smart Spending <span aria-hidden="true">•</span> Better Tomorrow
             </p>
@@ -265,29 +288,19 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
-          </div>
-          <div className="relative">
+          </Reveal>
+          <Reveal className="relative" delay={120}>
             <img
               src={laptop}
               alt="Campus Coin dashboard on a laptop and phone"
               loading="eager"
               className="h-auto w-full object-contain"
             />
-            <div className="absolute -top-2 right-0 max-w-[240px] rounded-xl bg-surface p-3 shadow-card ring-1 ring-emerald-100 sm:right-2">
-              <p className="flex items-center gap-1.5 text-xs font-bold">
-                <Icon name="lightbulb" size={15} className="text-amber-500" />
-                AI Tip
-              </p>
-              <p className="mt-1 text-[11px] leading-snug text-ink-500">
-                You&apos;ve spent 30% more on food this month. Consider cooking more at home
-                to save!
-              </p>
-            </div>
-          </div>
+          </Reveal>
         </section>
 
         <section className="bg-surface">
-          <div className="mx-auto grid max-w-7xl items-center gap-8 px-4  md:grid-cols-2">
+          <Reveal className="mx-auto grid max-w-7xl items-center gap-8 px-4 pb-14 md:grid-cols-2 md:pb-0">
             <img
               src={student}
               alt="Student with a laptop wondering where their money went"
@@ -310,20 +323,24 @@ export default function LandingPage() {
                 <Icon name="arrow-right" size={16} />
               </a>
             </div>
-          </div>
+          </Reveal>
         </section>
 
         <section id="features" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-14">
-          <h2 className="text-center font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
-            Key Features
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-center text-sm text-ink-500">
-            Everything you need to manage your money, made simple.
-          </p>
+          <Reveal className="text-center">
+            <h2 className="text-center font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
+              Key Features
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-center text-sm text-ink-500">
+              Everything you need to manage your money, made simple.
+            </p>
+          </Reveal>
           <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            {FEATURES.map((feature) => (
-              <li
+            {FEATURES.map((feature, index) => (
+              <Reveal
+                as="li"
                 key={feature.id}
+                delay={index * 70}
                 className="rounded-xl bg-surface p-5 text-center shadow-card"
               >
                 <span className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${feature.chip}`}>
@@ -331,13 +348,13 @@ export default function LandingPage() {
                 </span>
                 <p className="mt-3 text-sm font-bold">{feature.title}</p>
                 <p className="mt-1 text-xs leading-relaxed text-ink-500">{feature.text}</p>
-              </li>
+              </Reveal>
             ))}
           </ul>
         </section>
 
         <section id="insights" className="scroll-mt-20 bg-emerald-50">
-          <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-14 lg:grid-cols-[1fr_1.4fr]">
+          <Reveal className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-14 lg:grid-cols-[1fr_1.4fr]">
             <div>
               <h2 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
                 A Clearer View of Your Finances
@@ -419,7 +436,7 @@ export default function LandingPage() {
                 </p>
               </div>
             </div>
-          </div>
+          </Reveal>
         </section>
 
         <section id="how-it-works" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-14">
@@ -429,7 +446,12 @@ export default function LandingPage() {
           <p className="mt-2 text-center text-sm text-ink-500">Get started in 4 simple steps.</p>
           <ol className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-4 md:gap-6">
             {STEPS.map((step, index) => (
-              <li key={step.id} className="relative text-center">
+              <Reveal
+                as="li"
+                key={step.id}
+                delay={index * 90}
+                className="relative text-center"
+              >
                 <span className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full text-lg font-extrabold text-white ${step.circle}`}>
                   {step.id}
                 </span>
@@ -442,13 +464,13 @@ export default function LandingPage() {
                     className="absolute -right-5 top-4 hidden text-ink-500 md:block"
                   />
                 )}
-              </li>
+              </Reveal>
             ))}
           </ol>
         </section>
 
         <section className="mx-auto max-w-7xl px-4">
-          <div className="grid items-center gap-6 rounded-card bg-purple-50 p-6 md:grid-cols-[auto_1fr_auto] md:p-8">
+          <Reveal className="grid items-center gap-6 rounded-card bg-purple-50 p-6 md:grid-cols-[auto_1fr_auto] md:p-8">
             <img src={aibot} alt="" className="h-20 w-20 object-contain" loading="lazy" />
             <div>
               <h2 className="font-display text-xl font-extrabold tracking-tight">
@@ -467,11 +489,11 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
-          </div>
+          </Reveal>
         </section>
 
         <section className="mx-auto max-w-7xl px-4 pt-6">
-          <div className="flex flex-col items-center gap-6 rounded-card bg-brand-600 p-8 md:flex-row">
+          <Reveal className="flex flex-col items-center gap-6 rounded-card bg-brand-600 p-8 md:flex-row">
             <img src="/logo.png" alt="" className="h-12 w-12 shrink-0 object-contain" />
             <div className="min-w-0 flex-1 text-center md:text-left">
               <h2 className="font-display text-xl font-extrabold tracking-tight text-white sm:text-2xl">
@@ -489,13 +511,13 @@ export default function LandingPage() {
               Create Your Account
               <Icon name="arrow-right" size={17} />
             </button>
-          </div>
+          </Reveal>
         </section>
       </main>
 
       <footer className="mt-14 bg-forest-900 text-white">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
-          <div id="about" className="scroll-mt-20">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-10 px-4 py-12 sm:gap-x-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] lg:gap-x-10">
+          <div id="about" className="col-span-2 scroll-mt-20 sm:col-span-1">
             <p className="flex items-center gap-2">
               <img src="/logo.png" alt="" className="h-8 w-8 object-contain" />
               <span className="font-display text-lg font-extrabold tracking-tight">Campus Coin</span>
@@ -514,7 +536,7 @@ export default function LandingPage() {
               ))}
             </ul>
           </nav>
-          <nav aria-label="Account">
+          <nav aria-label="Account" className="col-span-2 order-1 sm:col-span-1 sm:order-none">
             <p className="text-xs font-bold uppercase tracking-wider text-sage-400">Account</p>
             <ul className="mt-3 space-y-2">
               {ACCOUNT_LINKS.map((link) => (
@@ -546,7 +568,7 @@ export default function LandingPage() {
               ))}
             </ul>
           </nav>
-          <div>
+          <div className="col-span-2 order-2 sm:order-none lg:col-span-1">
             <p className="text-xs font-bold uppercase tracking-wider text-sage-400">Connect With Us</p>
             <ul className="mt-3 flex items-center gap-2">
               {SOCIALS.map((social) => (
