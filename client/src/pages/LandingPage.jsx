@@ -1,0 +1,574 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Icon from "../components/Icon.jsx";
+import ThemeToggle from "../components/ThemeToggle.jsx";
+import SpendingDonut from "../components/SpendingDonut.jsx";
+import { CATEGORY_COLORS } from "../data/mockData.js";
+import { formatCurrency } from "../lib/formatCurrency.js";
+import aibot from "../assets/aibot.png";
+import laptop from "../assets/laptop.png";
+import student from "../assets/student.png";
+
+const NAV_LINKS = [
+  { label: "Features", href: "#features" },
+  { label: "How It Works", href: "#how-it-works" },
+  { label: "Insights", href: "#insights" },
+  { label: "About", href: "#about" },
+];
+
+const TRUST_BADGES = [
+  { id: "easy", icon: "zap", chip: "bg-amber-100 text-amber-600", title: "Easy to Use", text: "In minutes, not hours" },
+  { id: "secure", icon: "lock", chip: "bg-emerald-100 text-emerald-600", title: "Secure & Private", text: "Your data, your control" },
+  { id: "devices", icon: "smartphone", chip: "bg-blue-100 text-blue-600", title: "Works on All Devices", text: "Desktop, tablet & mobile" },
+];
+
+const FEATURES = [
+  { id: "track", icon: "wallet", chip: "bg-emerald-100 text-emerald-600", title: "Track Income & Expenses", text: "Log your money in seconds." },
+  { id: "categories", icon: "tag", chip: "bg-purple-100 text-purple-600", title: "Smart Categories", text: "Auto & manual categorization for better clarity." },
+  { id: "budgets", icon: "target", chip: "bg-amber-100 text-amber-600", title: "Budget Goals", text: "Set limits and stay on track." },
+  { id: "insights", icon: "chart-column", chip: "bg-blue-100 text-blue-600", title: "Spending Insights", text: "Visualize trends and spot patterns." },
+  { id: "tips", icon: "lightbulb", chip: "bg-red-100 text-red-500", title: "Saving Tips", text: "Personalized tips based on your habits." },
+  { id: "ai", icon: "bot", chip: "bg-purple-100 text-purple-600", title: "AI Assistant (Optional)", text: "Auto-categorize and get monthly summaries." },
+];
+
+const FINANCE_CHECKLIST = [
+  { id: "balance", text: "Balance overview" },
+  { id: "budget", text: "Budget vs actual" },
+  { id: "top", text: "Top spending category" },
+  { id: "recent", text: "Recent transactions" },
+  { id: "tip", text: "Personalized saving tip" },
+];
+
+const PREVIEW_STATS = [
+  { id: "balance", label: "Total Balance", value: formatCurrency(48200), icon: "wallet", tile: "bg-emerald-50", chip: "bg-emerald-100 text-emerald-600" },
+  { id: "spending", label: "This Month's Spending", value: formatCurrency(26400), icon: "arrow-down", tile: "bg-sky-50", chip: "bg-blue-100 text-blue-600" },
+  { id: "budget", label: "Monthly Budget", value: formatCurrency(35000), icon: "target", tile: "bg-purple-50", chip: "bg-purple-100 text-purple-600" },
+];
+
+const PREVIEW_BREAKDOWN = [
+  { category_id: "c5", name: "Food", amount: 21888, percentage: 32, color: CATEGORY_COLORS.c5 },
+  { category_id: "c6", name: "Transport", amount: 12312, percentage: 18, color: CATEGORY_COLORS.c6 },
+  { category_id: "c7", name: "Hostel", amount: 10260, percentage: 15, color: CATEGORY_COLORS.c7 },
+  { category_id: "c8", name: "Academics", amount: 8208, percentage: 12, color: CATEGORY_COLORS.c8 },
+  { category_id: "c11", name: "Others", amount: 15732, percentage: 23, color: CATEGORY_COLORS.c11 },
+];
+
+const PREVIEW_TRANSACTIONS = [
+  { id: "canteen", icon: "utensils", chip: "bg-red-100 text-red-500", name: "Canteen", sub: "Food · Apr 23", amount: "-₦850", positive: false },
+  { id: "bus", icon: "bus", chip: "bg-blue-100 text-blue-600", name: "Bus Pass", sub: "Transport · Apr 22", amount: "-₦1,200", positive: false },
+  { id: "salary", icon: "wallet", chip: "bg-emerald-100 text-emerald-600", name: "Salary (Part-time)", sub: "Income · Apr 20", amount: "+₦12,000", positive: true },
+];
+
+const STEPS = [
+  { id: 1, title: "Add Your Money", text: "Log your income and expenses quickly and easily.", circle: "bg-brand-500" },
+  { id: 2, title: "Track Spending", text: "See your transactions and categories in real time.", circle: "bg-blue-500" },
+  { id: 3, title: "Understand Your Habits", text: "View insights and reports made for you.", circle: "bg-purple-500" },
+  { id: 4, title: "Save Smarter", text: "Follow personalized tips and reach your goals.", circle: "bg-orange-400" },
+];
+
+const AI_CHECKLIST = [
+  { id: "auto", text: "Auto-categorize expenses" },
+  { id: "summary", text: "Monthly spending summary" },
+  { id: "actions", text: "Actionable suggestions" },
+];
+
+const QUICK_LINKS = [
+  { label: "Home", href: "#top" },
+  { label: "Features", href: "#features" },
+  { label: "How It Works", href: "#how-it-works" },
+  { label: "Insights", href: "#insights" },
+  { label: "About", href: "#about" },
+];
+
+const ACCOUNT_LINKS = [
+  { label: "Login", to: "/login" },
+  { label: "Register", to: "/signup" },
+];
+
+// TODO: build the /faq, /privacy and /terms pages; these buttons already point at their future routes.
+const RESOURCE_LINKS = [
+  { label: "FAQ", to: "/faq" },
+  { label: "Privacy Policy", to: "/privacy" },
+  { label: "Terms of Service", to: "/terms" },
+];
+
+const SOCIALS = [
+  { label: "Instagram", icon: "instagram" },
+  { label: "Facebook", icon: "facebook" },
+  { label: "X", icon: "x" },
+  { label: "YouTube", icon: "youtube" },
+];
+
+function SocialIcon({ icon }) {
+  if (icon === "x") {
+    return (
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+        <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+      </svg>
+    );
+  }
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {icon === "instagram" && (
+        <>
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+        </>
+      )}
+      {icon === "facebook" && (
+        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+      )}
+      {icon === "youtube" && (
+        <>
+          <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-1.92 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z" />
+          <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+export default function LandingPage() {
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  return (
+    <div id="top" className="min-h-svh bg-mint-50 text-ink-900">
+      <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-surface/95 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2"
+            aria-label="Campus Coin home"
+          >
+            <img src="/logo.png" alt="" className="h-8 w-8 object-contain" />
+            <span className="font-display text-lg font-extrabold tracking-tight">
+              Campus <span className="text-brand-600">Coin</span>
+            </span>
+          </button>
+          <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="text-sm font-semibold text-ink-500 transition hover:text-ink-900"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+          <div className="hidden items-center gap-5 md:flex">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              className="text-sm font-semibold text-ink-500 transition hover:text-ink-900"
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/signup")}
+              className="rounded-full bg-forest-900 px-5 py-2 text-sm font-bold text-white transition hover:bg-forest-800"
+            >
+              Get Started
+            </button>
+          </div>
+          <div className="flex items-center gap-1">
+            <ThemeToggle className="md:hidden" />
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-expanded={menuOpen}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              className="rounded-lg p-2 text-ink-900 hover:bg-slate-100 md:hidden"
+            >
+              <Icon name={menuOpen ? "x" : "menu"} size={22} />
+            </button>
+          </div>
+        </div>
+        {menuOpen && (
+          <nav className="border-t border-slate-200/70 bg-surface px-4 py-3 md:hidden" aria-label="Mobile">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                onClick={() => setMenuOpen(false)}
+                className="block rounded-lg px-2 py-2.5 text-sm font-semibold text-ink-900 hover:bg-slate-100"
+              >
+                {link.label}
+              </a>
+            ))}
+            <div className="mt-2 flex items-center gap-3 border-t border-slate-200/70 pt-3">
+              <button
+                type="button"
+                onClick={() => navigate("/login")}
+                className="flex-1 rounded-full px-4 py-2 text-sm font-bold text-ink-900 ring-1 ring-slate-300"
+              >
+                Login
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/signup")}
+                className="flex-1 rounded-full bg-forest-900 px-4 py-2 text-sm font-bold text-white"
+              >
+                Get Started
+              </button>
+            </div>
+          </nav>
+        )}
+      </header>
+
+      <main>
+        <section className="mx-auto grid max-w-7xl items-center gap-10 px-4 pb-14 pt-10 lg:grid-cols-2 lg:pt-16">
+          <div>
+            <p className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-1.5 text-xs font-bold text-brand-600">
+              Smart Spending <span aria-hidden="true">•</span> Better Tomorrow
+            </p>
+            <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
+              Take Control of Your Money. <span className="text-brand-600">Student Style.</span>
+            </h1>
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-500 sm:text-base">
+              Campus Coin is a simple, smart and student-friendly budget tracker that helps
+              you manage your income, expenses and build better financial habits.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/signup")}
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 text-sm font-bold text-white shadow-card transition hover:bg-brand-600"
+            >
+              Get Started Free
+              <Icon name="arrow-right" size={17} />
+            </button>
+            <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {TRUST_BADGES.map((badge) => (
+                <li key={badge.id} className="flex items-start gap-2.5">
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badge.chip}`}>
+                    <Icon name={badge.icon} size={17} />
+                  </span>
+                  <span>
+                    <span className="block text-xs font-bold">{badge.title}</span>
+                    <span className="mt-0.5 block text-[11px] leading-snug text-ink-500">{badge.text}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="relative">
+            <img
+              src={laptop}
+              alt="Campus Coin dashboard on a laptop and phone"
+              loading="eager"
+              className="h-auto w-full object-contain"
+            />
+            <div className="absolute -top-2 right-0 max-w-[240px] rounded-xl bg-surface p-3 shadow-card ring-1 ring-emerald-100 sm:right-2">
+              <p className="flex items-center gap-1.5 text-xs font-bold">
+                <Icon name="lightbulb" size={15} className="text-amber-500" />
+                AI Tip
+              </p>
+              <p className="mt-1 text-[11px] leading-snug text-ink-500">
+                You&apos;ve spent 30% more on food this month. Consider cooking more at home
+                to save!
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-surface">
+          <div className="mx-auto grid max-w-7xl items-center gap-8 px-4  md:grid-cols-2">
+            <img
+              src={student}
+              alt="Student with a laptop wondering where their money went"
+              loading="lazy"
+              className="mx-auto h-auto w-full max-w-md object-contain"
+            />
+            <div>
+              <h2 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
+                Built for Real Student Life
+              </h2>
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-ink-500 sm:text-base">
+                Unlike generic finance apps, Campus Coin is designed around your student
+                expenses — from food and transport to hostel, academics and subscriptions.
+              </p>
+              <a
+                href="#features"
+                className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-brand-600 hover:underline"
+              >
+                See all features
+                <Icon name="arrow-right" size={16} />
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section id="features" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-14">
+          <h2 className="text-center font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
+            Key Features
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-center text-sm text-ink-500">
+            Everything you need to manage your money, made simple.
+          </p>
+          <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {FEATURES.map((feature) => (
+              <li
+                key={feature.id}
+                className="rounded-xl bg-surface p-5 text-center shadow-card"
+              >
+                <span className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${feature.chip}`}>
+                  <Icon name={feature.icon} size={22} />
+                </span>
+                <p className="mt-3 text-sm font-bold">{feature.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-ink-500">{feature.text}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section id="insights" className="scroll-mt-20 bg-emerald-50">
+          <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-14 lg:grid-cols-[1fr_1.4fr]">
+            <div>
+              <h2 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
+                A Clearer View of Your Finances
+              </h2>
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-ink-500 sm:text-base">
+                Get a complete picture of your spending with an easy-to-read dashboard.
+              </p>
+              <ul className="mt-5 space-y-3">
+                {FINANCE_CHECKLIST.map((item) => (
+                  <li key={item.id} className="flex items-center gap-2.5 text-sm font-semibold">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white">
+                      <Icon name="check" size={14} />
+                    </span>
+                    {item.text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="space-y-4 rounded-card bg-surface p-5 shadow-card">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {PREVIEW_STATS.map((stat) => (
+                  <div key={stat.id} className={`flex items-center gap-2.5 rounded-xl ${stat.tile} p-3`}>
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${stat.chip}`}>
+                      <Icon name={stat.icon} size={17} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-[11px] text-ink-500">{stat.label}</span>
+                      <span className="block truncate text-sm font-extrabold tabular-nums">{stat.value}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="rounded-xl ring-1 ring-slate-200/70 p-4">
+                  <h3 className="text-sm font-bold">Spending by Category</h3>
+                  <div className="mt-2">
+                    <SpendingDonut breakdown={PREVIEW_BREAKDOWN} totalExpense={68400} stacked />
+                  </div>
+                </div>
+                <div className="rounded-xl ring-1 ring-slate-200/70 p-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold">Recent Transactions</h3>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/transactions")}
+                      className="text-[11px] font-bold text-brand-600 hover:underline"
+                    >
+                      View All
+                    </button>
+                  </div>
+                  <ul className="mt-2 divide-y divide-slate-100">
+                    {PREVIEW_TRANSACTIONS.map((tx) => (
+                      <li key={tx.id} className="flex items-center gap-2.5 py-2.5">
+                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${tx.chip}`}>
+                          <Icon name={tx.icon} size={15} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-xs font-bold">{tx.name}</span>
+                          <span className="block truncate text-[11px] text-ink-500">{tx.sub}</span>
+                        </span>
+                        <span className={`shrink-0 text-xs font-bold tabular-nums ${tx.positive ? "text-brand-600" : "text-red-500"}`}>
+                          {tx.amount}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-xl bg-emerald-50 p-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                  <Icon name="lightbulb" size={17} />
+                </span>
+                <p className="min-w-0 flex-1 text-xs leading-relaxed">
+                  <span className="block font-bold">Saving Tip</span>
+                  <span className="text-ink-500">
+                    You&apos;ve spent 30% more on food this month. Consider cooking more at
+                    home to save!
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="how-it-works" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-14">
+          <h2 className="text-center font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
+            How It Works
+          </h2>
+          <p className="mt-2 text-center text-sm text-ink-500">Get started in 4 simple steps.</p>
+          <ol className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-4 md:gap-6">
+            {STEPS.map((step, index) => (
+              <li key={step.id} className="relative text-center">
+                <span className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full text-lg font-extrabold text-white ${step.circle}`}>
+                  {step.id}
+                </span>
+                <p className="mt-3 text-sm font-bold">{step.title}</p>
+                <p className="mx-auto mt-1 max-w-[220px] text-xs leading-relaxed text-ink-500">{step.text}</p>
+                {index < STEPS.length - 1 && (
+                  <Icon
+                    name="chevron-right"
+                    size={20}
+                    className="absolute -right-5 top-4 hidden text-ink-500 md:block"
+                  />
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-4">
+          <div className="grid items-center gap-6 rounded-card bg-purple-50 p-6 md:grid-cols-[auto_1fr_auto] md:p-8">
+            <img src={aibot} alt="" className="h-20 w-20 object-contain" loading="lazy" />
+            <div>
+              <h2 className="font-display text-xl font-extrabold tracking-tight">
+                Smarter with AI (Optional)
+              </h2>
+              <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-ink-500">
+                Let AI do the heavy lifting — automatically categorize your expenses,
+                summarize your monthly spending and give you simple, actionable insights.
+              </p>
+            </div>
+            <ul className="space-y-2.5">
+              {AI_CHECKLIST.map((item) => (
+                <li key={item.id} className="flex items-center gap-2 text-sm font-semibold">
+                  <Icon name="check" size={16} className="shrink-0 text-purple-600" />
+                  {item.text}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-4 pt-6">
+          <div className="flex flex-col items-center gap-6 rounded-card bg-brand-600 p-8 md:flex-row">
+            <img src="/logo.png" alt="" className="h-12 w-12 shrink-0 object-contain" />
+            <div className="min-w-0 flex-1 text-center md:text-left">
+              <h2 className="font-display text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+                Your money. Your goals. Your Campus Coin.
+              </h2>
+              <p className="mt-1 text-sm text-white/85">
+                Join thousands of students who are already making smarter financial decisions.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/signup")}
+              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-forest-900 transition hover:bg-emerald-50"
+            >
+              Create Your Account
+              <Icon name="arrow-right" size={17} />
+            </button>
+          </div>
+        </section>
+      </main>
+
+      <footer className="mt-14 bg-forest-900 text-white">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
+          <div id="about" className="scroll-mt-20">
+            <p className="flex items-center gap-2">
+              <img src="/logo.png" alt="" className="h-8 w-8 object-contain" />
+              <span className="font-display text-lg font-extrabold tracking-tight">Campus Coin</span>
+            </p>
+            <p className="mt-2 text-xs text-sage-400">Smart Spending • Student Style</p>
+          </div>
+          <nav aria-label="Quick links">
+            <p className="text-xs font-bold uppercase tracking-wider text-sage-400">Quick Links</p>
+            <ul className="mt-3 space-y-2">
+              {QUICK_LINKS.map((link) => (
+                <li key={link.label}>
+                  <a href={link.href} className="text-sm text-white/85 transition hover:text-white hover:underline">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <nav aria-label="Account">
+            <p className="text-xs font-bold uppercase tracking-wider text-sage-400">Account</p>
+            <ul className="mt-3 space-y-2">
+              {ACCOUNT_LINKS.map((link) => (
+                <li key={link.label}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(link.to)}
+                    className="text-sm text-white/85 transition hover:text-white hover:underline"
+                  >
+                    {link.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <nav aria-label="Resources">
+            <p className="text-xs font-bold uppercase tracking-wider text-sage-400">Resources</p>
+            <ul className="mt-3 space-y-2">
+              {RESOURCE_LINKS.map((link) => (
+                <li key={link.label}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(link.to)}
+                    className="text-sm text-white/85 transition hover:text-white hover:underline"
+                  >
+                    {link.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-sage-400">Connect With Us</p>
+            <ul className="mt-3 flex items-center gap-2">
+              {SOCIALS.map((social) => (
+                <li key={social.label}>
+                  <a
+                    href="#top"
+                    aria-label={social.label}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+                  >
+                    <SocialIcon icon={social.icon} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <div className="border-t border-white/10">
+          <p className="mx-auto max-w-7xl px-4 py-5 text-center text-xs text-white/70 sm:text-left">
+            © 2026 Campus Coin. All rights reserved.
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
+}

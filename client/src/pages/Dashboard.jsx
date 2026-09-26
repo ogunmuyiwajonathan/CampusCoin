@@ -1,6 +1,8 @@
 import { useState } from "react";
 import Icon from "../components/Icon.jsx";
 import campusboy from "../assets/campusboy.png";
+import AssistantFab from "../components/AssistantFab.jsx";
+import MobileNav from "../components/MobileNav.jsx";
 import Sidebar from "../components/Sidebar.jsx";
 import StatCard from "../components/StatCard.jsx";
 import SpendingDonut from "../components/SpendingDonut.jsx";
@@ -48,9 +50,11 @@ export default function Dashboard() {
   return (
     <div className="min-h-svh">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <MobileNav />
+      <AssistantFab />
 
       <div className="lg:pl-60">
-        <main className="mx-auto max-w-7xl space-y-4 px-4 py-5">
+        <main className="mx-auto max-w-7xl space-y-4 px-4 pb-24 pt-5 md:pb-5">
           <PageHeader onMenu={() => setSidebarOpen(true)} />
 
           <section className="flex min-h-37.5 overflow-hidden rounded-card bg-linear-to-r from-emerald-100/80 via-emerald-50 to-surface px-6 py-3 ring-1 ring-emerald-100">
@@ -80,7 +84,7 @@ export default function Dashboard() {
                   src={campusboy}
                   alt="Student holding a laptop"
                   loading="lazy"
-                  className="hidden h-35 w-auto shrink-0 object-contain object-bottom sm:block md:h-40 lg:h-44"
+                  className="h-30 w-auto shrink-0 object-contain object-bottom sm:h-35 md:h-40 lg:h-44"
                 />
               </div>
             </div>

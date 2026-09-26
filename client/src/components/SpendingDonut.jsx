@@ -5,11 +5,14 @@ import { formatCurrency } from "../lib/formatCurrency.js";
 
 const CHART_SIZE = 176;
 
-export default function SpendingDonut({ breakdown, totalExpense }) {
+// `showAmount` adds the naira amount beside each share (used by Insights);
+// `stacked` keeps the legend under the donut instead of beside it, for cards
+// that are too narrow to fit both.
+export default function SpendingDonut({ breakdown, totalExpense, showAmount = false, stacked = false }) {
   const [activeIndex, setActiveIndex] = useState(-1);
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+    <div className={`flex gap-4 ${stacked ? "flex-col items-center" : "flex-col sm:flex-row sm:items-center"}`}>
       <div className="relative h-44 w-44 shrink-0 self-center">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
@@ -48,7 +51,7 @@ export default function SpendingDonut({ breakdown, totalExpense }) {
         </div>
       </div>
 
-      <ul className="flex flex-1 flex-col gap-1.5">
+      <ul className="flex w-full flex-1 flex-col gap-1.5">
         {breakdown.map((entry) => (
           <li key={entry.category_id} className="flex items-center gap-2 text-sm">
             <span
@@ -56,8 +59,15 @@ export default function SpendingDonut({ breakdown, totalExpense }) {
               style={{ backgroundColor: entry.color }}
               aria-hidden="true"
             />
-            <span className="flex-1 truncate text-ink-900">{entry.name}</span>
-            <span className="tabular-nums text-ink-500">{entry.percentage}%</span>
+            <span className="min-w-0 flex-1 truncate text-ink-900">{entry.name}</span>
+            {showAmount && (
+              <span className="shrink-0 tabular-nums text-ink-500">
+                {formatCurrency(entry.amount)}
+              </span>
+            )}
+            <span className="w-9 shrink-0 text-right tabular-nums text-ink-500">
+              {entry.percentage}%
+            </span>
           </li>
         ))}
       </ul>

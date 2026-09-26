@@ -16,6 +16,32 @@ export function monthLabel(key) {
   });
 }
 
+/** Moves a "YYYY-MM" key by whole months; negative goes further back. */
+export function shiftMonthKey(key, delta) {
+  const [year, month] = key.split("-").map(Number);
+  const date = new Date(year, month - 1 + delta, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/** "Apr - Sep 2026", or "Nov 2025 - Apr 2026" when the window spans two years. */
+export function monthRangeShort(startKey, endKey) {
+  const [startYear, startMonth] = startKey.split("-").map(Number);
+  const [endYear, endMonth] = endKey.split("-").map(Number);
+  const start = new Date(startYear, startMonth - 1, 1).toLocaleDateString(DATE_LOCALE, {
+    month: "short",
+  });
+  const end = new Date(endYear, endMonth - 1, 1).toLocaleDateString(DATE_LOCALE, {
+    month: "short",
+  });
+  if (startYear !== endYear) return `${start} ${startYear} – ${end} ${endYear}`;
+  return `${start} – ${end} ${endYear}`;
+}
+
+/** "Sep 2026" - the "Joined" profile line until `created_at` exists. */
+export function joinedLabel(today = new Date()) {
+  return today.toLocaleDateString(DATE_LOCALE, { month: "short", year: "numeric" });
+}
+
 export function monthRange(key) {
   const [year, month] = key.split("-").map(Number);
   const start = new Date(year, month - 1, 1);

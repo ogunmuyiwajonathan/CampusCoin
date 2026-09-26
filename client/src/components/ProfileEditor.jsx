@@ -2,33 +2,71 @@ import { useEffect, useState } from "react";
 import Icon from "./Icon.jsx";
 import { ACADEMIC_YEARS } from "../data/mockData.js";
 
+const AMOUNT_FIELDS = [
+  {
+    key: "allowance_baseline",
+    id: "profile-allowance",
+    label: "Monthly Allowance",
+    hint: "What you usually receive each month",
+  },
+  {
+    key: "monthly_savings_goal",
+    id: "profile-goal",
+    label: "Monthly Savings Goal",
+    hint: "Target for what you set aside each month",
+  },
+];
+
+function parseAmount(value) {
+  const text = value.trim();
+  if (text === "") return null;
+  const parsed = Number(text);
+  if (!Number.isFinite(parsed) || parsed < 0) return NaN;
+  return parsed;
+}
+
 export default function ProfileEditor({ initial, onClose, onSave }) {
-  const [email, setEmail] = useState(initial.email);
-  const [academicYear, setAcademicYear] = useState(initial.academic_year);
-  const [goal, setGoal] = useState(initial.monthly_savings_goal);
+  const [name, setName] = useState(initial.name ?? "");
+  const [academicYear, setAcademicYear] = useState(initial.academic_year ?? "");
+  const [amounts, setAmounts] = useState({
+    allowance_baseline: initial.allowance_baseline ?? "",
+    monthly_savings_goal: initial.monthly_savings_goal ?? "",
+  });
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const onKey = (event) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && !saving) onClose();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, saving]);
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
     setError("");
-    if (!email.includes("@") || !email.includes(".")) {
-      setError("Enter a valid email address.");
+
+    if (!name.trim()) {
+      setError("Enter your name.");
       return;
     }
-    const goalValue = goal.trim() === "" ? null : Number(goal);
-    if (goalValue !== null && (!Number.isFinite(goalValue) || goalValue < 0)) {
-      setError("Enter a valid savings goal.");
-      return;
+
+    const patch = { name: name.trim() };
+    for (const field of AMOUNT_FIELDS) {
+      const value = parseAmount(amounts[field.key]);
+      if (Number.isNaN(value)) {
+        setError(`${field.label} must be zero or more.`);
+        return;
+      }
+      patch[field.key] = value;
     }
-    onSave({ email: email.trim(), academic_year: academicYear || null, monthly_savings_goal: goalValue });
+    patch.academic_year = academicYear || null;
+
+    setSaving(true);
+    const result = await onSave(patch);
+    setSaving(false);
+    if (!result.ok) setError(result.error);
   };
 
   return (
@@ -38,10 +76,15 @@ export default function ProfileEditor({ initial, onClose, onSave }) {
       aria-modal="true"
       aria-label="Edit profile"
     >
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
+      <div
+        className="absolute inset-0 bg-black/40"
+        onClick={saving ? undefined : onClose}
+        aria-hidden="true"
+      />
       <form
         onSubmit={submit}
-        className="relative w-full max-w-md rounded-card bg-surface p-6 shadow-card"
+        noValidate
+        className="relative max-h-[90svh] w-full max-w-md overflow-y-auto rounded-card bg-surface p-6 shadow-card"
       >
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-extrabold tracking-tight text-ink-900">
@@ -50,14 +93,37 @@ export default function ProfileEditor({ initial, onClose, onSave }) {
           <button
             type="button"
             onClick={onClose}
+            disabled={saving}
             aria-label="Close editor"
-            className="rounded-lg p-1.5 text-ink-500 transition hover:bg-slate-50 hover:text-ink-900"
+            className="rounded-lg p-1.5 text-ink-500 transition hover:bg-slate-50 hover:text-ink-900 disabled:opacity-50"
           >
             <Icon name="x" size={18} />
           </button>
         </div>
 
         <div className="mt-5 flex flex-col gap-4">
+          <div>
+            <label htmlFor="profile-name" className="mb-1.5 block text-sm font-semibold text-ink-900">
+              Full Name
+            </label>
+            <div className="relative">
+              <Icon
+                name="user"
+                size={17}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500"
+              />
+              <input
+                id="profile-name"
+                type="text"
+                autoComplete="name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Your name"
+                className="w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-11 pr-4 text-sm text-ink-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              />
+            </div>
+          </div>
+
           <div>
             <label htmlFor="profile-email" className="mb-1.5 block text-sm font-semibold text-ink-900">
               Email Address
@@ -72,12 +138,15 @@ export default function ProfileEditor({ initial, onClose, onSave }) {
                 id="profile-email"
                 type="email"
                 autoComplete="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
-                className="w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-11 pr-4 text-sm text-ink-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                value={initial.email ?? ""}
+                readOnly
+                disabled
+                className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 py-2.5 pl-11 pr-4 text-sm text-ink-500"
               />
             </div>
+            <p className="mt-1.5 text-xs text-ink-500">
+              Your login email can&apos;t be changed here.
+            </p>
           </div>
 
           <div>
@@ -113,27 +182,32 @@ export default function ProfileEditor({ initial, onClose, onSave }) {
             </div>
           </div>
 
-          <div>
-            <label htmlFor="profile-goal" className="mb-1.5 block text-sm font-semibold text-ink-900">
-              Monthly Savings Goal
-            </label>
-            <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-ink-500">
-                &#8358;
-              </span>
-              <input
-                id="profile-goal"
-                type="number"
-                min="0"
-                step="500"
-                inputMode="numeric"
-                value={goal}
-                onChange={(event) => setGoal(event.target.value)}
-                placeholder="0"
-                className="w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-9 pr-4 text-sm tabular-nums text-ink-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-              />
+          {AMOUNT_FIELDS.map((field) => (
+            <div key={field.key}>
+              <label htmlFor={field.id} className="mb-1.5 block text-sm font-semibold text-ink-900">
+                {field.label}
+              </label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-ink-500">
+                  &#8358;
+                </span>
+                <input
+                  id={field.id}
+                  type="number"
+                  min="0"
+                  step="500"
+                  inputMode="numeric"
+                  value={amounts[field.key]}
+                  onChange={(event) =>
+                    setAmounts((current) => ({ ...current, [field.key]: event.target.value }))
+                  }
+                  placeholder="0"
+                  className="w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-9 pr-4 text-sm tabular-nums text-ink-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                />
+              </div>
+              <p className="mt-1.5 text-xs text-ink-500">{field.hint}</p>
             </div>
-          </div>
+          ))}
         </div>
 
         {error && (
@@ -146,15 +220,19 @@ export default function ProfileEditor({ initial, onClose, onSave }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-ink-500 transition hover:bg-slate-50"
+            disabled={saving}
+            className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-ink-500 transition hover:bg-slate-50 disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700"
+            disabled={saving}
+            aria-busy={saving}
+            className="flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-500 disabled:opacity-70"
           >
-            Save Changes
+            {saving && <Icon name="clock" size={15} className="animate-spin" />}
+            {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </form>

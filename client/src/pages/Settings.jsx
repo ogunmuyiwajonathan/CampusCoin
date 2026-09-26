@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import AvatarPicker from "../components/AvatarPicker.jsx";
 import Icon from "../components/Icon.jsx";
+import AssistantFab from "../components/AssistantFab.jsx";
+import MobileNav from "../components/MobileNav.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import ProfileEditor from "../components/ProfileEditor.jsx";
 import Sidebar from "../components/Sidebar.jsx";
+import Toast from "../components/Toast.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import { useTheme } from "../hooks/useTheme.js";
 import { mockUser } from "../data/mockData.js";
@@ -17,32 +21,57 @@ const QUICK_ROWS = [
 
 const NOT_ADDED = "Not added";
 
+// Marks the rows that are laid out but land with the backend, so nothing on
+// this page is a click that quietly does nothing.
+function SoonPill() {
+  return (
+    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-500">
+      Soon
+    </span>
+  );
+}
+
 export default function Settings() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [twoFactor, setTwoFactor] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [toast, setToast] = useState(null);
   const { user, updateProfile } = useAuth();
   const { theme, toggle } = useTheme();
+
+  const notify = useCallback((next) => setToast({ ...next, id: Date.now() }), []);
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const displayName = user?.name ?? mockUser.name;
   const email = user?.email ?? mockUser.email;
   const academicYear = user ? user.academic_year || null : mockUser.academic_year;
   const savingsGoal = user ? user.monthly_savings_goal ?? null : mockUser.monthly_savings_goal;
+  const allowance = user ? user.allowance_baseline ?? null : mockUser.allowance_baseline;
+  const joined = user?.joined ?? mockUser.joined;
   const academicLabel = academicYear ?? NOT_ADDED;
   const savingsLabel = savingsGoal == null ? NOT_ADDED : formatCurrency(savingsGoal);
+  const allowanceLabel = allowance == null ? NOT_ADDED : formatCurrency(allowance);
 
   const accountRows = [
     { icon: "mail", label: "Email Address", value: email },
     { icon: "graduation-cap", label: "Academic Year", value: academicLabel },
+    { icon: "wallet", label: "Monthly Allowance", value: allowanceLabel },
     { icon: "target", label: "Monthly Savings Goal", value: savingsLabel },
   ];
 
   return (
     <div className="min-h-svh">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <MobileNav />
+      <AssistantFab />
 
       <div className="lg:pl-60">
-        <main className="mx-auto max-w-7xl space-y-5 px-4 py-5">
+        <main className="mx-auto max-w-7xl space-y-5 px-4 pb-24 pt-5 md:pb-5">
           <PageHeader onMenu={() => setSidebarOpen(true)} />
 
           <div className="flex items-center gap-3.5">
@@ -76,19 +105,7 @@ export default function Settings() {
                   </button>
                 </div>
                 <div className="flex flex-wrap items-start gap-5 p-5">
-                  <div className="relative">
-                    <span className="flex h-28 w-28 items-center justify-center rounded-full bg-forest-700 text-4xl font-extrabold text-white">
-                      {displayName.charAt(0)}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setEditorOpen(true)}
-                      aria-label="Edit profile"
-                      className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-surface text-ink-900 shadow-card transition hover:text-emerald-600"
-                    >
-                      <Icon name="camera" size={14} />
-                    </button>
-                  </div>
+                  <AvatarPicker name={displayName} onNotify={notify} />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2.5">
                       <p className="min-w-0 max-w-full truncate font-display text-lg font-bold text-ink-900">{displayName}</p>
@@ -104,7 +121,7 @@ export default function Settings() {
                       </li>
                       <li className="flex items-center gap-2">
                         <Icon name="calendar" size={15} className="text-emerald-600" />
-                        Joined {mockUser.joined}
+                        Joined {joined}
                       </li>
                     </ul>
                   </div>
@@ -151,7 +168,8 @@ export default function Settings() {
                       <button
                         key={row.title}
                         type="button"
-                        className="flex w-full items-center gap-3.5 px-5 py-4 text-left transition hover:bg-slate-50"
+                        disabled
+                        className="flex w-full items-center gap-3.5 px-5 py-4 text-left opacity-70"
                       >
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                           <Icon name={row.icon} size={17} />
@@ -162,7 +180,7 @@ export default function Settings() {
                           </span>
                           <span className="mt-0.5 block text-xs text-ink-500">{row.subtitle}</span>
                         </span>
-                        <Icon name="chevron-right" size={16} className="shrink-0 text-slate-400" />
+                        <SoonPill />
                       </button>
                     ),
                   )}
@@ -217,7 +235,8 @@ export default function Settings() {
                 <div className="divide-y divide-slate-100 border-t border-slate-100">
                   <button
                     type="button"
-                    className="flex w-full items-center gap-3.5 px-5 py-4 text-left transition hover:bg-slate-50"
+                    disabled
+                    className="flex w-full items-center gap-3.5 px-5 py-4 text-left opacity-70"
                   >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                       <Icon name="lock" size={16} />
@@ -230,7 +249,7 @@ export default function Settings() {
                         Update your password regularly
                       </span>
                     </span>
-                    <Icon name="chevron-right" size={16} className="shrink-0 text-slate-400" />
+                    <SoonPill />
                   </button>
                   <div className="flex w-full items-center gap-3.5 px-5 py-4">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
@@ -263,7 +282,8 @@ export default function Settings() {
                   </div>
                   <button
                     type="button"
-                    className="flex w-full items-center gap-3.5 px-5 py-4 text-left transition hover:bg-slate-50"
+                    disabled
+                    className="flex w-full items-center gap-3.5 px-5 py-4 text-left opacity-70"
                   >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                       <Icon name="clock" size={16} />
@@ -276,7 +296,7 @@ export default function Settings() {
                         View recent login sessions
                       </span>
                     </span>
-                    <Icon name="chevron-right" size={16} className="shrink-0 text-slate-400" />
+                    <SoonPill />
                   </button>
                 </div>
               </section>
@@ -308,17 +328,25 @@ export default function Settings() {
       {editorOpen && (
         <ProfileEditor
           initial={{
+            name: displayName,
             email,
             academic_year: academicYear ?? "",
+            allowance_baseline: allowance == null ? "" : String(allowance),
             monthly_savings_goal: savingsGoal == null ? "" : String(savingsGoal),
           }}
           onClose={() => setEditorOpen(false)}
-          onSave={(patch) => {
-            updateProfile(patch);
-            setEditorOpen(false);
+          onSave={async (patch) => {
+            const result = await updateProfile(patch);
+            if (result.ok) {
+              setEditorOpen(false);
+              notify({ kind: "success", message: "Profile updated." });
+            }
+            return result;
           }}
         />
       )}
+
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   );
 }

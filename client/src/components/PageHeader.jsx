@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import Icon from "./Icon.jsx";
 import NotificationBell from "./NotificationBell.jsx";
+import UserAvatar from "./UserAvatar.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import { mockUser } from "../data/mockData.js";
 
@@ -14,12 +15,22 @@ export default function PageHeader({ onMenu }) {
     <header className="flex items-center gap-3">
       <button
         type="button"
-        className="rounded-lg p-2 hover:bg-surface lg:hidden"
+        className="hidden rounded-lg p-2 hover:bg-surface md:inline-flex lg:hidden"
         onClick={onMenu}
         aria-label="Open navigation menu"
       >
         <Icon name="menu" size={20} />
       </button>
+      <Link
+        to="/"
+        aria-label="Campus Coin home"
+        className="flex items-center gap-1.5 md:hidden"
+      >
+        <img src="/logo.png" alt="" className="h-8 w-8 shrink-0 object-contain" />
+        <span className="font-display text-lg font-bold tracking-wide text-forest-900 dark:text-sage-100">
+          Campus Coin
+        </span>
+      </Link>
       <div className="relative hidden flex-1 sm:block">
         <Icon
           name="search"
@@ -40,9 +51,7 @@ export default function PageHeader({ onMenu }) {
           aria-label="Open profile settings"
           className="flex items-center gap-2 rounded-lg p-1 transition hover:bg-surface"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-forest-700 text-sm font-bold text-white">
-            {displayName.charAt(0)}
-          </span>
+          <UserAvatar name={displayName} src={user?.profile_image_url} />
           <span className="hidden leading-tight sm:block">
             <span className="block max-w-[140px] truncate text-sm font-semibold text-ink-900">
               {greeting}

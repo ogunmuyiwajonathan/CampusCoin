@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import Icon from "../components/Icon.jsx";
+import AssistantFab from "../components/AssistantFab.jsx";
+import MobileNav from "../components/MobileNav.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import Sidebar from "../components/Sidebar.jsx";
 import StatCard from "../components/StatCard.jsx";
@@ -204,9 +206,11 @@ export default function Transactions() {
   return (
     <div className="min-h-svh">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <MobileNav />
+      <AssistantFab />
 
       <div className="lg:pl-60">
-        <main className="mx-auto max-w-7xl space-y-5 px-4 py-5">
+        <main className="mx-auto max-w-7xl space-y-5 px-4 pb-24 pt-5 md:pb-5">
           <PageHeader onMenu={() => setSidebarOpen(true)} />
 
           <div>
@@ -312,7 +316,7 @@ export default function Transactions() {
                       <th scope="col" className="px-3 py-2.5 font-semibold">
                         Date
                       </th>
-                      <th scope="col" className="hidden px-3 py-2.5 font-semibold sm:table-cell">
+                      <th scope="col" className="hidden px-3 py-2.5 font-semibold md:table-cell">
                         Type
                       </th>
                       <th scope="col" className="hidden px-3 py-2.5 font-semibold md:table-cell">
@@ -341,13 +345,16 @@ export default function Transactions() {
                           <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums text-ink-500">
                             {formatDate(item.date)}
                             {item.is_recurring && (
-                              <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-600">
+                              <span
+                                className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-600"
+                                aria-label="Recurring transaction"
+                              >
                                 <Icon name="repeat" size={10} />
-                                Recurring
+                                <span className="hidden sm:inline">Recurring</span>
                               </span>
                             )}
                           </td>
-                          <td className="hidden px-3 py-3 sm:table-cell">
+                          <td className="hidden px-3 py-3 md:table-cell">
                             <span
                               className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ${
                                 isIncome ? "bg-emerald-100 text-brand-600" : "bg-red-100 text-red-500"
@@ -367,12 +374,14 @@ export default function Transactions() {
                               <span className="min-w-0 max-w-[130px] truncate">{name}</span>
                             </span>
                           </td>
-                          <td className="px-3 py-3">
-                            <p className="max-w-[220px] truncate text-sm font-semibold text-ink-900">
+                          <td className="max-w-[160px] px-3 py-3 sm:max-w-none">
+                            <p className="truncate text-sm font-semibold text-ink-900">
                               {item.description || name}
                             </p>
-                            <p className="mt-0.5 truncate text-xs text-ink-500 sm:hidden">
-                              {formatDate(item.date)} · {isIncome ? "Income" : "Expense"} · {name}
+                            {/* Mobile-only subtext: the date lives in the Date
+                                column above, so only type · category here. */}
+                            <p className="mt-0.5 truncate text-xs text-ink-500 md:hidden">
+                              {isIncome ? "Income" : "Expense"} · {name}
                             </p>
                           </td>
                           <td

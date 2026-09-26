@@ -1,12 +1,28 @@
 import { useCallback, useMemo, useState } from "react";
 import { AuthContext, STORAGE_KEY } from "./authContext.js";
 import { mockUser } from "../data/mockData.js";
+import { updateUserProfile } from "../lib/apiClient.js";
+import { joinedLabel } from "../lib/formatMonth.js";
+import { formatName } from "../lib/formatName.js";
+
+// Names are normalized on the way in and on the way out, so "jAMIE" typed at
+// signup or derived from an email still shows as "Jamie" in every greeting.
+function withNormalizedName(next) {
+  if (!next || typeof next.name !== "string") return next;
+  return { ...next, name: formatName(next.name) };
+}
+
+// A demo account keeps its join date across logins; a fresh one gets today.
+// The backend replaces this with `users.created_at`.
+function joinDate(previous) {
+  return (previous && previous.joined) || joinedLabel();
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : null;
+      return stored ? withNormalizedName(JSON.parse(stored)) : null;
     } catch {
       localStorage.removeItem(STORAGE_KEY);
       return null;
@@ -15,21 +31,40 @@ export function AuthProvider({ children }) {
   const [status] = useState("ready");
 
   const persist = useCallback((next) => {
-    setUser(next);
-    if (next) localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    else localStorage.removeItem(STORAGE_KEY);
+    const value = withNormalizedName(next);
+    setUser(value);
+    if (!value) {
+      localStorage.removeItem(STORAGE_KEY);
+      return { ok: true };
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+      return { ok: true };
+    } catch {
+      return {
+        ok: false,
+        error: "Couldn't save your profile. Browser storage may be full or blocked.",
+      };
+    }
   }, []);
 
   const login = useCallback(
     async ({ email, password }) => {
       if (!email || !password) throw new Error("Enter your email and password.");
       if (password.length < 6) throw new Error("Password must be at least 6 characters.");
+      let previous = null;
+      try {
+        previous = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
+      } catch {
+        previous = null;
+      }
       persist({
         user_id: "demo-student",
         name: email.split("@")[0] || "Student",
         email,
         role: "student",
         monthly_savings_goal: 15000,
+        joined: joinDate(previous),
       });
     },
     [persist],
@@ -45,6 +80,7 @@ export function AuthProvider({ children }) {
         email,
         role: "student",
         monthly_savings_goal: 15000,
+        joined: joinDate(null),
       });
     },
     [persist],
@@ -54,21 +90,25 @@ export function AuthProvider({ children }) {
     persist(null);
   }, [persist]);
 
+  // Resolves to { ok, user?, error? } so callers can show their own error state.
   const updateProfile = useCallback(
-    (patch) => {
-      if (user) {
-        persist({ ...user, ...patch });
-        return;
-      }
-      persist({
+    async (patch) => {
+      const base = user ?? {
         user_id: mockUser.user_id,
         name: mockUser.name,
         email: mockUser.email,
         academic_year: mockUser.academic_year,
         monthly_savings_goal: mockUser.monthly_savings_goal,
+        allowance_baseline: mockUser.allowance_baseline,
         role: mockUser.role,
-        ...patch,
-      });
+        joined: mockUser.joined,
+      };
+      try {
+        const saved = await updateUserProfile({ ...base, ...patch });
+        return { ...persist(saved), user: saved };
+      } catch (error) {
+        return { ok: false, error: error.message };
+      }
     },
     [user, persist],
   );

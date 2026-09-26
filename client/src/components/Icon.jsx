@@ -5,32 +5,37 @@ import {
   ArrowRight,
   ArrowUp,
   Bell,
-  Bot,
   BookOpen,
   Briefcase,
   Bus,
   Calendar,
   Camera,
   ChartColumn,
+  ChartPie,
+  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
+  Database,
   Ellipsis,
   Eye,
   EyeOff,
+  FileText,
   Filter,
   Gamepad2,
   Gift,
   Globe,
   GraduationCap,
   House,
+  Info,
   Lightbulb,
   Lock,
   LogIn,
   LogOut,
   Mail,
   Menu,
+  MessageSquare,
   Moon,
   Pencil,
   PiggyBank,
@@ -41,7 +46,10 @@ import {
   Send,
   Settings,
   Shield,
+  Smartphone,
+  Sparkles,
   Sun,
+  Tag,
   Target,
   Trash2,
   TrendingDown,
@@ -52,6 +60,7 @@ import {
   Utensils,
   Wallet,
   X,
+  Zap,
 } from "lucide-react";
 
 const ICONS = {
@@ -61,32 +70,38 @@ const ICONS = {
   "arrow-right": ArrowRight,
   "arrow-up": ArrowUp,
   bell: Bell,
-  bot: Bot,
+  bot: BotIcon,
   "book-open": BookOpen,
   briefcase: Briefcase,
   bus: Bus,
   calendar: Calendar,
   camera: Camera,
   "chart-column": ChartColumn,
+  "chart-pie": ChartPie,
+  check: Check,
   "chevron-down": ChevronDown,
   "chevron-left": ChevronLeft,
   "chevron-right": ChevronRight,
   clock: Clock,
+  database: Database,
   ellipsis: Ellipsis,
   eye: Eye,
   "eye-off": EyeOff,
+  "file-text": FileText,
   filter: Filter,
   "gamepad-2": Gamepad2,
   gift: Gift,
   globe: Globe,
   "graduation-cap": GraduationCap,
   house: House,
+  info: Info,
   lightbulb: Lightbulb,
   lock: Lock,
   "log-in": LogIn,
   "log-out": LogOut,
   mail: Mail,
   menu: Menu,
+  "message-square": MessageSquare,
   moon: Moon,
   pencil: Pencil,
   "piggy-bank": PiggyBank,
@@ -97,7 +112,10 @@ const ICONS = {
   send: Send,
   settings: Settings,
   shield: Shield,
+  smartphone: Smartphone,
+  sparkles: Sparkles,
   sun: Sun,
+  tag: Tag,
   target: Target,
   "trash-2": Trash2,
   "trending-down": TrendingDown,
@@ -108,10 +126,29 @@ const ICONS = {
   utensils: Utensils,
   wallet: Wallet,
   x: X,
+  zap: Zap,
 };
 
 export default function Icon({ name, size = 18, className }) {
   const Component = ICONS[name];
   if (!Component) return null;
   return <Component size={size} className={className} strokeWidth={2} aria-hidden="true" />;
+}
+
+function BotIcon({ size = 18, className }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        fill="currentColor"
+        d="M8 0a1 1 0 0 1 .5 1.864V4H11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2.5V1.864A.998.998 0 0 1 8 0M5 10v2h6v-2zm.5-4a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3m5 0a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3m-9 1a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 1 .5-.5m13 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 1 .5-.5"
+      />
+    </svg>
+  );
 }
