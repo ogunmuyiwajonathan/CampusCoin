@@ -18,6 +18,7 @@ import { formatCurrency } from "../lib/formatCurrency.js";
 import {
   currentMonthKey,
   formatDate,
+  formatDayMonth,
   monthKey,
   monthLabel,
   monthRange,
@@ -313,7 +314,7 @@ export default function Transactions() {
                 <table className="w-full border-collapse text-left">
                   <thead>
                     <tr className="text-xs text-ink-500">
-                      <th scope="col" className="px-3 py-2.5 font-semibold">
+                      <th scope="col" className="px-2 py-2.5 font-semibold sm:px-3">
                         Date
                       </th>
                       <th scope="col" className="hidden px-3 py-2.5 font-semibold md:table-cell">
@@ -322,13 +323,13 @@ export default function Transactions() {
                       <th scope="col" className="hidden px-3 py-2.5 font-semibold md:table-cell">
                         Category
                       </th>
-                      <th scope="col" className="px-3 py-2.5 font-semibold">
+                      <th scope="col" className="px-2 py-2.5 font-semibold sm:px-3">
                         Description
                       </th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-semibold">
+                      <th scope="col" className="px-2 py-2.5 text-right font-semibold sm:px-3">
                         Amount
                       </th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-semibold">
+                      <th scope="col" className="px-2 py-2.5 text-right font-semibold sm:px-3">
                         Action
                       </th>
                     </tr>
@@ -342,8 +343,9 @@ export default function Transactions() {
                       const isIncome = item.type === "income";
                       return (
                         <tr key={item.transaction_id} className="transition hover:bg-slate-50/70">
-                          <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums text-ink-500">
-                            {formatDate(item.date)}
+                          <td className="whitespace-nowrap px-2 py-3 text-sm tabular-nums text-ink-500 sm:px-3">
+                            <span className="sm:hidden">{formatDayMonth(item.date)}</span>
+                            <span className="hidden sm:inline">{formatDate(item.date)}</span>
                             {item.is_recurring && (
                               <span
                                 className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-600"
@@ -374,7 +376,7 @@ export default function Transactions() {
                               <span className="min-w-0 max-w-[130px] truncate">{name}</span>
                             </span>
                           </td>
-                          <td className="max-w-[160px] px-3 py-3 sm:max-w-none">
+                          <td className="max-w-[104px] px-2 py-3 sm:max-w-none sm:px-3">
                             <p className="truncate text-sm font-semibold text-ink-900">
                               {item.description || name}
                             </p>
@@ -385,14 +387,14 @@ export default function Transactions() {
                             </p>
                           </td>
                           <td
-                            className={`whitespace-nowrap px-3 py-3 text-right text-sm font-bold tabular-nums ${
+                            className={`whitespace-nowrap px-2 py-3 text-right text-sm font-bold tabular-nums sm:px-3 ${
                               isIncome ? "text-brand-600" : "text-red-500"
                             }`}
                           >
                             {isIncome ? "+" : "-"}
                             {formatCurrency(item.amount)}
                           </td>
-                          <td className="px-3 py-3" data-row-actions>
+                          <td className="px-2 py-3 sm:px-3" data-row-actions>
                             <div className="relative flex justify-end">
                               {confirmId === item.transaction_id ? (
                                 <div className="flex items-center gap-2">

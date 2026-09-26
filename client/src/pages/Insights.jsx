@@ -265,13 +265,13 @@ export default function Insights() {
         <main className="mx-auto max-w-7xl space-y-4 px-4 pb-24 pt-5 md:pb-5">
           <PageHeader onMenu={() => setSidebarOpen(true)} />
 
-          <div className="flex flex-wrap items-start gap-4">
-            <div className="flex min-w-0 flex-1 items-center gap-3.5">
+          <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+            <div className="flex w-full min-w-0 items-center gap-3.5 sm:w-auto sm:flex-1">
               <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                 <Icon name="lightbulb" size={26} />
               </span>
               <div className="min-w-0">
-                <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink-900">
+                <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
                   Insights
                 </h1>
                 <p className="mt-1 text-sm text-ink-500">
@@ -279,7 +279,7 @@ export default function Insights() {
                 </p>
               </div>
             </div>
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <Icon
                 name="calendar"
                 size={16}

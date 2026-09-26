@@ -1,10 +1,10 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import Icon from "./Icon.jsx";
 import bushSide from "../assets/bush-side.png";
 import { useAuth } from "../hooks/useAuth.js";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Home", icon: "house", end: true },
+  { to: "/dashboard", label: "Home", icon: "house", end: true },
   { to: "/transactions", label: "Transactions", icon: "arrow-left-right" },
   { to: "/budgets", label: "Budgets", icon: "target" },
   { to: "/insights", label: "Insights", icon: "chart-column" },
@@ -30,10 +30,15 @@ export default function Sidebar({ open, onClose }) {
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="mb-7 flex items-center gap-1 px-2">
+        <Link
+          to="/"
+          onClick={onClose}
+          aria-label="Campus Coin home"
+          className="mb-7 flex items-center gap-1 rounded-lg px-2 transition hover:opacity-90"
+        >
           <img src="/logo.png" alt="" className="h-10 w-10 shrink-0 object-contain" />
           <span className="font-display text-xl font-bold tracking-wide">Campus Coin</span>
-        </div>
+        </Link>
 
         <nav className="flex flex-1 flex-col gap-1" aria-label="App">
           {NAV_ITEMS.map((item) => (

@@ -4,7 +4,7 @@ import Icon from "./Icon.jsx";
 // Bottom tab bar for phones only (below md) — tablets and up fall back to the
 // sidebar. AI Assistant is not a tab here; it gets its own FAB (AssistantFab).
 const TABS = [
-  { to: "/", label: "Home", icon: "house", end: true },
+  { to: "/dashboard", label: "Home", icon: "house", end: true },
   { to: "/transactions", label: "Transactions", icon: "arrow-left-right" },
   { to: "/budgets", label: "Budgets", icon: "target" },
   { to: "/insights", label: "Insights", icon: "chart-column" },

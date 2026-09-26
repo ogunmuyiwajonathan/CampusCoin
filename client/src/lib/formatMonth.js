@@ -61,6 +61,13 @@ export function formatDate(isoDate) {
   return date.toLocaleDateString(DATE_LOCALE, { month: "short", day: "numeric", year: "numeric" });
 }
 
+/** "Sep 26" — the phone-width date that keeps the transactions table on one line. */
+export function formatDayMonth(isoDate) {
+  const date = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return isoDate;
+  return date.toLocaleDateString(DATE_LOCALE, { month: "short", day: "numeric" });
+}
+
 export function todayISO() {
   const now = new Date();
   const month = String(now.getMonth() + 1).padStart(2, "0");

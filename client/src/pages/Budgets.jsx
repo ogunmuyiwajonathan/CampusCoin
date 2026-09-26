@@ -259,13 +259,13 @@ export default function Budgets() {
           <PageHeader onMenu={() => setSidebarOpen(true)} />
 
           <div className="min-w-0 space-y-4">
-              <div className="flex flex-wrap items-start gap-4">
-                <div className="flex min-w-0 flex-1 items-center gap-3.5">
+              <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+                <div className="flex w-full min-w-0 items-center gap-3.5 sm:w-auto sm:flex-1">
                   <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                     <Icon name="wallet" size={26} />
                   </span>
                   <div className="min-w-0">
-                    <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink-900">
+                    <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
                       Budgets
                     </h1>
                     <p className="mt-1 text-sm text-ink-500">
@@ -273,7 +273,7 @@ export default function Budgets() {
                     </p>
                   </div>
                 </div>
-                <div className="relative">
+                <div className="relative w-full sm:w-auto">
                   <Icon
                     name="calendar"
                     size={16}
@@ -300,7 +300,7 @@ export default function Budgets() {
                 <button
                   type="button"
                   onClick={openAdd}
-                  className="flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-bold text-white shadow-card transition hover:bg-brand-600"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-bold text-white shadow-card transition hover:bg-brand-600 sm:w-auto"
                 >
                   <Icon name="plus" size={17} />
                   Set New Budget
