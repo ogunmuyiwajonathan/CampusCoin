@@ -21,8 +21,7 @@ const QUICK_ROWS = [
 
 const NOT_ADDED = "Not added";
 
-// Marks the rows that are laid out but land with the backend, so nothing on
-// this page is a click that quietly does nothing.
+// Rows that land with the backend, so nothing here is a dead click.
 function SoonPill() {
   return (
     <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-500">

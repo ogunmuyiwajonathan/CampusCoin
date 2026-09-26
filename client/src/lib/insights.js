@@ -8,18 +8,14 @@ import {
 import { formatCurrency } from "./formatCurrency.js";
 import { monthKey, shiftMonthKey } from "./formatMonth.js";
 
-/** Months shown in the Spending Overview chart at a time. */
 export const WINDOW_MONTHS = 6;
-
-/** How far back the chart window can travel before the back arrow greys out. */
 export const HISTORY_MONTHS = 24;
 
-/** "2026-09" -> "2026-08" (safe across year boundaries). */
 export function prevMonthKey(key) {
   return shiftMonthKey(key, -1);
 }
 
-/** Percentage change against a previous value; null when there is nothing to compare. */
+// null rather than a percentage when the previous value cannot be compared.
 export function percentChange(current, previous) {
   if (previous <= 0) return null;
   return Math.round(((current - previous) / previous) * 100);
@@ -30,7 +26,6 @@ function shortMonth(key) {
   return new Date(year, month - 1, 1).toLocaleDateString("en-US", { month: "short" });
 }
 
-/** The last `count` months ending at `endMonth`, with income/expense totals each. */
 export function monthSeries(items, endMonth, count = WINDOW_MONTHS) {
   const income = new Map();
   const expenses = new Map();
@@ -54,11 +49,8 @@ export function monthSeries(items, endMonth, count = WINDOW_MONTHS) {
   return series;
 }
 
-/**
- * Everything the Insights page shows for one month, derived from the
- * transactions and budgets stores. Backend swap: replace this single call
- * with `GET /api/insights?month=YYYY-MM` (summary_text, tip_text, history[]).
- */
+// Everything the page shows for one month. This single call is what
+// `GET /api/insights?month=` will replace.
 export function buildInsights({ items, month, budgets = [], goal = 0 }) {
   const prev = prevMonthKey(month);
   const monthTx = items.filter((item) => monthKey(item.date) === month);
@@ -77,7 +69,6 @@ export function buildInsights({ items, month, budgets = [], goal = 0 }) {
     prevByCategory.set(item.category_id, (prevByCategory.get(item.category_id) ?? 0) + item.amount);
   }
 
-  // Per-category spend for the month, each with its change against last month.
   const stats = breakdown.map((entry) => {
     const previous = prevByCategory.get(entry.category_id) ?? 0;
     return {
@@ -95,7 +86,6 @@ export function buildInsights({ items, month, budgets = [], goal = 0 }) {
     spentByCategory.set(item.category_id, (spentByCategory.get(item.category_id) ?? 0) + item.amount);
   }
 
-  // Budgets for this month, closest to (or past) the limit first.
   const budgetRows = budgets
     .filter((item) => item.month === month)
     .map((item) => {
@@ -173,8 +163,6 @@ export function buildInsights({ items, month, budgets = [], goal = 0 }) {
     });
   }
 
-  // Whichever category moved least against last month; when there is no
-  // history to compare, the next biggest category reads as "normal".
   const stable = stats
     .filter((entry) => !spoken.has(entry.name) && entry.delta !== null)
     .sort((a, b) => Math.abs(a.delta) - Math.abs(b.delta))[0];

@@ -19,8 +19,7 @@ import {
 import { formatCurrency } from "../lib/formatCurrency.js";
 import { currentMonthKey, monthKey, monthLabel, monthRange } from "../lib/formatMonth.js";
 
-// Status bands follow the design reference: a budget only reads "Near Limit"
-// once it crosses 95% spent, and "Over" once spending passes the limit.
+// Bands follow the design reference: near at 95%, over once spend passes the limit.
 function statusFor(pct) {
   if (pct >= 100) return "exceeded";
   if (pct >= 95) return "near";

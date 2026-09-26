@@ -5,15 +5,14 @@ import { updateUserProfile } from "../lib/apiClient.js";
 import { joinedLabel } from "../lib/formatMonth.js";
 import { formatName } from "../lib/formatName.js";
 
-// Names are normalized on the way in and on the way out, so "jAMIE" typed at
-// signup or derived from an email still shows as "Jamie" in every greeting.
+// Names are normalized on read and write, so "jAMIE" typed at signup or
+// derived from an email still renders as "Jamie" everywhere.
 function withNormalizedName(next) {
   if (!next || typeof next.name !== "string") return next;
   return { ...next, name: formatName(next.name) };
 }
 
-// A demo account keeps its join date across logins; a fresh one gets today.
-// The backend replaces this with `users.created_at`.
+// Backend replaces this with users.created_at.
 function joinDate(previous) {
   return (previous && previous.joined) || joinedLabel();
 }
@@ -90,7 +89,7 @@ export function AuthProvider({ children }) {
     persist(null);
   }, [persist]);
 
-  // Resolves to { ok, user?, error? } so callers can show their own error state.
+  // Resolves to { ok, user?, error? } so callers own their error state.
   const updateProfile = useCallback(
     async (patch) => {
       const base = user ?? {

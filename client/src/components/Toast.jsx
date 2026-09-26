@@ -1,7 +1,5 @@
 import Icon from "./Icon.jsx";
 
-// Small confirmation for things that have no page of their own (profile save,
-// avatar upload). Settings owns the timer; this is the presentation only.
 export default function Toast({ toast, onClose }) {
   if (!toast) return null;
   const isError = toast.kind === "error";

@@ -5,9 +5,6 @@ import { formatCurrency } from "../lib/formatCurrency.js";
 
 const CHART_SIZE = 176;
 
-// `showAmount` adds the naira amount beside each share (used by Insights);
-// `stacked` keeps the legend under the donut instead of beside it, for cards
-// that are too narrow to fit both.
 export default function SpendingDonut({ breakdown, totalExpense, showAmount = false, stacked = false }) {
   const [activeIndex, setActiveIndex] = useState(-1);
 

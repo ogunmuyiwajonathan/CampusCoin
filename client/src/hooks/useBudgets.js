@@ -3,9 +3,8 @@ import { budgets as seedBudgets } from "../data/mockData.js";
 
 const STORAGE_KEY = "campuscoin.budgets";
 
-// First read is synchronous so the page never flashes an empty state.
-// When the API lands, replace this with a fetch that starts status at "loading"
-// - the budgets grid already renders a skeleton and error alert off that status.
+// Sync first read avoids an empty-state flash. The API swap replaces
+// readStore/commit with fetch and starts status at "loading".
 function readStore() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);

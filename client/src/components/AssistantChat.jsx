@@ -73,9 +73,6 @@ function seedConversation() {
   ];
 }
 
-// The Rix chat panel. Rendered by the /assistant page AND by the mobile/tablet
-// AssistantFab overlay — one copy of the logic, two shells.
-// onClose swaps the header X from a Link (page) to a close button (overlay).
 export default function AssistantChat({ onClose } = {}) {
   const [messages, setMessages] = useState(seedConversation);
   const [draft, setDraft] = useState("");

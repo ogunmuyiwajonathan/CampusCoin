@@ -11,9 +11,6 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-// Custom Recharts tooltip: positioned from `coordinate` inside the chart box
-// (the wrapper is pinned to 0,0 via wrapperStyle), clamped to the box edges
-// and placed so it never covers the center total label.
 export default function ChartTooltip({ active, payload, coordinate, bounds }) {
   if (!active || !payload || payload.length === 0) return null;
   const entry = payload[0]?.payload;

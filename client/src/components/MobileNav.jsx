@@ -1,8 +1,6 @@
 import { NavLink } from "react-router-dom";
 import Icon from "./Icon.jsx";
 
-// Bottom tab bar for phones only (below md) — tablets and up fall back to the
-// sidebar. AI Assistant is not a tab here; it gets its own FAB (AssistantFab).
 const TABS = [
   { to: "/dashboard", label: "Home", icon: "house", end: true },
   { to: "/transactions", label: "Transactions", icon: "arrow-left-right" },

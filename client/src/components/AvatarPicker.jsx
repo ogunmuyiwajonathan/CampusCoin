@@ -4,9 +4,6 @@ import UserAvatar from "./UserAvatar.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import { uploadAvatar } from "../lib/apiClient.js";
 
-// Profile photo: pick a file, preview it, then save it onto the user record.
-// The camera button is the only entry point; the initial letter stays the
-// fallback until an upload succeeds.
 export default function AvatarPicker({ name, onNotify }) {
   const { user, updateProfile } = useAuth();
   const inputRef = useRef(null);
@@ -25,7 +22,7 @@ export default function AvatarPicker({ name, onNotify }) {
 
   const onPick = async (event) => {
     const file = event.target.files && event.target.files[0];
-    // Reset so choosing the same file twice still fires a change event.
+    // So picking the same file twice still fires a change event.
     event.target.value = "";
     if (!file) return;
     setBusy(true);

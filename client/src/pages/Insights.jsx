@@ -47,12 +47,8 @@ const SERIES = [
   { key: "expenses", label: "Expenses", color: "#3b82f6" },
 ];
 
-// Long enough to read as real work, short enough not to feel laggy. The
-// backend swap replaces this with the actual range request.
 const RANGE_LOAD_MS = 320;
 
-// Highlights the percentage inside a title/description without splitting the
-// copy into fields, e.g. "Food spending increased by 28%".
 function withAccent(text, accent, tone) {
   if (!accent || !text.includes(accent)) return text;
   const [before, ...rest] = text.split(accent);
@@ -65,8 +61,7 @@ function withAccent(text, accent, tone) {
   );
 }
 
-// Months with no activity get a 3px stub instead of vanishing, so a gap in the
-// data reads as "nothing logged" rather than a missing bar.
+// Zero months get a 3px stub so a gap reads as "nothing logged".
 function BarShape({ x, y, width, height, fill, fillOpacity }) {
   if (!height || height < 1) {
     return (
@@ -175,7 +170,6 @@ export default function Insights() {
   });
   const [rangeStatus, setRangeStatus] = useState("ready");
 
-  // The window travels through real history and stops at the current month.
   const now = currentMonthKey();
   const canGoBack = month > shiftMonthKey(now, -HISTORY_MONTHS);
   const canGoForward = month < now;
@@ -188,15 +182,13 @@ export default function Insights() {
 
   const stepWindow = (delta) => goToMonth(shiftMonthKey(month, delta));
 
-  // Stands in for the range request the backend will make; it drives the same
-  // status field the transactions hook uses, so the skeleton is already wired.
+  // Stands in for the range request the API will make.
   useEffect(() => {
     if (rangeStatus !== "loading") return undefined;
     const timer = setTimeout(() => setRangeStatus("ready"), RANGE_LOAD_MS);
     return () => clearTimeout(timer);
   }, [rangeStatus, month]);
 
-  // Months with transactions, plus wherever the arrows have moved the window.
   const monthOptions = useMemo(() => {
     const keys = new Set(availableMonths);
     keys.add(month);

@@ -1,5 +1,3 @@
-// Avatar rule everywhere: the uploaded photo when there is one, otherwise the
-// first letter of the name in a forest-700 circle.
 export default function UserAvatar({ name, src, className = "h-9 w-9", textClassName = "text-sm" }) {
   if (src) {
     return (

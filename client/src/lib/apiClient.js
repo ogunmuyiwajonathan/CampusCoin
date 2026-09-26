@@ -1,6 +1,3 @@
-// Demo transport layer. Every call is async on purpose so the loading, error
-// and success states in the UI are the real ones the backend will drive.
-// Swapping these bodies for `fetch` is the whole backend change (structure.md).
 import { formatName } from "./formatName.js";
 
 export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
@@ -30,10 +27,7 @@ function requirePositiveAmount(value, label) {
   }
 }
 
-/**
- * PATCH /api/users/me — the server has to repeat every check below; the
- * client-side copy is a convenience, never the guard.
- */
+// Server must repeat these checks on PATCH /api/users/me.
 export async function updateUserProfile(patch) {
   const next = { ...(readSession() ?? {}), ...patch };
   if (typeof next.name === "string") {
@@ -47,13 +41,7 @@ export async function updateUserProfile(patch) {
   return next;
 }
 
-/**
- * POST /api/users/me/avatar — the demo crops the image to a square, downscales
- * it and hands back a data URL stored on the user record, so the avatar follows
- * the session everywhere (header, Settings). The real endpoint should accept
- * multipart, re-validate the mime type and size, and store an object-storage
- * URL in `profile_image_url` instead.
- */
+// The real endpoint takes multipart and returns a `profile_image_url`.
 export async function uploadAvatar(file) {
   if (!file) throw new Error("Choose an image first.");
   if (!AVATAR_TYPES.includes(file.type)) throw new Error("Use a JPG, PNG or WEBP image.");
@@ -75,7 +63,6 @@ function cropToSquare(file, size = 192) {
         canvas.width = size;
         canvas.height = size;
         const side = Math.min(image.width, image.height);
-        // Centre crop so a circle avatar never letterboxes.
         canvas
           .getContext("2d")
           .drawImage(

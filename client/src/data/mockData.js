@@ -77,8 +77,6 @@ export const transactions = [
   { transaction_id: "t19", user_id: "demo-student", category_id: "c11", type: "expense", amount: 1000, description: "Misc", date: "2026-09-16" },
 ];
 
-// September 2026 = current month (live spend from the transactions above);
-// October 2026 = next month, planned limits with no spend yet.
 export const budgets = [
   { budget_id: "b1", user_id: "demo-student", category_id: "c5", month: "2026-09", limit_amount: 12000 },
   { budget_id: "b2", user_id: "demo-student", category_id: "c6", month: "2026-09", limit_amount: 4000 },

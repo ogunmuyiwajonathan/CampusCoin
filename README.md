@@ -1,44 +1,45 @@
 # CampusCoin
 
-A student budget tracker. Students log income and expenses manually, set category budgets, and get plain-language insights and ranked savings tips — a private, simple, safe alternative to adult-oriented finance apps. **No bank linking, no real money handling.**
+A student budget tracker. Students log income and expenses manually, set category budgets, and get plain-language insights — a private, simple, safe alternative to adult-oriented finance apps. **No bank linking, no real money handling.**
 
 TechWiz 7 competition project.
 
-## Features (from SRS)
+## Status
 
-- **Accounts** — register/login, profile with academic year, allowance baseline and savings goal, email/token password reset
-- **Logging** — quick-add income/expense form, recurring entries (allowance, subscriptions)
-- **Categories** — personal categories plus system defaults separated by an `is_default` flag
-- **Dashboard** — greeting, monthly balance, top category, budget-vs-actual
-- **Budgets** — per-category monthly limits with progress bars and near/exceed alerts
-- **Reports** — category-wise, 6-month income-vs-expense, daily/weekly, date/category/source filters, PDF/image export
-- **AI assistance** — suggest-as-you-type categorization with manual override, batch suggestions on CSV import
-- **Insights** — monthly narrative with actionable advice, stored history
-- **Tips** — rules-based savings tips ranked by impact, pin and dismiss
-- **Admin** — default categories, tip templates, view/disable/reset users, usage stats
-- **CSV bulk import**, dark mode, font-size control, breadcrumbs, sitemap
+This repository currently contains the **frontend only**. There is no `server/` directory yet: all data lives in `localStorage` (seeded with realistic demo data) and all "auth" is a demo session. Nothing here talks to a database, an email service or an AI provider unless an environment variable is supplied.
+
+| Area | State |
+|---|---|
+| Auth + profile | Demo only — register/login/logout in `localStorage`, profile edit + avatar upload, no server session, no password reset |
+| Transactions | Working — add/edit/delete, filters, month selector, recurring *flag* (no scheduled generation) |
+| Categories | Defaults seeded and rendered; personal category CRUD not built |
+| Dashboard | Working — balance, top category, recent activity, budget-vs-actual |
+| Budgets | Working — per-category monthly limits, progress bars, near/exceed alerts |
+| Insights | Working client-side — monthly narrative, growth flags, 6-month chart with month navigation, category breakdown |
+| AI assistant | Rule-based responses locally. If `VITE_AI_API_KEY` is set it calls OpenAI **directly from the browser** — for anything real this must move behind a server proxy (see below) |
+| Reports, CSV import, AI categorisation, tips engine, bookmarks/share, admin panel | Not built |
+| Accessibility | Dark mode and responsive layout done; font-size control and breadcrumbs not built |
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 19 + TypeScript + Vite |
+| Frontend | React 19 (JavaScript, no TypeScript) + Vite |
+| Styling | Tailwind CSS v4 |
 | Routing | React Router 7 |
-| Backend | Node.js + Express (in progress) |
-| Database | MongoDB + Mongoose (in progress) |
-| Auth | Sessions + bcrypt (in progress) |
-| Charts / Export | Recharts + jsPDF (planned) |
+| Charts | Recharts 3 |
+| Linting | oxlint |
+| Backend | Node.js + Express — **not started** |
+| Database | MongoDB + Mongoose — **not started** |
 
 ## Project Structure
 
 ```
 CampusCoin/
-├── client/      # React frontend
-├── server/      # Express API (in progress)
-└── structure/   # SRS + competition study documentation
+├── client/      # React frontend (the whole app today)
+├── instructions/ # SRS + study reference (gitignored)
+└── structure/   # design decisions, DB design, backend plan
 ```
-
-See `structure/structure.md` for the full layering (Controller → Service → Repository) and DB document design.
 
 ## Run
 
@@ -48,12 +49,37 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173
+Open http://localhost:5173 — the landing page needs no account; `/dashboard` and the rest use the demo session created by signing up or logging in.
+
+```bash
+cd client
+npm run lint     # must report 0 warnings
+npm run build    # production build
+```
+
+## Environment
+
+Copy `client/.env.example` to `client/.env` if you need it. Everything is optional:
+
+| Variable | Purpose |
+|---|---|
+| `VITE_API_URL` | Base URL for the future Express API |
+| `VITE_AI_API_KEY` | OpenAI key for the assistant. **Any `VITE_*` value is inlined into the built JavaScript and is public.** It is fine for a local test and unsafe for a deployed build — a real deployment must call OpenAI from a server and keep the key there. |
 
 ## Architecture
 
-- **Client**: React pages/components, hooks for data (useAuth, useBudgets, useTransactions), `lib/` API client + formatting helpers, `types/` shared interfaces.
-- **Server (planned)**: Express REST API with Controller / Service / Repository layers, Mongoose models matching the SRS entities (User, Category, Transaction, Budget, Insight).
+- **`pages/`** — one screen each (Dashboard, Transactions, Budgets, Insights, Assistant, Settings, Landing, Login, Signup)
+- **`components/`** — presentational pieces, reused across pages (charts, cards, forms, nav)
+- **`hooks/`** — data access (`useTransactions`, `useBudgets`, `AuthProvider`) and theme
+- **`lib/`** — pure logic and formatting (`insights.js` derives every insight figure, `apiClient.js` is the seam where the API calls will go, plus date/currency/name helpers)
+- **`data/mockData.js`** — seed data and shared category constants
+
+Each store has one read path and one write path, which is why swapping `localStorage` for HTTP later is a small, contained change rather than a rewrite.
+
+## Documentation
+
+- `structure/structure.md` — layering decisions, MongoDB document design, per-feature backend endpoint contracts, and the current implementation status
+- `ATTRIBUTION.md` — AI tools used and how their output was reviewed
 
 ## Git History
 

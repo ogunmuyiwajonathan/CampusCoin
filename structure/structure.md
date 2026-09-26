@@ -4,18 +4,19 @@
 CampusCoin/
 ├── client/                        # React 19 + JavaScript/JSX (Vite) — react 19.2.8, vite 8.3.0, react-router-dom 7.18.4, tailwindcss v4, lucide-react, recharts
 │   └── src/
-│       ├── components/            # reusable UI (PascalCase files, e.g. BudgetCard.jsx)
-│       │                          #   + Sidebar, StatCard, SpendingDonut, RecentTransactions
-│       │                          #   + TransactionForm, ProfileEditor, PageHeader, ThemeToggle
+│       ├── components/            # reusable UI (PascalCase files)
+│       │                          #   + Sidebar, MobileNav, StatCard, SpendingDonut, RecentTransactions
+│       │                          #   + TransactionForm, ProfileEditor, AvatarPicker, UserAvatar, Toast
+│       │                          #   + PageHeader, ThemeToggle, NotificationBell, AssistantFab
 │       │                          #   + Icon.jsx (single lucide-react registry)
-│       ├── pages/                 # Login, Signup, Dashboard, Transactions, Settings,
-│       │                          #   Assistant, Budgets, Reports, Insights, Admin...
-│       ├── hooks/                 # AuthProvider/useAuth, useBudgets, useTransactions (camelCase)
-│       ├── data/                  # mock seed data — snake_case fields, derived totals
-│       ├── lib/                   # formatCurrency, formatMonth, API client, CSV import, date utils
-│       ├── assets/                # logo.png, campusboy.png
-│       └── App.jsx · main.jsx
-├── server/                        # Node + Express + Mongoose (planned MERN)
+│       ├── pages/                 # LandingPage, Login, Signup, Dashboard, Transactions,
+│       │                          #   Budgets, Insights, Assistant, Settings
+│       ├── hooks/                 # AuthProvider/useAuth, useBudgets, useTransactions, ThemeProvider/useTheme
+│       ├── data/                  # mockData.js — seed data, category constants, derived totals
+│       ├── lib/                   # formatCurrency, formatMonth, formatName, insights, apiClient, aiAssistant
+│       ├── assets/                # logo.png, campusboy.png, aibot.png, bush-side.png, student.png, laptop.png
+│       └── App.jsx · main.jsx · index.css
+├── server/                        # NOT CREATED YET — Node + Express + Mongoose
 │   ├── src/
 │   │   ├── controllers/           # HTTP in/out, validation      ← Controller
 │   │   ├── services/              # budget alerts, insights,     ← Service
@@ -28,7 +29,8 @@ CampusCoin/
 │   ├── seed/                      # default categories + demo user + sample data
 │   └── .env / .env.example
 ├── structure/                     # SRS + competition study docs (this folder)
-├── .gitignore · README.md         # run steps + architecture diagram
+├── instructions/                  # study reference — gitignored, never committed
+├── .gitignore · README.md
 └── ATTRIBUTION.md                 # AI disclosure (mandatory)
 ```
 
@@ -60,17 +62,74 @@ Secrets: real `.env` gitignored, commit only `.env.example`. Linters (oxlint) to
 - **Transaction:** refs User + Category, amount, type, description, `ai_suggested_category`, date
 - **Budget:** refs User + Category, month, limit_amount
 - **Insight:** refs User, month, summary_text, tip_text, generated_at, history[]
+- **Notification:** refs User, title, body, read_at, link — the bell is seeded from `mockData.js` today
+- **Tip:** template text, savings_impact rank, pin/dismiss per user (SRS module 10, not built)
+- **Bookmark:** refs User + Insight/Tip, optional note (SRS module 11, not built)
+- **ResetToken:** refs User, hashed token, expires_at — for email password reset
+- User also needs `role` (`student|admin`), `is_active` (admin disable), `profile_image_url`, `created_at`
 
 Relations: User 1—M Transactions/Budgets/Insights, Category 1—M Transactions.
 
+## Implementation status (honest snapshot — frontend only, no `server/` yet)
+
+**Working in the browser today**
+| Area | Where | Notes |
+|---|---|---|
+| Landing page | `pages/LandingPage.jsx` | Marketing page at `/`, redirects to `/dashboard` when signed in |
+| Auth (demo) | `hooks/AuthProvider.jsx` | localStorage session, no server, no password reset |
+| Profile + avatar | `components/ProfileEditor.jsx`, `AvatarPicker.jsx` | Avatar is a 192px data URL in the session, not object storage |
+| Transactions | `pages/Transactions.jsx`, `hooks/useTransactions.js` | CRUD, filters, month picker, `is_recurring` flag only — nothing generates future entries |
+| Categories | `data/mockData.js` | 11 seeded defaults, read-only; personal CRUD not built |
+| Dashboard | `pages/Dashboard.jsx` | Balance, top category, recent activity, budget-vs-actual |
+| Budgets + alerts | `pages/Budgets.jsx`, `hooks/useBudgets.js` | Limits, progress bars, near/exceed bands (95% / 100%) |
+| Insights | `pages/Insights.jsx`, `lib/insights.js` | Narrative, growth flags, 6-month chart with month stepping, donut |
+| AI assistant | `pages/Assistant.jsx`, `lib/aiAssistant.js` | Rule-based locally; calls OpenAI from the browser if a key is set |
+| Dark mode + responsive | `ThemeProvider`, Tailwind breakpoints | Light/dark, phone/tablet/desktop, bottom tab bar + FAB |
+
+**Not built (SRS-scored)**
+- Server, database, sessions, bcrypt, email/token password reset
+- Personal category add/edit/delete
+- Recurring entry generation and transaction change history
+- AI suggest-as-you-type, learning from corrections, CSV import + batch suggestions
+- Reports (daily/weekly, filters), PDF/image export
+- Persisted insight history (`history[]`)
+- Tips engine with pin/dismiss
+- Bookmarks, notes, share by email
+- Admin panel (users, defaults, tip templates, stats)
+- Recently viewed, forecast, duplicate/unusually-large detection
+- Font-size control, breadcrumbs, sitemap on home
+- Live hosted URL, install docs with credentials for every role, demo video
+
 ## Backend reminders (agreed during frontend phase)
-- **User avatar:** `users.profile_image_url TEXT NULL` + `updated_at`. Avatar rule everywhere (header, Settings): use `profile_image_url` if set, else first letter of `name` in a forest-700 circle. Photo upload + storage land in the backend phase (badge on the Settings profile card is the entry point).
+- **User avatar:** `users.profile_image_url TEXT NULL` + `updated_at`. Avatar rule everywhere (header, Settings): use `profile_image_url` if set, else first letter of `name` in a forest-700 circle. Real upload is `POST /api/users/me/avatar` (multipart) — `AvatarPicker` posts nothing today.
 - **Phone:** intentionally not collected anywhere (SRS password reset = email token). Add `users.phone TEXT NULL` only if SMS/OTP ever lands.
 - **Academic year + savings goal:** `users.academic_year TEXT NULL`, `users.monthly_savings_goal INT NULL` — set via profile update (`PATCH /api/users/me`), never at signup. Settings shows "Not added" until set.
-- **Joined date:** the "Joined Oct 2025" profile line maps to `users.created_at` formatted "Mon YYYY" once the backend exists.
-- **Transactions (live in `hooks/useTransactions.js`):** `GET /api/transactions?month=YYYY-MM&type=` (sorted `date` desc), `POST /api/transactions`, `PATCH /api/transactions/:id`, `DELETE /api/transactions/:id`. Fields per SRS: `amount`, `type`, `description`, `date`, `is_recurring`, plus `ai_suggested_category` (SRS module 8, later). The hook reads/writes localStorage today (synchronous first read, so no empty-state flash); swapping `readStore`/`commit` for fetch calls is the entire backend change - start `status` at `"loading"` and the table skeleton + error alert render themselves.
-- **Budgets (live in `hooks/useBudgets.js`):** `GET /api/budgets?month=YYYY-MM`, `POST /api/budgets`, `PATCH /api/budgets/:id`, `DELETE /api/budgets/:id`. Fields per SRS: `category_id`, `month` (`YYYY-MM`), `limit_amount`. Spent is derived client-side from `useTransactions` (same `campuscoin.transactions` store) - backend can either serve computed `spent` or the page keeps merging `GET /api/transactions?month=`. Same readStore/commit swap as transactions (localStorage `campuscoin.budgets` today). Alert thresholds live in `Budgets.jsx`: `>=95%` = near limit, `>=100%` = over limit (SRS module 5 near/exceed in-app alerts = the sidebar alerts + status pills; bands follow the approved budget reference).
-- **Insights (built by `buildInsights()` in `lib/insights.js`):** SRS module 9 maps to `GET /api/insights?month=YYYY-MM` returning the Insight document above (`summary_text`, `tip_text`, `generated_at`, `history[]`). Today the page computes all of it client-side from `useTransactions` + `useBudgets`: month totals, per-category change vs last month, the 6-month series, the key/recent insight lists and the Rix tip - replacing that single `buildInsights` call with the fetch is the whole backend change. Copy rules baked into `lib/insights.js` and worth keeping server-side: `delta = null` when the previous month has no spend for that category (never "new" or "infinite" percentages), budget wording flips at `>=100%` ("over its limit") matching the Budgets page, and an empty store shows the page-level empty state rather than zeroes everywhere.
+- **Joined date:** the profile line comes from `AuthProvider.joinDate()` today; it maps to `users.created_at` formatted "Mon YYYY".
+- **Name capitalisation:** `lib/formatName.js` title-cases on read and write, so the server should normalise on save too rather than trusting the client's copy.
+- **Transactions (live in `hooks/useTransactions.js`):** `GET /api/transactions?month=YYYY-MM&type=` (sorted `date` desc), `POST /api/transactions`, `PATCH /api/transactions/:id`, `DELETE /api/transactions/:id`. Fields per SRS: `amount`, `type`, `description`, `date`, `is_recurring`, plus `ai_suggested_category`. Swapping `readStore`/`commit` for fetch is the whole change — start `status` at `"loading"` and the table skeleton + error alert render themselves.
+- **Budgets (live in `hooks/useBudgets.js`):** `GET /api/budgets?month=YYYY-MM`, `POST /api/budgets`, `PATCH /api/budgets/:id`, `DELETE /api/budgets/:id`. Spent is derived client-side from the transactions store; the backend can serve a computed `spent` instead. Alert thresholds live in `Budgets.jsx`: `>=95%` = near limit, `>=100%` = over limit.
+- **Insights (built by `buildInsights()` in `lib/insights.js`):** SRS module 9 maps to `GET /api/insights?month=YYYY-MM` returning the Insight document above. Rules worth keeping server-side: `delta = null` when the previous month has no spend for that category (never "infinite" percentages), budget wording flips at `>=100%`, and an empty store shows an empty state rather than zeroes everywhere.
+- **AI key exposure (fix before any deploy):** `lib/aiAssistant.js` reads `VITE_AI_API_KEY`, and Vite inlines every `VITE_*` value into the shipped JavaScript — the key is public. Move the call behind `POST /api/ai/chat` and keep `OPENAI_API_KEY` in the server's `.env`. Rotate any key already used.
+- **Auth enforcement:** `components/ProtectedRoute.jsx` exists but no route uses it, so a signed-out visitor can open any page. Wrap the app routes once the server session exists.
+
+## Endpoint inventory (to build)
+
+| Area | Endpoints |
+|---|---|
+| Auth | `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/users/me`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password` |
+| OAuth | `GET /api/auth/google` (redirect) + `GET /api/auth/google/callback` |
+| Profile | `PATCH /api/users/me`, `POST /api/users/me/avatar` |
+| Categories | `GET /api/categories`, `POST /api/categories`, `PATCH /api/categories/:id`, `DELETE /api/categories/:id` |
+| Transactions | `GET/POST /api/transactions`, `PATCH/DELETE /api/transactions/:id`, `POST /api/transactions/import` (CSV) |
+| Budgets | `GET/POST /api/budgets`, `PATCH/DELETE /api/budgets/:id` |
+| Insights | `GET /api/insights?month=`, `GET /api/insights/:month/history` |
+| Reports | `GET /api/reports?from=&to=`, `POST /api/reports/share` (email) |
+| Notifications | `GET /api/notifications`, `PATCH /api/notifications/:id/read` |
+| AI | `POST /api/ai/chat`, `POST /api/ai/suggest-category` |
+| Admin | `GET /api/admin/users`, `PATCH /api/admin/users/:id` (disable/reset), `GET/PATCH /api/admin/categories`, `GET/PATCH /api/admin/tips`, `GET /api/admin/stats` |
+
+## Secrets the server will need
+`MONGODB_URI` · `SESSION_SECRET` · `OPENAI_API_KEY` (server-only) · `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` · email provider key (`RESEND_API_KEY` or SMTP credentials) · `CORS_ORIGIN` · optional `S3_*` for avatar storage. All live in `server/.env` (gitignored); only `.env.example` is committed.
 
 ## What the SRS says to build (CampusCoin — 14 modules)
 
