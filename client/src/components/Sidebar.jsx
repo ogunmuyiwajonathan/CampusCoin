@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import Icon from "./Icon.jsx";
-import bushSide from "../assets/bush-side.png";
+import bushSide from "../assets/bush-side.webp";
 import { useAuth } from "../hooks/useAuth.js";
 
 const NAV_ITEMS = [

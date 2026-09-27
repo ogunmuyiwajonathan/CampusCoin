@@ -7,9 +7,9 @@ import SpendingDonut from "../components/SpendingDonut.jsx";
 import { CATEGORY_COLORS } from "../data/mockData.js";
 import { formatCurrency } from "../lib/formatCurrency.js";
 import aibot from "../assets/aibot.png";
-import aboutArt from "../assets/about.png";
-import laptop from "../assets/laptop.png";
-import student from "../assets/student.png";
+import aboutArt from "../assets/about.webp";
+import laptop from "../assets/laptop.webp";
+import student from "../assets/student.webp";
 
 const NAV_LINKS = [
   { label: "Home", href: "#top" },
@@ -56,7 +56,7 @@ const ABOUT_CARDS = [
   { id: "track", icon: "wallet", chip: "bg-emerald-100 text-emerald-600", title: "Track Income & Expenses", text: "Log every naira in and out the moment it happens." },
   { id: "budgets", icon: "chart-pie", chip: "bg-blue-100 text-blue-600", title: "Set Monthly Budgets", text: "Give every category a limit and watch it in real time." },
   { id: "habits", icon: "chart-column", chip: "bg-purple-100 text-purple-600", title: "Understand Spending Habits", text: "See your patterns with charts that actually make sense." },
-  { id: "tips", icon: "bulb", chip: "bg-[#fcf0c4] text-amber-800 dark:bg-amber-100 dark:text-amber-300", title: "Get Personalized Saving Tips", text: "Small, practical advice based on how you really spend." },
+  { id: "tips", icon: "bulb", chip: "bg-forest-900 text-amber-300 dark:bg-amber-100", title: "Get Personalized Saving Tips", text: "Small, practical advice based on how you really spend." },
 ];
 
 const AI_CHECKLIST = [
