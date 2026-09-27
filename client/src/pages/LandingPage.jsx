@@ -7,14 +7,15 @@ import SpendingDonut from "../components/SpendingDonut.jsx";
 import { CATEGORY_COLORS } from "../data/mockData.js";
 import { formatCurrency } from "../lib/formatCurrency.js";
 import aibot from "../assets/aibot.png";
+import aboutArt from "../assets/about.png";
 import laptop from "../assets/laptop.png";
 import student from "../assets/student.png";
 
 const NAV_LINKS = [
+  { label: "Home", href: "#top" },
   { label: "Features", href: "#features" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Insights", href: "#insights" },
   { label: "About", href: "#about" },
+  { label: "Insights", href: "#insights" },
 ];
 
 const TRUST_BADGES = [
@@ -60,11 +61,11 @@ const PREVIEW_TRANSACTIONS = [
   { id: "salary", icon: "wallet", chip: "bg-emerald-100 text-emerald-600", name: "Salary (Part-time)", sub: "Income · Apr 20", amount: "+₦12,000", positive: true },
 ];
 
-const STEPS = [
-  { id: 1, title: "Add Your Money", text: "Log your income and expenses quickly and easily.", circle: "bg-brand-500" },
-  { id: 2, title: "Track Spending", text: "See your transactions and categories in real time.", circle: "bg-blue-500" },
-  { id: 3, title: "Understand Your Habits", text: "View insights and reports made for you.", circle: "bg-purple-500" },
-  { id: 4, title: "Save Smarter", text: "Follow personalized tips and reach your goals.", circle: "bg-orange-400" },
+const ABOUT_CARDS = [
+  { id: "track", icon: "wallet", chip: "bg-emerald-100 text-emerald-600", title: "Track Income & Expenses", text: "Log every naira in and out the moment it happens." },
+  { id: "budgets", icon: "chart-pie", chip: "bg-blue-100 text-blue-600", title: "Set Monthly Budgets", text: "Give every category a limit and watch it in real time." },
+  { id: "habits", icon: "chart-column", chip: "bg-purple-100 text-purple-600", title: "Understand Spending Habits", text: "See your patterns with charts that actually make sense." },
+  { id: "tips", icon: "lightbulb", chip: "bg-amber-100 text-amber-600", title: "Get Personalized Saving Tips", text: "Small, practical advice based on how you really spend." },
 ];
 
 const AI_CHECKLIST = [
@@ -76,9 +77,8 @@ const AI_CHECKLIST = [
 const QUICK_LINKS = [
   { label: "Home", href: "#top" },
   { label: "Features", href: "#features" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Insights", href: "#insights" },
   { label: "About", href: "#about" },
+  { label: "Insights", href: "#insights" },
 ];
 
 const ACCOUNT_LINKS = [
@@ -222,7 +222,7 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={() => navigate("/signup")}
-              className="hidden rounded-full bg-forest-900 px-5 py-2 text-sm font-bold text-white transition hover:bg-forest-800 md:inline-flex"
+              className="hidden rounded-full bg-brand-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 md:inline-flex"
             >
               Get Started
             </button>
@@ -263,7 +263,7 @@ export default function LandingPage() {
               <button
                 type="button"
                 onClick={() => navigate("/signup")}
-                className="flex-1 rounded-full bg-forest-900 px-4 py-2 text-sm font-bold text-white"
+                className="flex-1 rounded-full bg-brand-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700"
               >
                 Get Started
               </button>
@@ -275,7 +275,7 @@ export default function LandingPage() {
       <main>
         <section className="mx-auto grid max-w-7xl items-center gap-10 px-4 pb-14 pt-10 lg:grid-cols-2 lg:pt-16">
           <Reveal>
-            <p className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-1.5 text-xs font-bold text-brand-600">
+            <p className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
               Smart Spending <span aria-hidden="true">•</span> Better Tomorrow
             </p>
             <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
@@ -288,10 +288,14 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={() => navigate("/signup")}
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 text-sm font-bold text-white shadow-card transition hover:bg-brand-600"
+              className="group mt-6 inline-flex items-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-sm font-bold text-white shadow-card transition hover:bg-emerald-700 active:scale-[0.98]"
             >
               Get Started Free
-              <Icon name="arrow-right" size={17} />
+              <Icon
+                name="arrow-right"
+                size={17}
+                className="transition-transform duration-300 group-hover:translate-x-1"
+              />
             </button>
             <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
               {TRUST_BADGES.map((badge) => (
@@ -371,34 +375,82 @@ export default function LandingPage() {
             ))}
           </ul>
         </section>
-        <section id="how-it-works" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-14">
-          <h2 className="text-center font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
-            How It Works
-          </h2>
-          <p className="mt-2 text-center text-sm text-ink-500">Get started in 4 simple steps.</p>
-          <ol className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-4 md:gap-6">
-            {STEPS.map((step, index) => (
+        <section id="about" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-14">
+          <Reveal className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr]">
+            <div>
+              <p className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                About Campus Coin
+              </p>
+              <h2 className="mt-5 font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+                Smart Spending
+                <br />
+                <span className="text-brand-600">Student Style</span>
+              </h2>
+              <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-500 sm:text-base">
+                Campus Coin is a budget tracker built around the way students actually
+                spend — on an allowance, a side gig, or whatever came in this month. It
+                turns that into a plan you can see and stick to.
+              </p>
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-ink-500 sm:text-base">
+                Log what comes in and what goes out, set a limit for the things that drain
+                you fastest, and let the app show you where you can save without giving up
+                what makes campus life worth it.
+              </p>
+              <p className="mt-6 text-lg font-extrabold text-emerald-700 dark:text-emerald-400 sm:text-xl">
+                Spend smarter. Save better. Stay in control.
+                <span
+                  aria-hidden="true"
+                  className="mx-auto mt-2 block h-1 w-16 rounded-full bg-brand-500"
+                />
+              </p>
+            </div>
+            <div className="relative">
+              <div
+                aria-hidden="true"
+                className="absolute inset-x-4 bottom-6 h-28 rounded-full bg-emerald-100 blur-2xl"
+              />
+              <img
+                src={aboutArt}
+                alt="A student reviewing their Campus Coin budget on a laptop"
+                width={1740}
+                height={904}
+                loading="lazy"
+                className="relative mx-auto h-auto w-full object-contain"
+              />
+            </div>
+          </Reveal>
+
+          <ul className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {ABOUT_CARDS.map((card, index) => (
               <Reveal
                 as="li"
-                key={step.id}
-                delay={index * 90}
-                className="relative text-center"
+                key={card.id}
+                delay={index * 70}
+                className="rounded-xl bg-surface p-5 text-center shadow-card"
               >
-                <span className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full text-lg font-extrabold text-white ${step.circle}`}>
-                  {step.id}
+                <span className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${card.chip}`}>
+                  <Icon name={card.icon} size={22} />
                 </span>
-                <p className="mt-3 text-sm font-bold">{step.title}</p>
-                <p className="mx-auto mt-1 max-w-[220px] text-xs leading-relaxed text-ink-500">{step.text}</p>
-                {index < STEPS.length - 1 && (
-                  <Icon
-                    name="chevron-right"
-                    size={20}
-                    className="absolute -right-5 top-4 hidden text-ink-500 md:block"
-                  />
-                )}
+                <p className="mt-3 text-sm font-bold">{card.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-ink-500">{card.text}</p>
               </Reveal>
             ))}
-          </ol>
+          </ul>
+
+          <Reveal className="mt-10 flex justify-center">
+            <button
+              type="button"
+              onClick={() => navigate("/signup")}
+              className="group inline-flex items-center gap-2 rounded-full bg-brand-600 px-8 py-3.5 text-sm font-bold text-white shadow-card transition hover:bg-emerald-700 active:scale-[0.98]"
+            >
+              Get Started
+              <Icon
+                name="arrow-right"
+                size={17}
+                className="transition-transform duration-300 group-hover:translate-x-1"
+              />
+            </button>
+          </Reveal>
         </section>
 
         <section id="insights" className="scroll-mt-20 bg-emerald-50">
@@ -536,7 +588,7 @@ export default function LandingPage() {
 
       <footer className="mt-14 bg-forest-900 text-white">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-10 px-4 py-12 sm:gap-x-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] lg:gap-x-10">
-          <div id="about" className="col-span-2 scroll-mt-20 sm:col-span-1">
+          <div id="footer-about" className="col-span-2 sm:col-span-1">
             <p className="flex items-center gap-2">
               <img src="/logo.png" alt="" className="h-8 w-8 object-contain" />
               <span className="font-display text-lg font-extrabold tracking-tight">Campus Coin</span>
@@ -548,7 +600,11 @@ export default function LandingPage() {
             <ul className="mt-3 space-y-2">
               {QUICK_LINKS.map((link) => (
                 <li key={link.label}>
-                  <a href={link.href} className="text-sm text-white/85 transition hover:text-white hover:underline">
+                  <a
+                    href={link.href}
+                    onClick={(event) => scrollToSection(event, link.href)}
+                    className="text-sm text-white/85 transition hover:text-white hover:underline"
+                  >
                     {link.label}
                   </a>
                 </li>
