@@ -7,7 +7,7 @@ import Budgets from "./pages/Budgets.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Insights from "./pages/Insights.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
-import Login from "./pages/Login.jsx";
+import Login from "./pages/LoginPage.jsx";
 import Settings from "./pages/Settings.jsx";
 import Signup from "./pages/Signup.jsx";
 import Transactions from "./pages/Transactions.jsx";
