@@ -39,7 +39,7 @@ export default function Login() {
 
   return (
     <div className="flex min-h-svh bg-slate-50 md:h-svh md:overflow-hidden">
-      <aside className="relative hidden w-1/2 flex-col overflow-hidden bg-gradient-to-br from-emerald-100/80 via-emerald-50 to-teal-50 p-8 md:flex lg:p-10">
+      <aside className="animate-auth-left relative hidden w-1/2 flex-col overflow-hidden bg-gradient-to-br from-emerald-100/80 via-emerald-50 to-teal-50 p-8 md:flex lg:p-10">
         <div
           className="absolute -right-12 top-14 h-44 w-44 rounded-full bg-surface/60 blur-2xl"
           aria-hidden="true"
@@ -93,7 +93,7 @@ export default function Login() {
       </aside>
 
       <main className="flex w-full items-center justify-center px-4 py-8 md:w-1/2 md:overflow-y-auto md:p-8">
-        <div className="relative w-full max-w-md rounded-card bg-surface p-7 shadow-card lg:p-8">
+        <div className="animate-auth-right relative w-full max-w-md rounded-card bg-surface p-7 shadow-card lg:p-8">
           <ThemeToggle className="absolute right-3.5 top-3.5" />
           <div className="flex flex-col items-center text-center">
             <div className="flex items-center gap-2.5">
@@ -112,7 +112,7 @@ export default function Login() {
           </div>
 
           <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
-            <div>
+            <div className="animate-auth-rise" style={{ animationDelay: "90ms" }}>
               <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-ink-900">
                 Email Address
               </label>
@@ -134,7 +134,7 @@ export default function Login() {
               </div>
             </div>
 
-            <div>
+            <div className="animate-auth-rise" style={{ animationDelay: "135ms" }}>
               <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-ink-900">
                 Password
               </label>
@@ -164,7 +164,7 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="animate-auth-rise flex items-center justify-between" style={{ animationDelay: "180ms" }}>
               <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-500">
                 <input
                   type="checkbox"
@@ -183,7 +183,7 @@ export default function Login() {
             </div>
 
             {error && (
-              <p className="text-sm font-semibold text-red-500" role="alert">
+              <p className="animate-auth-error text-sm font-semibold text-red-500" role="alert">
                 {error}
               </p>
             )}
@@ -191,7 +191,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={!email.trim() || !password}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Log In
               <Icon name="arrow-right" size={16} />
@@ -205,7 +205,7 @@ export default function Login() {
 
             <button
               type="button"
-              className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-surface py-2.5 text-sm font-semibold text-ink-900 transition hover:bg-slate-50"
+              className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-surface py-2.5 text-sm font-semibold text-ink-900 transition hover:bg-slate-50 active:scale-[0.98]"
             >
               <GoogleG />
               Continue with Google

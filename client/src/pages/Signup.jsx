@@ -51,7 +51,7 @@ export default function Signup() {
 
   return (
     <div className="flex min-h-svh bg-slate-50 md:h-svh md:overflow-hidden">
-      <aside className="relative hidden w-1/2 flex-col overflow-hidden bg-gradient-to-br from-emerald-100/80 via-emerald-50 to-teal-50 p-8 md:flex lg:p-10">
+      <aside className="animate-auth-left relative hidden w-1/2 flex-col overflow-hidden bg-gradient-to-br from-emerald-100/80 via-emerald-50 to-teal-50 p-8 md:flex lg:p-10">
         <div
           className="absolute -right-12 top-14 h-44 w-44 rounded-full bg-surface/60 blur-2xl"
           aria-hidden="true"
@@ -105,7 +105,7 @@ export default function Signup() {
       </aside>
 
       <main className="flex w-full items-center justify-center px-4 py-8 md:w-1/2 md:overflow-y-auto md:p-8">
-        <div className="relative w-full max-w-xl rounded-card bg-surface p-7 shadow-card lg:p-8">
+        <div className="animate-auth-right relative w-full max-w-xl rounded-card bg-surface p-7 shadow-card lg:p-8">
           <ThemeToggle className="absolute right-3.5 top-3.5" />
           <div className="flex flex-col items-center text-center">
             <div className="flex items-center gap-2.5">
@@ -124,7 +124,7 @@ export default function Signup() {
           </div>
 
           <form onSubmit={submit} className="mt-6 flex flex-col gap-3">
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <div className="animate-auth-rise grid grid-cols-1 gap-3 lg:grid-cols-2" style={{ animationDelay: "90ms" }}>
               <div className="relative">
                 <Icon
                   name="user"
@@ -159,7 +159,7 @@ export default function Signup() {
               </div>
             </div>
 
-            <div className="relative">
+            <div className="animate-auth-rise relative" style={{ animationDelay: "135ms" }}>
               <Icon
                 name="lock"
                 size={17}
@@ -209,7 +209,7 @@ export default function Signup() {
               </button>
             </div>
 
-            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-ink-500">
+            <label className="animate-auth-rise flex cursor-pointer items-start gap-2.5 text-sm text-ink-500" style={{ animationDelay: "180ms" }}>
               <input
                 type="checkbox"
                 checked={agreed}
@@ -229,7 +229,7 @@ export default function Signup() {
             </label>
 
             {error && (
-              <p className="text-sm font-semibold text-red-500" role="alert">
+              <p className="animate-auth-error text-sm font-semibold text-red-500" role="alert">
                 {error}
               </p>
             )}
@@ -237,7 +237,7 @@ export default function Signup() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Create Account
               <Icon name="arrow-right" size={16} />
@@ -251,7 +251,7 @@ export default function Signup() {
 
             <button
               type="button"
-              className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-surface py-2.5 text-sm font-semibold text-ink-900 transition hover:bg-slate-50"
+              className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-surface py-2.5 text-sm font-semibold text-ink-900 transition hover:bg-slate-50 active:scale-[0.98]"
             >
               <GoogleG />
               Sign up with Google

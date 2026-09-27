@@ -145,6 +145,23 @@ export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add("scroll-smooth");
+    return () => root.classList.remove("scroll-smooth");
+  }, []);
+
+  // The router pushes the hash with pushState, so the browser never jumps to
+  // the section on its own. scrollIntoView honours each section's
+  // scroll-margin-top, which clears the sticky header.
+  const scrollToSection = (event, href) => {
+    const target = document.getElementById(href.replace("#", ""));
+    if (!target) return;
+    event.preventDefault();
+    setMenuOpen(false);
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  useEffect(() => {
     if (!menuOpen) return undefined;
     const handlePointerDown = (event) => {
       if (event.target instanceof Element && !event.target.closest("[data-landing-header]")) {
@@ -185,6 +202,7 @@ export default function LandingPage() {
               <a
                 key={link.label}
                 href={link.href}
+                onClick={(event) => scrollToSection(event, link.href)}
                 className="text-sm font-semibold text-ink-500 transition hover:text-ink-900"
               >
                 {link.label}
@@ -228,7 +246,7 @@ export default function LandingPage() {
               <a
                 key={link.label}
                 href={link.href}
-                onClick={() => setMenuOpen(false)}
+                onClick={(event) => scrollToSection(event, link.href)}
                 className="block rounded-lg px-2 py-2.5 text-sm font-semibold text-ink-900 hover:bg-slate-100"
               >
                 {link.label}
@@ -317,6 +335,7 @@ export default function LandingPage() {
               </p>
               <a
                 href="#features"
+                onClick={(event) => scrollToSection(event, "#features")}
                 className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-brand-600 hover:underline"
               >
                 See all features
@@ -351,6 +370,35 @@ export default function LandingPage() {
               </Reveal>
             ))}
           </ul>
+        </section>
+        <section id="how-it-works" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-14">
+          <h2 className="text-center font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
+            How It Works
+          </h2>
+          <p className="mt-2 text-center text-sm text-ink-500">Get started in 4 simple steps.</p>
+          <ol className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-4 md:gap-6">
+            {STEPS.map((step, index) => (
+              <Reveal
+                as="li"
+                key={step.id}
+                delay={index * 90}
+                className="relative text-center"
+              >
+                <span className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full text-lg font-extrabold text-white ${step.circle}`}>
+                  {step.id}
+                </span>
+                <p className="mt-3 text-sm font-bold">{step.title}</p>
+                <p className="mx-auto mt-1 max-w-[220px] text-xs leading-relaxed text-ink-500">{step.text}</p>
+                {index < STEPS.length - 1 && (
+                  <Icon
+                    name="chevron-right"
+                    size={20}
+                    className="absolute -right-5 top-4 hidden text-ink-500 md:block"
+                  />
+                )}
+              </Reveal>
+            ))}
+          </ol>
         </section>
 
         <section id="insights" className="scroll-mt-20 bg-emerald-50">
@@ -439,42 +487,13 @@ export default function LandingPage() {
           </Reveal>
         </section>
 
-        <section id="how-it-works" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-14">
-          <h2 className="text-center font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
-            How It Works
-          </h2>
-          <p className="mt-2 text-center text-sm text-ink-500">Get started in 4 simple steps.</p>
-          <ol className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-4 md:gap-6">
-            {STEPS.map((step, index) => (
-              <Reveal
-                as="li"
-                key={step.id}
-                delay={index * 90}
-                className="relative text-center"
-              >
-                <span className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full text-lg font-extrabold text-white ${step.circle}`}>
-                  {step.id}
-                </span>
-                <p className="mt-3 text-sm font-bold">{step.title}</p>
-                <p className="mx-auto mt-1 max-w-[220px] text-xs leading-relaxed text-ink-500">{step.text}</p>
-                {index < STEPS.length - 1 && (
-                  <Icon
-                    name="chevron-right"
-                    size={20}
-                    className="absolute -right-5 top-4 hidden text-ink-500 md:block"
-                  />
-                )}
-              </Reveal>
-            ))}
-          </ol>
-        </section>
 
         <section className="mx-auto max-w-7xl px-4">
           <Reveal className="grid items-center gap-6 rounded-card bg-purple-50 p-6 md:grid-cols-[auto_1fr_auto] md:p-8">
             <img src={aibot} alt="" className="h-20 w-20 object-contain" loading="lazy" />
             <div>
               <h2 className="font-display text-xl font-extrabold tracking-tight">
-                Smarter with AI (Optional)
+                Smarter with Rix (Beta)
               </h2>
               <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-ink-500">
                 Let AI do the heavy lifting — automatically categorize your expenses,
