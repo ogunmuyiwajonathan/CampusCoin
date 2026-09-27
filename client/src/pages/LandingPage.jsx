@@ -13,8 +13,8 @@ import student from "../assets/student.png";
 
 const NAV_LINKS = [
   { label: "Home", href: "#top" },
-  { label: "Features", href: "#features" },
   { label: "About", href: "#about" },
+  { label: "Features", href: "#features" },
   { label: "Insights", href: "#insights" },
 ];
 
@@ -22,15 +22,6 @@ const TRUST_BADGES = [
   { id: "easy", icon: "zap", chip: "bg-amber-100 text-amber-600", title: "Easy to Use", text: "In minutes, not hours" },
   { id: "secure", icon: "lock", chip: "bg-emerald-100 text-emerald-600", title: "Secure & Private", text: "Your data, your control" },
   { id: "devices", icon: "smartphone", chip: "bg-blue-100 text-blue-600", title: "Works on All Devices", text: "Desktop, tablet & mobile" },
-];
-
-const FEATURES = [
-  { id: "track", icon: "wallet", chip: "bg-emerald-100 text-emerald-600", title: "Track Income & Expenses", text: "Log your money in seconds." },
-  { id: "categories", icon: "tag", chip: "bg-purple-100 text-purple-600", title: "Smart Categories", text: "Auto & manual categorization for better clarity." },
-  { id: "budgets", icon: "target", chip: "bg-amber-100 text-amber-600", title: "Budget Goals", text: "Set limits and stay on track." },
-  { id: "insights", icon: "chart-column", chip: "bg-blue-100 text-blue-600", title: "Spending Insights", text: "Visualize trends and spot patterns." },
-  { id: "tips", icon: "lightbulb", chip: "bg-red-100 text-red-500", title: "Saving Tips", text: "Personalized tips based on your habits." },
-  { id: "ai", icon: "bot", chip: "bg-purple-100 text-purple-600", title: "AI Assistant (Optional)", text: "Auto-categorize and get monthly summaries." },
 ];
 
 const FINANCE_CHECKLIST = [
@@ -65,7 +56,7 @@ const ABOUT_CARDS = [
   { id: "track", icon: "wallet", chip: "bg-emerald-100 text-emerald-600", title: "Track Income & Expenses", text: "Log every naira in and out the moment it happens." },
   { id: "budgets", icon: "chart-pie", chip: "bg-blue-100 text-blue-600", title: "Set Monthly Budgets", text: "Give every category a limit and watch it in real time." },
   { id: "habits", icon: "chart-column", chip: "bg-purple-100 text-purple-600", title: "Understand Spending Habits", text: "See your patterns with charts that actually make sense." },
-  { id: "tips", icon: "lightbulb", chip: "bg-amber-100 text-amber-600", title: "Get Personalized Saving Tips", text: "Small, practical advice based on how you really spend." },
+  { id: "tips", icon: "bulb", chip: "bg-forest-900 dark:bg-amber-100", title: "Get Personalized Saving Tips", text: "Small, practical advice based on how you really spend." },
 ];
 
 const AI_CHECKLIST = [
@@ -76,8 +67,8 @@ const AI_CHECKLIST = [
 
 const QUICK_LINKS = [
   { label: "Home", href: "#top" },
-  { label: "Features", href: "#features" },
   { label: "About", href: "#about" },
+  { label: "Features", href: "#features" },
   { label: "Insights", href: "#insights" },
 ];
 
@@ -349,32 +340,6 @@ export default function LandingPage() {
           </Reveal>
         </section>
 
-        <section id="features" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-14">
-          <Reveal className="text-center">
-            <h2 className="text-center font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
-              Key Features
-            </h2>
-            <p className="mx-auto mt-2 max-w-md text-center text-sm text-ink-500">
-              Everything you need to manage your money, made simple.
-            </p>
-          </Reveal>
-          <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            {FEATURES.map((feature, index) => (
-              <Reveal
-                as="li"
-                key={feature.id}
-                delay={index * 70}
-                className="rounded-xl bg-surface p-5 text-center shadow-card"
-              >
-                <span className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${feature.chip}`}>
-                  <Icon name={feature.icon} size={22} />
-                </span>
-                <p className="mt-3 text-sm font-bold">{feature.title}</p>
-                <p className="mt-1 text-xs leading-relaxed text-ink-500">{feature.text}</p>
-              </Reveal>
-            ))}
-          </ul>
-        </section>
         <section id="about" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-14">
           <Reveal className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr]">
             <div>
@@ -420,7 +385,17 @@ export default function LandingPage() {
             </div>
           </Reveal>
 
-          <ul className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div id="features" className="scroll-mt-20">
+            <Reveal className="mt-12 text-center">
+              <h2 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
+                Key Features
+              </h2>
+              <p className="mx-auto mt-2 max-w-md text-sm text-ink-500">
+                Everything you need to manage your money, made simple.
+              </p>
+            </Reveal>
+
+            <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {ABOUT_CARDS.map((card, index) => (
               <Reveal
                 as="li"
@@ -435,7 +410,8 @@ export default function LandingPage() {
                 <p className="mt-1 text-xs leading-relaxed text-ink-500">{card.text}</p>
               </Reveal>
             ))}
-          </ul>
+            </ul>
+          </div>
 
           <Reveal className="mt-10 flex justify-center">
             <button
