@@ -8,13 +8,14 @@ CampusCoin/
 │       │                          #   + Sidebar, MobileNav, StatCard, SpendingDonut, RecentTransactions
 │       │                          #   + TransactionForm, ProfileEditor, AvatarPicker, UserAvatar, Toast
 │       │                          #   + PageHeader, ThemeToggle, NotificationBell, AssistantFab
+│       │                          #   + ErrorBoundary (app-wide crash fallback)
 │       │                          #   + Icon.jsx (single lucide-react registry)
-│       ├── pages/                 # LandingPage, Login, Signup, Dashboard, Transactions,
+│       ├── pages/                 # LandingPage, LoginPage, Signup, Dashboard, Transactions,
 │       │                          #   Budgets, Insights, Assistant, Settings
 │       ├── hooks/                 # AuthProvider/useAuth, useBudgets, useTransactions, ThemeProvider/useTheme
 │       ├── data/                  # mockData.js — seed data, category constants, derived totals
 │       ├── lib/                   # formatCurrency, formatMonth, formatName, insights, apiClient, aiAssistant
-│       ├── assets/                # logo.png, campusboy.png, aibot.png, bush-side.png, student.png, laptop.png
+│       ├── assets/                # aibot.png + WebP art (campusboy, bush-side, laptop, student, about)
 │       └── App.jsx · main.jsx · index.css
 ├── server/                        # NOT CREATED YET — Node + Express + Mongoose
 │   ├── src/
@@ -83,7 +84,7 @@ Relations: User 1—M Transactions/Budgets/Insights, Category 1—M Transactions
 | Dashboard | `pages/Dashboard.jsx` | Balance, top category, recent activity, budget-vs-actual |
 | Budgets + alerts | `pages/Budgets.jsx`, `hooks/useBudgets.js` | Limits, progress bars, near/exceed bands (95% / 100%) |
 | Insights | `pages/Insights.jsx`, `lib/insights.js` | Narrative, growth flags, 6-month chart with month stepping, donut |
-| AI assistant | `pages/Assistant.jsx`, `lib/aiAssistant.js` | Rule-based locally; calls OpenAI from the browser if a key is set |
+| AI assistant | `pages/Assistant.jsx`, `lib/aiAssistant.js` | Posts to `/api/ai/chat` so the provider key stays server-side, with a local rules fallback while the server is unbuilt |
 | Dark mode + responsive | `ThemeProvider`, Tailwind breakpoints | Light/dark, phone/tablet/desktop, bottom tab bar + FAB |
 
 **Not built (SRS-scored)**
@@ -109,7 +110,7 @@ Relations: User 1—M Transactions/Budgets/Insights, Category 1—M Transactions
 - **Transactions (live in `hooks/useTransactions.js`):** `GET /api/transactions?month=YYYY-MM&type=` (sorted `date` desc), `POST /api/transactions`, `PATCH /api/transactions/:id`, `DELETE /api/transactions/:id`. Fields per SRS: `amount`, `type`, `description`, `date`, `is_recurring`, plus `ai_suggested_category`. Swapping `readStore`/`commit` for fetch is the whole change — start `status` at `"loading"` and the table skeleton + error alert render themselves.
 - **Budgets (live in `hooks/useBudgets.js`):** `GET /api/budgets?month=YYYY-MM`, `POST /api/budgets`, `PATCH /api/budgets/:id`, `DELETE /api/budgets/:id`. Spent is derived client-side from the transactions store; the backend can serve a computed `spent` instead. Alert thresholds live in `Budgets.jsx`: `>=95%` = near limit, `>=100%` = over limit.
 - **Insights (built by `buildInsights()` in `lib/insights.js`):** SRS module 9 maps to `GET /api/insights?month=YYYY-MM` returning the Insight document above. Rules worth keeping server-side: `delta = null` when the previous month has no spend for that category (never "infinite" percentages), budget wording flips at `>=100%`, and an empty store shows an empty state rather than zeroes everywhere.
-- **AI key exposure (fix before any deploy):** `lib/aiAssistant.js` reads `VITE_AI_API_KEY`, and Vite inlines every `VITE_*` value into the shipped JavaScript — the key is public. Move the call behind `POST /api/ai/chat` and keep `OPENAI_API_KEY` in the server's `.env`. Rotate any key already used.
+- **AI key exposure (fixed in S0):** `lib/aiAssistant.js` used to read `VITE_AI_API_KEY` and call OpenAI straight from the browser. Vite inlines every `VITE_*` value into the shipped JavaScript, so the key was public. The call now goes through `POST /api/ai/chat` and the provider key lives only in the server's `.env`.
 - **Auth enforcement:** `components/ProtectedRoute.jsx` exists but no route uses it, so a signed-out visitor can open any page. Wrap the app routes once the server session exists.
 
 ## Endpoint inventory (to build)
@@ -129,7 +130,7 @@ Relations: User 1—M Transactions/Budgets/Insights, Category 1—M Transactions
 | Admin | `GET /api/admin/users`, `PATCH /api/admin/users/:id` (disable/reset), `GET/PATCH /api/admin/categories`, `GET/PATCH /api/admin/tips`, `GET /api/admin/stats` |
 
 ## Secrets the server will need
-`MONGODB_URI` · `SESSION_SECRET` · `OPENAI_API_KEY` (server-only) · `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` · email provider key (`RESEND_API_KEY` or SMTP credentials) · `CORS_ORIGIN` · optional `S3_*` for avatar storage. All live in `server/.env` (gitignored); only `.env.example` is committed.
+`MONGODB_URI` · `SESSION_SECRET` · `POOLSIDE_API_KEY` (server-only, never rotated by tooling) · `RESEND_API_KEY` (sender `onboarding@resend.dev` until a domain is verified) · `CORS_ORIGIN` · `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` left blank — OAuth is deferred, not cancelled. All live in `server/.env` (gitignored); only `.env.example` is committed. Nothing secret is ever a `VITE_` variable, because Vite inlines those into the client bundle.
 
 ## What the SRS says to build (CampusCoin — 14 modules)
 
