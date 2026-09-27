@@ -80,10 +80,6 @@ export default function AssistantChat({ onClose } = {}) {
   const idRef = useRef(0);
   const bottomRef = useRef(null);
   const breakdown = useMemo(() => expenseBreakdown(transactions), []);
-  const recent = useMemo(
-    () => [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
-    [],
-  );
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -115,7 +111,7 @@ export default function AssistantChat({ onClose } = {}) {
 
   const handleQuestion = async (text, id) => {
     try {
-      const answer = await askAssistant(text, breakdown, recent);
+      const answer = await askAssistant(text, breakdown);
       setMessages((prev) =>
         prev.map((m) => (m.id === id ? { ...m, kind: "text", text: answer } : m)),
       );

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Icon from "../components/Icon.jsx";
-import campusboy from "../assets/campusboy.png";
+import campusboy from "../assets/campusboy.webp";
 import AssistantFab from "../components/AssistantFab.jsx";
 import MobileNav from "../components/MobileNav.jsx";
 import Sidebar from "../components/Sidebar.jsx";
@@ -103,7 +103,7 @@ export default function Dashboard() {
               <SpendingDonut breakdown={breakdown} totalExpense={totals.expense} />
             </div>
             <RecentTransactions items={recent} />
-            <AIAssistantCard breakdown={breakdown} recent={recent} />
+            <AIAssistantCard breakdown={breakdown} />
           </section>
         </main>
       </div>

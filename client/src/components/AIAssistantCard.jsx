@@ -3,20 +3,20 @@ import BotAvatar from "./BotAvatar.jsx";
 import Icon from "./Icon.jsx";
 import { askAssistant } from "../lib/aiAssistant.js";
 
-export default function AIAssistantCard({ breakdown, recent }) {
+export default function AIAssistantCard({ breakdown }) {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [status, setStatus] = useState("loading");
 
   const load = useCallback(
     (q) =>
-      askAssistant(q, breakdown, recent)
+      askAssistant(q, breakdown)
         .then((res) => {
           setAnswer(res);
           setStatus("ready");
         })
         .catch(() => setStatus("error")),
-    [breakdown, recent],
+    [breakdown],
   );
 
   useEffect(() => {

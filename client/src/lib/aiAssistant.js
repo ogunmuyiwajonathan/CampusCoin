@@ -1,22 +1,6 @@
-const API_KEY = import.meta.env.VITE_AI_API_KEY;
 const CACHE_KEY = "campuscoin.ai-insights";
+const CHAT_URL = "/api/ai/chat";
 const DAY_MS = 86400000;
-
-function spendingContext(breakdown, recent) {
-  const categories = breakdown
-    .map((c) => `${c.name} NGN ${c.amount} (${c.percentage}%)`)
-    .join(", ");
-  const transactions = recent
-    .slice(0, 5)
-    .map((t) => `${t.description} ${t.type === "income" ? "+" : "-"}NGN ${t.amount}`)
-    .join("; ");
-  return `Categories: ${categories}. Recent transactions: ${transactions}.`;
-}
-
-function promptFor(context, question) {
-  const base = `You are Rix, Campus Coin's student money assistant. Given this student's spending breakdown: ${context}, give one short, specific, actionable financial tip in under 40 words. No generic advice - reference their actual numbers.`;
-  return question ? `${base} Student's question: ${question}` : base;
-}
 
 function localTip(question, breakdown) {
   if (breakdown.length === 0) {
@@ -34,23 +18,16 @@ function localTip(question, breakdown) {
   return `You spent ${top.percentage}% of your money on ${top.name.toLowerCase()} this month - your top category. Cap it at NGN ${weekly} a week to save more next month.`;
 }
 
-async function callLLM(context, question) {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+async function askServer(question) {
+  const res = await fetch(CHAT_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: promptFor(context, question) }],
-      max_tokens: 80,
-      temperature: 0.7,
-    }),
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ question }),
   });
-  if (!res.ok) throw new Error(`AI request failed with status ${res.status}`);
+  if (!res.ok) throw new Error(`Assistant request failed with status ${res.status}`);
   const data = await res.json();
-  return data.choices[0].message.content.trim();
+  return String(data.reply ?? "").trim();
 }
 
 function readCache() {
@@ -74,13 +51,19 @@ function writeCache(cache) {
   }
 }
 
-export async function askAssistant(question, breakdown, recent) {
+export async function askAssistant(question, breakdown) {
   const key = question.trim();
   const cache = readCache();
   if (cache[key]) return cache[key].answer;
 
-  const context = spendingContext(breakdown, recent);
-  const answer = API_KEY ? await callLLM(context, key) : localTip(key, breakdown);
+  let answer = "";
+  try {
+    answer = await askServer(key);
+  } catch {
+    answer = "";
+  }
+  if (!answer) answer = localTip(key, breakdown);
+
   cache[key] = { answer, at: Date.now() };
   writeCache(cache);
   return answer;
