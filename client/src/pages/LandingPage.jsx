@@ -56,7 +56,7 @@ const ABOUT_CARDS = [
   { id: "track", icon: "wallet", chip: "bg-emerald-100 text-emerald-600", title: "Track Income & Expenses", text: "Log every naira in and out the moment it happens." },
   { id: "budgets", icon: "chart-pie", chip: "bg-blue-100 text-blue-600", title: "Set Monthly Budgets", text: "Give every category a limit and watch it in real time." },
   { id: "habits", icon: "chart-column", chip: "bg-purple-100 text-purple-600", title: "Understand Spending Habits", text: "See your patterns with charts that actually make sense." },
-  { id: "tips", icon: "bulb", chip: "bg-forest-900 text-amber-300 dark:bg-amber-100", title: "Get Personalized Saving Tips", text: "Small, practical advice based on how you really spend." },
+  { id: "tips", icon: "lightbulb", chip: "bg-amber-100 text-amber-600", title: "Get Personalized Saving Tips", text: "Small, practical advice based on how you really spend." },
 ];
 
 const AI_CHECKLIST = [
@@ -77,7 +77,6 @@ const ACCOUNT_LINKS = [
   { label: "Register", to: "/signup" },
 ];
 
-// TODO: /faq, /privacy and /terms have no pages yet — the footer links 404.
 const RESOURCE_LINKS = [
   { label: "FAQ", to: "/faq" },
   { label: "Privacy Policy", to: "/privacy" },
@@ -141,9 +140,6 @@ export default function LandingPage() {
     return () => root.classList.remove("scroll-smooth");
   }, []);
 
-  // The router pushes the hash with pushState, so the browser never jumps to
-  // the section on its own. scrollIntoView honours each section's
-  // scroll-margin-top, which clears the sticky header.
   const scrollToSection = (event, href) => {
     const target = document.getElementById(href.replace("#", ""));
     if (!target) return;
@@ -170,7 +166,6 @@ export default function LandingPage() {
         className="sticky top-0 z-50 border-b border-slate-200/70 bg-surface/95 backdrop-blur"
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
-          {/* Zone 1: logo */}
           <div className="flex flex-1 items-center">
             <button
               type="button"
@@ -187,7 +182,6 @@ export default function LandingPage() {
               </span>
             </button>
           </div>
-          {/* Zone 2: primary links, centered (hidden below lg → hamburger) */}
           <nav className="hidden items-center justify-center gap-8 lg:flex" aria-label="Primary">
             {NAV_LINKS.map((link) => (
               <a
@@ -200,7 +194,6 @@ export default function LandingPage() {
               </a>
             ))}
           </nav>
-          {/* Zone 3: action group */}
           <div className="flex flex-1 items-center justify-end gap-4">
             <ThemeToggle className="mr-1" />
             <button
@@ -351,12 +344,12 @@ export default function LandingPage() {
                 <br />
                 <span className="text-brand-600">Student Style</span>
               </h2>
-              <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-500 sm:text-base">
+              <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-500 sm:text-base md:max-w-none lg:max-w-md">
                 Campus Coin is a budget tracker built around the way students actually
                 spend — on an allowance, a side gig, or whatever came in this month. It
                 turns that into a plan you can see and stick to.
               </p>
-              <p className="mt-3 max-w-md text-sm leading-relaxed text-ink-500 sm:text-base">
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-ink-500 sm:text-base md:max-w-none lg:max-w-md">
                 Log what comes in and what goes out, set a limit for the things that drain
                 you fastest, and let the app show you where you can save without giving up
                 what makes campus life worth it.

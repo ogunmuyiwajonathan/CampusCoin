@@ -72,7 +72,6 @@ const ICONS = {
   "book-open": BookOpen,
   briefcase: Briefcase,
   bus: Bus,
-  bulb: BulbIcon,
   calendar: Calendar,
   camera: Camera,
   "chart-column": ChartColumn,
@@ -184,24 +183,6 @@ function BoltIcon({ size = 18, className }) {
       <path
         fill="currentColor"
         d="M9 7h2.898a.5.5 0 0 1 .376.83L6 15l1-6H4.102a.5.5 0 0 1-.377-.83L10 1z"
-      />
-    </svg>
-  );
-}
-
-function BulbIcon({ size = 18, className }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        fill="currentColor"
-        d="M15 20v-2H9v2c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2m-6.81-4.92c.13.18.29.53.43.92h6.76c.15-.39.3-.74.43-.92c.35-.5.72-.93 1.08-1.36c1.03-1.21 2.1-2.46 2.1-4.72c0-3.86-3.14-7-7-7s-7 3.14-7 7c0 2.28 1.07 3.53 2.1 4.73c.36.42.73.85 1.09 1.35ZM12 5v2c-1.1 0-2 .9-2 2H8c0-2.21 1.79-4 4-4"
       />
     </svg>
   );

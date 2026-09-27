@@ -61,7 +61,6 @@ function withAccent(text, accent, tone) {
   );
 }
 
-// Zero months get a 3px stub so a gap reads as "nothing logged".
 function BarShape({ x, y, width, height, fill, fillOpacity }) {
   if (!height || height < 1) {
     return (
@@ -182,7 +181,6 @@ export default function Insights() {
 
   const stepWindow = (delta) => goToMonth(shiftMonthKey(month, delta));
 
-  // Stands in for the range request the API will make.
   useEffect(() => {
     if (rangeStatus !== "loading") return undefined;
     const timer = setTimeout(() => setRangeStatus("ready"), RANGE_LOAD_MS);

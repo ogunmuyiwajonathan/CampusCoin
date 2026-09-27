@@ -15,7 +15,6 @@ export function prevMonthKey(key) {
   return shiftMonthKey(key, -1);
 }
 
-// null rather than a percentage when the previous value cannot be compared.
 export function percentChange(current, previous) {
   if (previous <= 0) return null;
   return Math.round(((current - previous) / previous) * 100);
@@ -49,8 +48,6 @@ export function monthSeries(items, endMonth, count = WINDOW_MONTHS) {
   return series;
 }
 
-// Everything the page shows for one month. This single call is what
-// `GET /api/insights?month=` will replace.
 export function buildInsights({ items, month, budgets = [], goal = 0 }) {
   const prev = prevMonthKey(month);
   const monthTx = items.filter((item) => monthKey(item.date) === month);

@@ -22,7 +22,6 @@ export default function AvatarPicker({ name, onNotify }) {
 
   const onPick = async (event) => {
     const file = event.target.files && event.target.files[0];
-    // So picking the same file twice still fires a change event.
     event.target.value = "";
     if (!file) return;
     setBusy(true);

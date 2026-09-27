@@ -3,7 +3,6 @@ import { formatCurrency } from "../lib/formatCurrency.js";
 const TOOLTIP_WIDTH = 156;
 const TOOLTIP_HEIGHT = 56;
 const EDGE = 6;
-// The donut's center label (total + caption) is a ~48px band we never cover.
 const CENTER_HALF = 24;
 
 function clamp(value, min, max) {

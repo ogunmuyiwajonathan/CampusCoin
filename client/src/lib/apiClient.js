@@ -27,7 +27,6 @@ function requirePositiveAmount(value, label) {
   }
 }
 
-// Server must repeat these checks on PATCH /api/users/me.
 export async function updateUserProfile(patch) {
   const next = { ...(readSession() ?? {}), ...patch };
   if (typeof next.name === "string") {
@@ -41,7 +40,6 @@ export async function updateUserProfile(patch) {
   return next;
 }
 
-// The real endpoint takes multipart and returns a `profile_image_url`.
 export async function uploadAvatar(file) {
   if (!file) throw new Error("Choose an image first.");
   if (!AVATAR_TYPES.includes(file.type)) throw new Error("Use a JPG, PNG or WEBP image.");

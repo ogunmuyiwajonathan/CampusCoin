@@ -6,7 +6,6 @@ import BotAvatar from "./BotAvatar.jsx";
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-// Mobile/tablet entry point for Rix. Hidden at lg+, where the sidebar has it.
 export default function AssistantFab() {
   const [open, setOpen] = useState(false);
   const location = useLocation();

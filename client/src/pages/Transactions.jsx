@@ -377,14 +377,9 @@ export default function Transactions() {
                             </span>
                           </td>
                           <td className="max-w-[108px] px-2 py-3 sm:max-w-none sm:px-3">
-                            {/* Two lines instead of a hard truncate: long
-                                descriptions stay readable on a phone without
-                                widening the row. */}
                             <p className="line-clamp-2 text-sm font-semibold text-ink-900">
                               {item.description || name}
                             </p>
-                            {/* Mobile-only subtext: the date lives in the Date
-                                column above, so only type · category here. */}
                             <p className="mt-0.5 truncate text-xs text-ink-500 md:hidden">
                               {isIncome ? "Income" : "Expense"} · {name}
                             </p>

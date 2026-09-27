@@ -3,8 +3,6 @@ import { transactions as seedTransactions } from "../data/mockData.js";
 
 const STORAGE_KEY = "campuscoin.transactions";
 
-// Sync first read avoids an empty-state flash. The API swap replaces
-// readStore/commit with fetch and starts status at "loading".
 function readStore() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);

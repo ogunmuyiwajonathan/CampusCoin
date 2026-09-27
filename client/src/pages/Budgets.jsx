@@ -19,7 +19,6 @@ import {
 import { formatCurrency } from "../lib/formatCurrency.js";
 import { currentMonthKey, monthKey, monthLabel, monthRange } from "../lib/formatMonth.js";
 
-// Bands follow the design reference: near at 95%, over once spend passes the limit.
 function statusFor(pct) {
   if (pct >= 100) return "exceeded";
   if (pct >= 95) return "near";

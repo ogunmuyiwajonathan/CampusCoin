@@ -1,9 +1,7 @@
 @import "tailwindcss";
 
-/* stylelint-disable-next-line at-rule-no-unknown -- Tailwind CSS v4 theme directive. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* stylelint-disable-next-line at-rule-no-unknown -- Tailwind CSS v4 theme directive. */
 @theme {
   --color-forest-900: #123b2d;
   --color-forest-800: #164a38;
