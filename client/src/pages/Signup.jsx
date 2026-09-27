@@ -50,8 +50,8 @@ export default function Signup() {
   const canSubmit = fullName.trim() && email.trim() && password && confirmPassword && agreed;
 
   return (
-    <div className="flex min-h-svh bg-slate-50 md:h-svh md:overflow-hidden">
-      <aside className="animate-auth-left relative hidden w-1/2 flex-col overflow-hidden bg-gradient-to-br from-emerald-100/80 via-emerald-50 to-teal-50 p-8 md:flex lg:p-10">
+    <div className="flex min-h-svh bg-slate-50 lg:h-svh lg:overflow-hidden">
+      <aside className="animate-auth-left relative hidden w-1/2 flex-col overflow-hidden bg-gradient-to-br from-emerald-100/80 via-emerald-50 to-teal-50 p-8 lg:flex lg:p-10">
         <div
           className="absolute -right-12 top-14 h-44 w-44 rounded-full bg-surface/60 blur-2xl"
           aria-hidden="true"
@@ -104,7 +104,7 @@ export default function Signup() {
         </div>
       </aside>
 
-      <main className="flex w-full items-center justify-center px-4 py-8 md:w-1/2 md:overflow-y-auto md:p-8">
+      <main className="flex w-full items-center justify-center px-4 py-8 lg:w-1/2 lg:overflow-y-auto lg:p-8">
         <div className="animate-auth-right relative w-full max-w-xl rounded-card bg-surface p-7 shadow-card lg:p-8">
           <ThemeToggle className="absolute right-3.5 top-3.5" />
           <div className="flex flex-col items-center text-center">
