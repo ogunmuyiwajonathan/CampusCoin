@@ -21,7 +21,6 @@ const QUICK_ROWS = [
 
 const NOT_ADDED = "Not added";
 
-// Rows that land with the backend, so nothing here is a dead click.
 function SoonPill() {
   return (
     <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-500">
@@ -32,7 +31,6 @@ function SoonPill() {
 
 export default function Settings() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [twoFactor, setTwoFactor] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const { user, updateProfile } = useAuth();
@@ -108,9 +106,6 @@ export default function Settings() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2.5">
                       <p className="min-w-0 max-w-full truncate font-display text-lg font-bold text-ink-900">{displayName}</p>
-                      <span className="rounded-full bg-brand-500 px-2.5 py-0.5 text-xs font-bold text-white">
-                        Level 1
-                      </span>
                     </div>
                     <p className="mt-0.5 text-sm text-ink-500">{email}</p>
                     <ul className="mt-3.5 flex flex-col gap-2 text-sm text-ink-500">
@@ -250,7 +245,11 @@ export default function Settings() {
                     </span>
                     <SoonPill />
                   </button>
-                  <div className="flex w-full items-center gap-3.5 px-5 py-4">
+                  <button
+                    type="button"
+                    disabled
+                    className="flex w-full items-center gap-3.5 px-5 py-4 text-left opacity-70"
+                  >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                       <Icon name="shield" size={16} />
                     </span>
@@ -262,23 +261,8 @@ export default function Settings() {
                         Add an extra layer of security
                       </span>
                     </span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={twoFactor}
-                      aria-label="Two-factor authentication"
-                      onClick={() => setTwoFactor((value) => !value)}
-                      className={`flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition ${
-                        twoFactor ? "bg-brand-500" : "bg-slate-300"
-                      }`}
-                    >
-                      <span
-                        className={`h-5 w-5 rounded-full bg-surface dark:bg-white shadow transition-transform ${
-                          twoFactor ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </div>
+                    <SoonPill />
+                  </button>
                   <button
                     type="button"
                     disabled

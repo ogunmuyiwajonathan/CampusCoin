@@ -56,7 +56,6 @@ export default function PageHeader({ onMenu }) {
             <span className="block max-w-[140px] truncate text-sm font-semibold text-ink-900">
               {greeting}
             </span>
-            <span className="block max-w-[140px] truncate text-[11px] text-ink-500">Level 1</span>
           </span>
           <Icon name="chevron-down" size={15} className="text-ink-500" />
         </Link>

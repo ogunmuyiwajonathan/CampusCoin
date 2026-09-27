@@ -243,18 +243,20 @@ export default function Signup() {
               <Icon name="arrow-right" size={16} />
             </button>
 
-            <div className="flex items-center gap-3 text-xs font-bold text-slate-400">
-              <span className="h-px flex-1 bg-slate-200" />
-              OR
-              <span className="h-px flex-1 bg-slate-200" />
-            </div>
+            <p className="text-center text-xs text-ink-500">
+              Signing up with Google is coming soon.
+            </p>
 
             <button
               type="button"
-              className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-surface py-2.5 text-sm font-semibold text-ink-900 transition hover:bg-slate-50 active:scale-[0.98]"
+              disabled
+              className="flex w-full cursor-not-allowed items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-surface py-2.5 text-sm font-semibold text-ink-500 opacity-70"
             >
               <GoogleG />
               Sign up with Google
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-slate-500 uppercase">
+                Soon
+              </span>
             </button>
 
             <p className="text-center text-sm text-ink-500">
