@@ -17,6 +17,12 @@ export class ApiError extends Error {
 
 function readErrorMessage(status, payload) {
   const message = payload?.error?.message;
+  // A missing route answers with Express's own "No route matches ..." text.
+  // That is a fact about the server's wiring, not something a person can act
+  // on, so it never reaches the screen.
+  if (status === 404 && /no route matches/i.test(String(message))) {
+    return "That could not be found.";
+  }
   if (typeof message === "string" && message) return message;
   if (status === 401) return "Please log in to continue.";
   if (status === 403) return "You do not have access to that.";
