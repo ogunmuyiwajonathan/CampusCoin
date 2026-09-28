@@ -136,6 +136,6 @@ export function publicUser(user) {
     monthly_savings_goal: user.monthly_savings_goal,
     role: user.role,
     profile_image_url: user.profile_image_url,
-    created_at: user.created_at,
+    created_at: user.createdAt ?? user.created_at ?? null,
   };
 }

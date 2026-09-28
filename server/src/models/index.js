@@ -9,3 +9,5 @@ export { Bookmark } from "./Bookmark.js";
 export { Notification } from "./Notification.js";
 export { ResetToken } from "./ResetToken.js";
 export { CategorySuggestion } from "./CategorySuggestion.js";
+export { Conversation } from "./Conversation.js";
+export { ChatMessage } from "./ChatMessage.js";

@@ -9,7 +9,6 @@ import Sidebar from "../components/Sidebar.jsx";
 import Toast from "../components/Toast.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import { useTheme } from "../hooks/useTheme.js";
-import { mockUser } from "../data/mockData.js";
 import { formatCurrency } from "../lib/formatCurrency.js";
 
 const QUICK_ROWS = [
@@ -44,12 +43,14 @@ export default function Settings() {
     return () => clearTimeout(timer);
   }, [toast]);
 
-  const displayName = user?.name ?? mockUser.name;
-  const email = user?.email ?? mockUser.email;
-  const academicYear = user ? user.academic_year || null : mockUser.academic_year;
-  const savingsGoal = user ? user.monthly_savings_goal ?? null : mockUser.monthly_savings_goal;
-  const allowance = user ? user.allowance_baseline ?? null : mockUser.allowance_baseline;
-  const joined = user?.joined ?? mockUser.joined;
+  const displayName = user?.name ?? "";
+  const email = user?.email ?? "";
+  const academicYear = user?.academic_year ?? null;
+  const savingsGoal = user?.monthly_savings_goal ?? null;
+  const allowance = user?.allowance_baseline ?? null;
+  const joined = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString("en-GB", { month: "short", year: "numeric" })
+    : null;
   const academicLabel = academicYear ?? NOT_ADDED;
   const savingsLabel = savingsGoal == null ? NOT_ADDED : formatCurrency(savingsGoal);
   const allowanceLabel = allowance == null ? NOT_ADDED : formatCurrency(allowance);
@@ -113,10 +114,12 @@ export default function Settings() {
                         <Icon name="user" size={15} className="text-emerald-600" />
                         Student
                       </li>
-                      <li className="flex items-center gap-2">
-                        <Icon name="calendar" size={15} className="text-emerald-600" />
-                        Joined {joined}
-                      </li>
+                      {joined && (
+                        <li className="flex items-center gap-2">
+                          <Icon name="calendar" size={15} className="text-emerald-600" />
+                          Joined {joined}
+                        </li>
+                      )}
                     </ul>
                   </div>
                 </div>

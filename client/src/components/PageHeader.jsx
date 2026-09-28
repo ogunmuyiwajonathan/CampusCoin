@@ -3,12 +3,11 @@ import Icon from "./Icon.jsx";
 import NotificationBell from "./NotificationBell.jsx";
 import UserAvatar from "./UserAvatar.jsx";
 import { useAuth } from "../hooks/useAuth.js";
-import { mockUser } from "../data/mockData.js";
 
 export default function PageHeader({ onMenu }) {
   const { user } = useAuth();
   const userName = user?.name?.trim();
-  const displayName = userName || mockUser.name;
+  const displayName = userName ?? "";
   const greeting = userName ? `Hi, ${userName}!` : "Hi there!";
 
   return (
