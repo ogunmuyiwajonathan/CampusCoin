@@ -152,9 +152,15 @@ const runEnvChild = (childEnv) => {
   }
 };
 
-const noMongo = runEnvChild({ NODE_ENV: "development", PORT: "5000", CORS_ORIGIN: "http://x" });
-check("missing MONGODB_URI stops the process", noMongo.code !== 0, `exit ${noMongo.code}`);
-check("the error names the variable", /MONGODB_URI/.test(noMongo.output), noMongo.output.slice(0, 150));
+// A blank MONGODB_URI is legal in development, where it selects an in-memory
+// database, and fatal in production, where an ephemeral database would silently
+// discard every write. The production rule is the stricter of the two: a deploy
+// must never come up healthy against a database that forgets everything on exit.
+const noMongoProd = runEnvChild({ NODE_ENV: "production", PORT: "5000", CORS_ORIGIN: "http://x" });
+check("blank MONGODB_URI stops a production boot", noMongoProd.code !== 0, `exit ${noMongoProd.code}`);
+check("the production error names the variable", /MONGODB_URI/.test(noMongoProd.output), noMongoProd.output.slice(0, 150));
+const noMongoDev = runEnvChild({ NODE_ENV: "development", PORT: "5000", CORS_ORIGIN: "http://x" });
+check("blank MONGODB_URI boots in development (in-memory mode)", noMongoDev.code === 0, noMongoDev.output.slice(0, 150));
 const noCors = runEnvChild({ NODE_ENV: "development", PORT: "5000", MONGODB_URI: "mongodb://x" });
 check("missing CORS_ORIGIN stops the process", noCors.code !== 0, `exit ${noCors.code}`);
 const badPort = runEnvChild({ NODE_ENV: "development", PORT: "99999", CORS_ORIGIN: "http://x", MONGODB_URI: "mongodb://x" });

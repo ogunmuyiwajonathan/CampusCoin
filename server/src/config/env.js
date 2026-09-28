@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-const REQUIRED = ["MONGODB_URI", "CORS_ORIGIN"];
+const REQUIRED = ["CORS_ORIGIN"];
 
 const missing = REQUIRED.filter((key) => !process.env[key]?.trim());
 
@@ -32,11 +32,26 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 // leak internal messages to whoever triggered the error.
 const nodeEnv = process.env.NODE_ENV ?? "production";
 
+const mongoUri = process.env.MONGODB_URI?.trim() ?? "";
+
+// A blank MONGODB_URI selects an in-memory MongoDB, which is how this project
+// develops and how the test suite runs. It is never allowed in production: an
+// ephemeral database discards every write the moment the process exits, so a
+// deploy with a missing, blank or unreadable MONGODB_URI would start up looking
+// perfectly healthy and then silently lose all of its data. Refusing to boot is
+// the only safe answer.
+if (mongoUri === "" && nodeEnv === "production") {
+  console.error("MONGODB_URI is required when NODE_ENV=production.");
+  console.error("The in-memory database is for development and tests only; it discards all data on exit.");
+  process.exit(1);
+}
+
 export const env = {
   nodeEnv,
   isDev: nodeEnv === "development",
   isProd: nodeEnv === "production",
   port,
-  mongoUri: process.env.MONGODB_URI.trim(),
+  mongoUri,
+  useMemoryDb: mongoUri === "",
   corsOrigins,
 };
