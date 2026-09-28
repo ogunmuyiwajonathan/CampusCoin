@@ -1,64 +1,78 @@
-import { useCallback, useState } from "react";
-import { transactions as seedTransactions } from "../data/mockData.js";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  createTransaction,
+  deleteTransaction,
+  listTransactions,
+  updateTransaction,
+} from "../lib/apiClient.js";
+import { currentMonthKey } from "../lib/formatMonth.js";
 
-const STORAGE_KEY = "campuscoin.transactions";
+// The server is the only copy of the ledger now. A write refetches rather than
+// patching local state, so what the screen shows is always what the database
+// holds - which matters because creating a transaction can also raise a budget
+// alert, and the row the student added is not the only thing that changed.
+//
+// The month defaults to the current one so the pages that do not care about
+// filtering get a single month rather than the whole history.
+export function useTransactions(month = currentMonthKey()) {
+  const [nonce, setNonce] = useState(0);
+  const [result, setResult] = useState({ key: null, items: [], error: null });
 
-function readStore() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === null) return { items: seedTransactions, error: null };
-    const parsed = JSON.parse(stored);
-    if (!Array.isArray(parsed)) throw new Error("Saved data is not a list.");
-    return { items: parsed, error: null };
-  } catch {
-    return {
-      items: seedTransactions,
-      error: "Couldn't load your saved transactions. Showing sample data instead.",
-    };
-  }
-}
+  // The result is tagged with the request it answers. Anything else - a month
+  // that just changed, a write that has not come back yet - is still loading,
+  // which avoids calling setState synchronously inside the effect.
+  const key = `${month}:${nonce}`;
 
-export function useTransactions() {
-  const [state, setState] = useState(() => ({ status: "ready", ...readStore() }));
-
-  const commit = useCallback((nextItems) => {
-    setState({ status: "ready", items: nextItems, error: null });
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextItems));
-    } catch {
-      setState({
-        status: "ready",
-        items: nextItems,
-        error: "Couldn't save your changes. Browser storage may be full or blocked.",
+  useEffect(() => {
+    let cancelled = false;
+    listTransactions(month)
+      .then((data) => {
+        if (cancelled) return;
+        setResult({ key, items: data.transactions, error: null });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setResult({ key, items: [], error: error.message });
       });
+    return () => {
+      cancelled = true;
+    };
+  }, [month, nonce, key]);
+
+  const settled = result.key === key;
+  const status = settled ? (result.error ? "error" : "ready") : "loading";
+
+  const run = useCallback(async (action) => {
+    try {
+      await action();
+      setNonce((value) => value + 1);
+      return { ok: true };
+    } catch (error) {
+      setResult((prev) => ({ ...prev, error: error.message }));
+      return { ok: false, error: error.message };
     }
   }, []);
 
-  const add = useCallback(
-    (payload) => {
-      const record = { transaction_id: `t${Date.now()}`, user_id: "demo-student", ...payload };
-      commit([record, ...state.items]);
-    },
-    [state.items, commit],
+  const add = useCallback((payload) => run(() => createTransaction(payload)), [run]);
+  const update = useCallback((id, payload) => run(() => updateTransaction(id, payload)), [run]);
+  const remove = useCallback((id) => run(() => deleteTransaction(id)), [run]);
+  const refresh = useCallback(() => setNonce((value) => value + 1), []);
+  const clearError = useCallback(
+    () => setResult((prev) => ({ ...prev, error: null })),
+    [],
   );
 
-  const update = useCallback(
-    (transactionId, payload) => {
-      commit(
-        state.items.map((item) =>
-          item.transaction_id === transactionId ? { ...item, ...payload } : item,
-        ),
-      );
-    },
-    [state.items, commit],
+  return useMemo(
+    () => ({
+      status,
+      items: settled ? result.items : [],
+      error: result.error,
+      add,
+      update,
+      remove,
+      refresh,
+      clearError,
+    }),
+    [status, settled, result, add, update, remove, refresh, clearError],
   );
-
-  const remove = useCallback(
-    (transactionId) => {
-      commit(state.items.filter((item) => item.transaction_id !== transactionId));
-    },
-    [state.items, commit],
-  );
-
-  return { ...state, add, update, remove };
 }

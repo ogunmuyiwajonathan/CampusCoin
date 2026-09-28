@@ -1,15 +1,44 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Icon from "./Icon.jsx";
-import { notifications as SEED_NOTIFICATIONS } from "../data/mockData.js";
+import {
+  listNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "../lib/apiClient.js";
+import { formatDate } from "../lib/formatMonth.js";
 
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState(SEED_NOTIFICATIONS);
+  const [nonce, setNonce] = useState(0);
+  // The answer is tagged with the request it belongs to, so anything else is
+  // still loading. This avoids calling setState synchronously inside an effect.
+  const [result, setResult] = useState({ key: null, items: [], error: null });
   const rootRef = useRef(null);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    let cancelled = false;
+    listNotifications()
+      .then((data) => {
+        if (cancelled) return;
+        setResult({ key: nonce, items: data.notifications, error: null });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setResult({ key: nonce, items: [], error: error.message });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [nonce]);
+
+  const settled = result.key === nonce;
+  const status = settled ? (result.error ? "error" : "ready") : "loading";
+  const items = settled ? result.items : [];
   const unread = items.filter((item) => !item.is_read).length;
+
+  const refresh = useCallback(() => setNonce((value) => value + 1), []);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -27,12 +56,33 @@ export default function NotificationBell() {
     };
   }, [open]);
 
+  // Opening the bell refetches, so an alert raised while the student was on the
+  // budgets page is already there by the time they go looking for it.
+  const toggle = () => {
+    setOpen((visible) => {
+      if (!visible) refresh();
+      return !visible;
+    });
+  };
+
+  // Marked read on the server first, then locally. A local-only flip would make
+  // the badge look handled and reappear on the next refresh.
   const markRead = (notificationId) => {
-    setItems((prev) =>
-      prev.map((item) =>
+    setResult((prev) => ({
+      ...prev,
+      items: prev.items.map((item) =>
         item.notification_id === notificationId ? { ...item, is_read: true } : item,
       ),
-    );
+    }));
+    markNotificationRead(notificationId).catch(refresh);
+  };
+
+  const markAll = () => {
+    setResult((prev) => ({
+      ...prev,
+      items: prev.items.map((item) => ({ ...item, is_read: true })),
+    }));
+    markAllNotificationsRead().catch(refresh);
   };
 
   const openItem = (item) => {
@@ -45,7 +95,7 @@ export default function NotificationBell() {
     <div ref={rootRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((visible) => !visible)}
+        onClick={toggle}
         aria-expanded={open}
         aria-haspopup="true"
         aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
@@ -64,50 +114,78 @@ export default function NotificationBell() {
         <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-card bg-surface p-2 shadow-card ring-1 ring-slate-200/70">
           <div className="flex items-center justify-between px-2 py-1.5">
             <p className="font-display text-sm font-bold text-ink-900">Notifications</p>
-            <button
-              type="button"
-              onClick={() => setItems((prev) => prev.map((item) => ({ ...item, is_read: true })))}
-              className="text-xs font-semibold text-brand-600 transition hover:text-brand-700"
-            >
-              Mark all read
-            </button>
+            {unread > 0 && (
+              <button
+                type="button"
+                onClick={markAll}
+                className="text-xs font-semibold text-brand-600 transition hover:text-brand-700"
+              >
+                Mark all read
+              </button>
+            )}
           </div>
-          <ul className="flex flex-col gap-1">
-            {items.map((item) => (
-              <li key={item.notification_id}>
-                <button
-                  type="button"
-                  onClick={() => openItem(item)}
-                  className={`flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-slate-50 ${
-                    item.is_read ? "" : "bg-mint-50"
-                  }`}
-                >
-                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                    <Icon name={item.icon} size={15} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1.5">
-                      <span className="truncate text-sm font-semibold text-ink-900">
-                        {item.title}
+
+          {status === "loading" && (
+            <p className="px-2 py-6 text-center text-sm text-ink-500" role="status">
+              Loading notifications...
+            </p>
+          )}
+
+          {status === "error" && (
+            <div className="px-2 py-6 text-center" role="alert">
+              <p className="text-sm text-red-500">{result.error}</p>
+              <button
+                type="button"
+                onClick={refresh}
+                className="mt-2 text-xs font-semibold text-brand-600 hover:underline"
+              >
+                Try again
+              </button>
+            </div>
+          )}
+
+          {status === "ready" && items.length === 0 && (
+            <p className="px-2 py-6 text-center text-sm text-ink-500">
+              Nothing here yet. Budget alerts will show up on this bell.
+            </p>
+          )}
+
+          {status === "ready" && items.length > 0 && (
+            <ul className="flex flex-col gap-1">
+              {items.map((item) => (
+                <li key={item.notification_id}>
+                  <button
+                    type="button"
+                    onClick={() => openItem(item)}
+                    className={`flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-slate-50 ${
+                      item.is_read ? "" : "bg-mint-50"
+                    }`}
+                  >
+                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                      <Icon name={item.icon} size={15} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-1.5">
+                        <span className="truncate text-sm font-semibold text-ink-900">
+                          {item.title}
+                        </span>
+                        {!item.is_read && (
+                          <span
+                            className="h-1.5 w-1.5 shrink-0 rounded-full bg-forest-700"
+                            aria-hidden="true"
+                          />
+                        )}
                       </span>
-                      {!item.is_read && (
-                        <span
-                          className="h-1.5 w-1.5 shrink-0 rounded-full bg-forest-700"
-                          aria-hidden="true"
-                        />
-                      )}
+                      <span className="mt-0.5 block truncate text-xs text-ink-500">{item.body}</span>
+                      <span className="mt-1 block text-[11px] text-slate-400">
+                        {formatDate(item.created_at)}
+                      </span>
                     </span>
-                    <span className="mt-0.5 block truncate text-xs text-ink-500">
-                      {item.body}
-                    </span>
-                    <span className="mt-1 block text-[11px] text-slate-400">
-                      {item.created_at}
-                    </span>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </div>

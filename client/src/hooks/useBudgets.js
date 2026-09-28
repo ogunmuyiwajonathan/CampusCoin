@@ -1,64 +1,73 @@
-import { useCallback, useState } from "react";
-import { budgets as seedBudgets } from "../data/mockData.js";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  createBudget,
+  deleteBudget,
+  listBudgets,
+  updateBudget,
+} from "../lib/apiClient.js";
+import { currentMonthKey } from "../lib/formatMonth.js";
 
-const STORAGE_KEY = "campuscoin.budgets";
+// Spent, percentage and the near/over band are all computed by the server from
+// the same aggregation the budgets page used to run by hand in the browser, so
+// the numbers on screen are the database's numbers.
+export function useBudgets(month = currentMonthKey()) {
+  const [nonce, setNonce] = useState(0);
+  const [result, setResult] = useState({ key: null, items: [], error: null });
 
-function readStore() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === null) return { items: seedBudgets, error: null };
-    const parsed = JSON.parse(stored);
-    if (!Array.isArray(parsed)) throw new Error("Saved data is not a list.");
-    return { items: parsed, error: null };
-  } catch {
-    return {
-      items: seedBudgets,
-      error: "Couldn't load your saved budgets. Showing sample data instead.",
-    };
-  }
-}
+  // Same request-tagging as useTransactions: the answer carries the key it
+  // answers, and anything else counts as still loading.
+  const key = `${month}:${nonce}`;
 
-export function useBudgets() {
-  const [state, setState] = useState(() => ({ status: "ready", ...readStore() }));
-
-  const commit = useCallback((nextItems) => {
-    setState({ status: "ready", items: nextItems, error: null });
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextItems));
-    } catch {
-      setState({
-        status: "ready",
-        items: nextItems,
-        error: "Couldn't save your changes. Browser storage may be full or blocked.",
+  useEffect(() => {
+    let cancelled = false;
+    listBudgets(month)
+      .then((data) => {
+        if (cancelled) return;
+        setResult({ key, items: data.budgets, error: null });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setResult({ key, items: [], error: error.message });
       });
+    return () => {
+      cancelled = true;
+    };
+  }, [month, nonce, key]);
+
+  const settled = result.key === key;
+  const status = settled ? (result.error ? "error" : "ready") : "loading";
+
+  const run = useCallback(async (action) => {
+    try {
+      await action();
+      setNonce((value) => value + 1);
+      return { ok: true };
+    } catch (error) {
+      setResult((prev) => ({ ...prev, error: error.message }));
+      return { ok: false, error: error.message };
     }
   }, []);
 
-  const add = useCallback(
-    (payload) => {
-      const record = { budget_id: `b${Date.now()}`, user_id: "demo-student", ...payload };
-      commit([record, ...state.items]);
-    },
-    [state.items, commit],
+  const add = useCallback((payload) => run(() => createBudget(payload)), [run]);
+  const update = useCallback((id, payload) => run(() => updateBudget(id, payload)), [run]);
+  const remove = useCallback((id) => run(() => deleteBudget(id)), [run]);
+  const refresh = useCallback(() => setNonce((value) => value + 1), []);
+  const clearError = useCallback(
+    () => setResult((prev) => ({ ...prev, error: null })),
+    [],
   );
 
-  const update = useCallback(
-    (budgetId, payload) => {
-      commit(
-        state.items.map((item) =>
-          item.budget_id === budgetId ? { ...item, ...payload } : item,
-        ),
-      );
-    },
-    [state.items, commit],
+  return useMemo(
+    () => ({
+      status,
+      items: settled ? result.items : [],
+      error: result.error,
+      add,
+      update,
+      remove,
+      refresh,
+      clearError,
+    }),
+    [status, settled, result, add, update, remove, refresh, clearError],
   );
-
-  const remove = useCallback(
-    (budgetId) => {
-      commit(state.items.filter((item) => item.budget_id !== budgetId));
-    },
-    [state.items, commit],
-  );
-
-  return { ...state, add, update, remove };
 }
