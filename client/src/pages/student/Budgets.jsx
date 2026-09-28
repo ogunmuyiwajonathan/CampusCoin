@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import BudgetForm from "../../components/BudgetForm.jsx";
+import CategoryManagerDialog from "../../components/CategoryManagerDialog.jsx";
 import Icon from "../../components/Icon.jsx";
 import AssistantFab from "../../components/AssistantFab.jsx";
 import MobileNav from "../../components/MobileNav.jsx";
@@ -104,12 +105,27 @@ const QUICK_ACTIONS = [
     subtitle: "Log income or expense",
   },
   {
-    to: "/transactions",
-    icon: "settings",
+    dialog: "categories",
+    icon: "tags",
     title: "Manage Categories",
-    subtitle: "Edit your spending categories",
+    subtitle: "Add, edit or remove your own",
   },
 ];
+
+function QuickActionBody({ action }) {
+  return (
+    <>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+        <Icon name={action.icon} size={18} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-bold text-ink-900">{action.title}</span>
+        <span className="block truncate text-xs text-ink-500">{action.subtitle}</span>
+      </span>
+      <Icon name="chevron-right" size={16} className="shrink-0 text-ink-500" />
+    </>
+  );
+}
 
 function MenuDeleteButton({ onConfirm, onCancel }) {
   const { locked, done, run, minWidth, measure } = useSubmitLock();
@@ -161,6 +177,7 @@ function MenuDeleteButton({ onConfirm, onCancel }) {
 export default function Budgets() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [menuId, setMenuId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -608,24 +625,23 @@ export default function Budgets() {
                 </div>
                 <ul className="divide-y divide-slate-100">
                   {QUICK_ACTIONS.map((action) => (
-                    <li key={`${action.to}-${action.title}`}>
-                      <Link
-                        to={action.to}
-                        className="flex items-center gap-3 rounded-lg py-3 transition hover:bg-slate-50"
-                      >
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                          <Icon name={action.icon} size={18} />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-bold text-ink-900">
-                            {action.title}
-                          </span>
-                          <span className="block truncate text-xs text-ink-500">
-                            {action.subtitle}
-                          </span>
-                        </span>
-                        <Icon name="chevron-right" size={16} className="shrink-0 text-ink-500" />
-                      </Link>
+                    <li key={action.title}>
+                      {action.dialog ? (
+                        <button
+                          type="button"
+                          onClick={() => setCategoryDialogOpen(true)}
+                          className="flex w-full items-center gap-3 rounded-lg py-3 text-left transition hover:bg-slate-50"
+                        >
+                          <QuickActionBody action={action} />
+                        </button>
+                      ) : (
+                        <Link
+                          to={action.to}
+                          className="flex items-center gap-3 rounded-lg py-3 transition hover:bg-slate-50"
+                        >
+                          <QuickActionBody action={action} />
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -655,6 +671,10 @@ export default function Budgets() {
           onSave={handleSave}
           onDelete={handleDelete}
         />
+      )}
+
+      {categoryDialogOpen && (
+        <CategoryManagerDialog onClose={() => setCategoryDialogOpen(false)} />
       )}
     </div>
   );

@@ -82,6 +82,10 @@ export const idParamSchema = z.object({
   id: z.string().min(1),
 });
 
+export const batchParamsSchema = z.object({
+  batchId: z.string().min(1),
+});
+
 export const createBudgetSchema = z.object({
   category_id: z.string().min(1, "Choose a category."),
   month: z.string().regex(MONTH, "Use a month like 2026-09."),

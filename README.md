@@ -17,7 +17,9 @@ This repository has two parts: a React frontend in `client/` and an Express API 
 | Budgets | Working — per-category monthly limits, progress bars, near/exceed alerts |
 | Insights | Working client-side — monthly narrative, growth flags, 6-month chart with month navigation, category breakdown |
 | AI assistant | **"Rix"**, live on the server. It reads the student's own transactions and budgets and uses Poolside's `laguna-xs-2.1` to phrase the answer. **Rix sends the student's own transaction data to the Poolside API to generate answers.** The key sits in `server/.env` and never reaches the browser bundle |
-| Reports, CSV import, AI categorisation, tips engine, bookmarks/share, admin panel | Not built |
+| Reports | Working - date + category filters, day/week/month re-bucketing, 6-month income-vs-expense, category table, PDF and image export |
+| Bookmarks + share | Working - save a month with a note from Insights, grouped list at `/bookmarks`, share a report by email |
+| CSV import, AI categorisation, tips engine | Not built |
 | Accessibility | Dark mode and responsive layout done; font-size control and breadcrumbs not built |
 
 ## Tech Stack

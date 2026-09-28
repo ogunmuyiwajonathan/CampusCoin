@@ -75,7 +75,7 @@ export default function AdminLogin() {
         <div className="relative z-10 flex flex-1 flex-col">
           <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-forest-900 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
             <Icon name="shield" size={13} />
-            Staff only
+            Admin only
           </span>
 
           <h1 className="mt-5 font-display text-4xl font-extrabold tracking-tight text-ink-900 xl:text-5xl">
@@ -148,7 +148,10 @@ export default function AdminLogin() {
                   from ADMIN_EMAIL, so there is nothing here to mistype and no
                   other admin to be named. */}
               <div className="animate-auth-rise">
-                <label htmlFor="admin-password" className="mb-1.5 block text-sm font-semibold text-ink-900">
+                <label
+                  htmlFor="admin-password"
+                  className="mb-1.5 block text-sm font-semibold text-ink-900"
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -178,7 +181,10 @@ export default function AdminLogin() {
                 </div>
               </div>
 
-              <div className="animate-auth-rise flex items-center" style={{ animationDelay: "180ms" }}>
+              <div
+                className="animate-auth-rise flex items-center justify-between"
+                style={{ animationDelay: "180ms" }}
+              >
                 <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-500">
                   <input
                     type="checkbox"
@@ -216,12 +222,16 @@ export default function AdminLogin() {
                   </>
                 )}
               </button>
-            </form>
 
-            <p className="mt-5 flex items-start gap-2 rounded-lg bg-emerald-50 p-3 text-xs leading-relaxed text-ink-500 dark:bg-emerald-500/10">
-              <Icon name="shield" size={15} className="mt-px shrink-0 text-emerald-600 dark:text-emerald-400" />
-              Authorized personnel only. This area is restricted to Campus Coin administrators.
-            </p>
+              <p className="mt-5 flex items-start gap-2 rounded-lg bg-emerald-50 p-3 text-xs leading-relaxed text-ink-500 dark:bg-emerald-500/10">
+                <Icon
+                  name="shield"
+                  size={15}
+                  className="mt-px shrink-0 text-emerald-600 dark:text-emerald-400"
+                />
+                Admins only. This area is restricted to Campus Coin administrators.
+              </p>
+            </form>
           </div>
         </div>
       </main>

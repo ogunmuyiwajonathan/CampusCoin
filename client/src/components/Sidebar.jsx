@@ -1,7 +1,8 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Icon from "./Icon.jsx";
 import bushSide from "../assets/bush-side.webp";
 import { useAuth } from "../hooks/useAuth.js";
+import { isNavActive } from "../lib/navRoutes.js";
 
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Home", icon: "house", end: true },
@@ -9,11 +10,12 @@ const NAV_ITEMS = [
   { to: "/budgets", label: "Budgets", icon: "target" },
   { to: "/insights", label: "Insights", icon: "chart-column" },
   { to: "/assistant", label: "AI Assistant", icon: "bot" },
-  { to: "/settings", label: "Settings", icon: "settings" },
+  { to: "/more", label: "More", icon: "ellipsis" },
 ];
 
 export default function Sidebar({ open, onClose }) {
   const { user, logout } = useAuth();
+  const { pathname } = useLocation();
 
   return (
     <>
@@ -40,24 +42,25 @@ export default function Sidebar({ open, onClose }) {
         </Link>
 
         <nav className="flex flex-1 flex-col gap-1" aria-label="App">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={onClose}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                  isActive
+          {NAV_ITEMS.map((item) => {
+            const active = isNavActive(pathname, item);
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={onClose}
+                aria-current={active ? "page" : undefined}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                  active
                     ? "bg-forest-700 text-white"
                     : "text-sage-400 hover:bg-forest-800 hover:text-white"
-                }`
-              }
-            >
-              <Icon name={item.icon} size={18} />
-              {item.label}
-            </NavLink>
-          ))}
+                }`}
+              >
+                <Icon name={item.icon} size={18} />
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="-mx-4 mt-4">
@@ -80,14 +83,14 @@ export default function Sidebar({ open, onClose }) {
             <span className="sr-only">, {user.name}</span>
           </button>
         ) : (
-          <NavLink
+          <Link
             to="/login"
             onClick={onClose}
             className="mt-4 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sage-400 transition hover:bg-forest-800 hover:text-white"
           >
             <Icon name="log-in" size={18} />
             Log in
-          </NavLink>
+          </Link>
         )}
       </aside>
     </>

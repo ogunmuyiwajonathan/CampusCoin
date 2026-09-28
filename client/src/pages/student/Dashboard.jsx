@@ -11,6 +11,7 @@ import SpendingDonut from "../../components/SpendingDonut.jsx";
 import RecentTransactions from "../../components/RecentTransactions.jsx";
 import AIAssistantCard from "../../components/AIAssistantCard.jsx";
 import PageHeader from "../../components/PageHeader.jsx";
+import ProfileSetupOverlay from "../../components/ProfileSetupOverlay.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
 import {
   CATEGORY_ICONS,
@@ -34,7 +35,7 @@ const AddTransactionLink = () => (
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const displayName = user?.name ?? mockUser.name;
 
   const { items } = useTransactions();
@@ -42,6 +43,12 @@ export default function Dashboard() {
   const balance = totals.income - totals.expense;
   const savings = mockUser.monthly_savings_goal;
   const breakdown = expenseBreakdown(items);
+
+  // The first-login profile card. ProtectedRoute holds the page until the user
+  // has loaded, so the flag is already known on the first render. It is closed
+  // only by the card itself, which is what lets the "you can update this
+  // anytime" confirmation be read before the card goes away.
+  const [setupOpen, setSetupOpen] = useState(user?.profileOnboarded === false);
 
   const lookup = categoryLookup();
   const recent = [...items]
@@ -63,6 +70,14 @@ export default function Dashboard() {
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <MobileNav />
       <AssistantFab />
+
+      {setupOpen && (
+        <ProfileSetupOverlay
+          onDismiss={() => setSetupOpen(false)}
+          onSave={(patch) => updateProfile({ ...patch, profileOnboarded: true })}
+          onSkip={() => updateProfile({ profileOnboarded: true })}
+        />
+      )}
 
       <div className="lg:pl-60">
         <main className="mx-auto max-w-7xl space-y-4 px-4 pb-24 pt-5 md:pb-5">

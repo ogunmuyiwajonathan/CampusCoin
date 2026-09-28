@@ -16,14 +16,22 @@ export const mockUser = {
   user_id: "demo-student",
   name: "Alex",
   email: "alex@example.com",
-  academic_year: "Year 2",
+  academic_year: "200 Level",
   allowance_baseline: 20000,
   monthly_savings_goal: 15000,
   role: "student",
   joined: "Oct 2025",
 };
 
-export const ACADEMIC_YEARS = ["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Postgraduate"];
+export const ACADEMIC_YEARS = [
+  "100 Level",
+  "200 Level",
+  "300 Level",
+  "400 Level",
+  "500 Level",
+  "Graduated",
+  "Not a student",
+];
 
 export const notifications = [
   {

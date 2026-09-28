@@ -20,8 +20,8 @@ export default function errorHandler(error, req, res, next) {
   // that carries no status, so it would otherwise surface as a 500. These are
   // the student's mistake, not ours, and deserve a message they can act on.
   const uploadProblems = {
-    LIMIT_FILE_SIZE: "That image is too large. Pick one under 2 MB.",
-    LIMIT_FILE_COUNT: "Upload one image at a time.",
+    LIMIT_FILE_SIZE: "That file is too large. Keep it under 2 MB.",
+    LIMIT_FILE_COUNT: "Upload one file at a time.",
     LIMIT_UNEXPECTED_FILE: "That upload was not expected.",
   };
   if (error.name === "MulterError" && uploadProblems[error.code]) {

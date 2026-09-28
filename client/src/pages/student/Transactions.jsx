@@ -7,6 +7,7 @@ import PageHeader from "../../components/PageHeader.jsx";
 import Sidebar from "../../components/Sidebar.jsx";
 import StatCard from "../../components/StatCard.jsx";
 import TransactionForm from "../../components/TransactionForm.jsx";
+import CsvImportDialog from "../../components/CsvImportDialog.jsx";
 import SubmitSpinner from "../../components/SubmitSpinner.jsx";
 import { useTransactions } from "../../hooks/useTransactions.js";
 import { useSubmitLock } from "../../hooks/useSubmitLock.js";
@@ -107,8 +108,9 @@ export default function Transactions() {
   const [editing, setEditing] = useState(null);
   const [menuId, setMenuId] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
 
-  const { status, items, error, add, update, remove } = useTransactions();
+  const { status, items, error, add, update, remove, refresh } = useTransactions();
 
   useEffect(() => {
     if (menuId === null && confirmId === null) return undefined;
@@ -339,6 +341,15 @@ export default function Transactions() {
                   <Icon name="plus" size={16} />
                   Add Transaction
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setImportOpen(true)}
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-ink-500 transition hover:bg-slate-50"
+                >
+                  <Icon name="upload" size={16} />
+                  Import CSV
+                </button>
               </div>
             </div>
 
@@ -520,6 +531,13 @@ export default function Transactions() {
             setEditing(null);
           }}
           onSave={handleSave}
+        />
+      )}
+
+      {importOpen && (
+        <CsvImportDialog
+          onClose={() => setImportOpen(false)}
+          onImported={refresh}
         />
       )}
     </div>

@@ -31,6 +31,15 @@ export const listTransactions = asyncHandler(async (req, res) => {
   res.json({ transactions: await ledger.listTransactions(me(req), req.validatedQuery?.month) });
 });
 
+export const listTransactionHistory = asyncHandler(async (req, res) => {
+  res.json({ history: await ledger.listTransactionHistory(me(req)) });
+});
+
+export const restoreTransaction = asyncHandler(async (req, res) => {
+  const restored = await ledger.restoreTransaction(me(req), req.params.id);
+  res.status(201).json({ transaction: restored });
+});
+
 export const createTransaction = asyncHandler(async (req, res) => {
   res.status(201).json({ transaction: await ledger.createTransaction(me(req), req.body) });
 });

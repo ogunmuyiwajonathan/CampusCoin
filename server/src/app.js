@@ -6,6 +6,7 @@ import morgan from "morgan";
 import { env } from "./config/env.js";
 import { sessionMiddleware } from "./config/session.js";
 import { loadUser, requireTrustedOrigin } from "./middleware/requireAuth.js";
+import { isTrustedOrigin } from "./utils/trustedOrigin.js";
 import { apiLimiter } from "./middleware/rateLimiters.js";
 import routes from "./routes/index.js";
 import notFound from "./middleware/notFound.js";
@@ -22,7 +23,7 @@ app.disable("x-powered-by");
 app.use(helmet());
 app.use(
   cors({
-    origin: env.corsOrigins,
+    origin: (origin, callback) => callback(null, isTrustedOrigin(origin)),
     credentials: true,
   }),
 );

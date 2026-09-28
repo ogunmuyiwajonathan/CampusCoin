@@ -1,6 +1,13 @@
 import ApiError from "../utils/ApiError.js";
 import { serialize, serializeAll } from "../utils/idOptions.js";
-import { Budget, Category, Notification, Transaction } from "../models/index.js";
+import {
+  Budget,
+  Category,
+  Notification,
+  Transaction,
+  TransactionHistory,
+} from "../models/index.js";
+import { isDateString, monthKey, nextRunFrom, todayString } from "../utils/dateMath.js";
 
 export const ALERT_NEAR = 0.95;
 export const ALERT_OVER = 1;
@@ -49,13 +56,24 @@ export async function updateCategory(userId, id, body) {
 }
 
 // A default category is shared by everyone, so deleting one would break other
-// students' history. What is allowed is hiding it from the student who wants it
-// gone, which is what the SRS means by managing your own categories.
+// students' history. What is allowed is managing your own: the row is only
+// removed once nothing else points at it, otherwise the student is told exactly
+// what to move first rather than being left with a dangling budget.
 export async function deleteCategory(userId, id) {
-  const category = await Category.findOneAndDelete({ _id: id, user_id: userId }).lean();
-  if (category) return category;
-
+  const owned = await Category.exists({ _id: id, user_id: userId });
   const inUse = await Transaction.exists({ user_id: userId, category_id: id });
+  const budgeted = await Budget.exists({ user_id: userId, category_id: id });
+
+  if (owned) {
+    if (inUse) {
+      throw ApiError.conflict("That category has transactions on it. Move them first.");
+    }
+    if (budgeted) {
+      throw ApiError.conflict("That category has a budget on it. Remove the budget first.");
+    }
+    return Category.findOneAndDelete({ _id: id, user_id: userId }).lean();
+  }
+
   if (inUse) {
     throw ApiError.conflict("That category has transactions on it. Move them first.");
   }
@@ -67,14 +85,6 @@ export async function deleteCategory(userId, id) {
 function monthWindow(month) {
   if (!month) return null;
   return { $gte: `${month}-01`, $lte: `${month}-31` };
-}
-
-export async function listTransactions(userId, month) {
-  const query = { user_id: userId };
-  const window = monthWindow(month);
-  if (window) query.date = window;
-  const rows = await Transaction.find(query).sort({ date: -1, createdAt: -1 }).lean();
-  return serializeAll(rows, "transaction_id");
 }
 
 async function assertOwnsCategory(userId, categoryId) {
@@ -90,14 +100,17 @@ async function assertOwnsCategory(userId, categoryId) {
 
 export async function createTransaction(userId, body) {
   const category = await assertOwnsCategory(userId, body.category_id);
-  // The type is taken from the category rather than trusted from the client, so
-  // an expense cannot be filed as income by posting a different type.
+  const frequency = body.is_recurring ? body.frequency ?? "monthly" : null;
+  // A recurring row with no next_run_at would never fire, so the date is worked
+  // out from the transaction's own date the first time it is saved. Anything the
+  // client sent that is not a real date is ignored rather than stored broken.
+  const requested = body.is_recurring && isDateString(body.next_run_at) ? body.next_run_at : null;
   const payload = {
     ...body,
     user_id: userId,
     type: category.type,
-    frequency: body.is_recurring ? body.frequency ?? "monthly" : null,
-    next_run_at: body.is_recurring ? body.next_run_at ?? null : null,
+    frequency,
+    next_run_at: requested ?? (frequency ? nextRunFrom(body.date, frequency) : null),
   };
 
   if (body.request_id) {
@@ -148,10 +161,195 @@ export async function updateTransaction(userId, id, body) {
   return updated;
 }
 
+// Deleting keeps the row's contents rather than dropping them. The live
+// transaction is removed so every total, budget and report stops counting it,
+// and a history document holds what it was, which is what makes an accidental
+// delete recoverable instead of permanent.
 export async function deleteTransaction(userId, id) {
   const removed = await Transaction.findOneAndDelete({ _id: id, user_id: userId }).lean();
   if (!removed) throw ApiError.notFound("That transaction was not found.");
+
+  await TransactionHistory.create({
+    user_id: userId,
+    transaction: {
+      category_id: removed.category_id,
+      type: removed.type,
+      amount: removed.amount,
+      description: removed.description,
+      date: removed.date,
+      is_recurring: removed.is_recurring,
+      frequency: removed.frequency,
+      next_run_at: removed.next_run_at,
+      import_batch_id: removed.import_batch_id,
+    },
+    deleted_at: new Date(),
+    origin: "delete",
+  });
+
   return removed;
+}
+
+export async function listTransactionHistory(userId) {
+  const rows = await TransactionHistory.find({ user_id: userId, restored_at: null })
+    .sort({ deleted_at: -1 })
+    .limit(50)
+    .lean();
+  if (!rows.length) return [];
+
+  const ids = [
+    ...new Set(rows.map((row) => String(row.transaction?.category_id)).filter(Boolean)),
+  ];
+  const categories = ids.length
+    ? await Category.find({ _id: { $in: ids } }).select("name color icon_key").lean()
+    : [];
+  const byId = new Map(categories.map((category) => [String(category._id), category]));
+
+  return rows.map((row) => {
+    const category = byId.get(String(row.transaction?.category_id));
+    return {
+      ...serialize(row, "history_id"),
+      category: category
+        ? { name: category.name, color: category.color, icon_key: category.icon_key }
+        : null,
+    };
+  });
+}
+
+export async function restoreTransaction(userId, historyId) {
+  const record = await TransactionHistory.findOne({
+    _id: historyId,
+    user_id: userId,
+    restored_at: null,
+  }).lean();
+  if (!record) throw ApiError.notFound("That deleted transaction was not found.");
+
+  const snapshot = record.transaction ?? {};
+  const category = await Category.findOne({
+    _id: snapshot.category_id,
+    $or: [{ user_id: null }, { user_id: userId }],
+  })
+    .select("type")
+    .lean();
+  if (!category) {
+    throw ApiError.conflict("That category is gone, so this cannot be restored.");
+  }
+
+  const restored = await Transaction.create({
+    user_id: userId,
+    category_id: snapshot.category_id,
+    type: category.type,
+    amount: snapshot.amount,
+    description: snapshot.description ?? "",
+    date: isDateString(snapshot.date) ? snapshot.date : todayString(),
+    is_recurring: Boolean(snapshot.is_recurring),
+    frequency: snapshot.is_recurring ? snapshot.frequency ?? "monthly" : null,
+    next_run_at: null,
+  });
+
+  await TransactionHistory.updateOne(
+    { _id: historyId, user_id: userId },
+    { $set: { restored_at: new Date() } },
+  );
+
+  await evaluateBudgets(userId, restored);
+  return restored;
+}
+
+// The next occurrence of every recurring row that is due. This is the step that
+// turns the is_recurring flag into real transactions: a monthly allowance saved
+// on the 20th writes itself on the 20th of every following month.
+//
+// It is called from listTransactions rather than a timer, so it needs no
+// scheduler and no second process. The read is already the moment a student is
+// looking at their ledger, which is exactly when a new entry should appear.
+//
+// Bounded on purpose. A row is only ever advanced one period at a time, and the
+// catch-up loop stops after 24 steps, so a transaction dated years ago or a
+// daily-ish frequency written by a bad client cannot stall the request.
+const MAX_CATCH_UP_STEPS = 24;
+
+export async function materialiseRecurring(userId) {
+  const today = todayString();
+  const due = await Transaction.find({
+    user_id: userId,
+    is_recurring: true,
+    frequency: { $in: ["weekly", "monthly"] },
+    next_run_at: { $ne: null, $lte: today },
+  })
+    .sort({ date: 1 })
+    .limit(100)
+    .lean();
+
+  const created = [];
+  const touched = new Set();
+
+  for (const row of due) {
+    if (touched.has(String(row._id))) continue;
+    let next = row.next_run_at;
+    let steps = 0;
+
+    while (next <= today && steps < MAX_CATCH_UP_STEPS) {
+      steps += 1;
+      const duplicate = await Transaction.exists({
+        user_id: userId,
+        is_recurring: true,
+        recurring_root: row.recurring_root ?? row._id,
+        date: next,
+      });
+      if (!duplicate) {
+        const createdRow = await Transaction.create({
+          user_id: userId,
+          category_id: row.category_id,
+          type: row.type,
+          amount: row.amount,
+          description: row.description,
+          date: next,
+          is_recurring: false,
+          frequency: null,
+          next_run_at: null,
+          recurring_root: row.recurring_root ?? row._id,
+          generated_from: row._id,
+        });
+        created.push(createdRow);
+      }
+      next = nextRunFrom(next, row.frequency);
+    }
+
+    await Transaction.updateOne(
+      { _id: row._id },
+      {
+        $set: {
+          next_run_at: next,
+          recurring_root: row.recurring_root ?? row._id,
+        },
+      },
+    );
+    touched.add(String(row._id));
+  }
+
+  if (created.length) {
+    const categories = new Set(created.map((row) => String(row.category_id)));
+    for (const categoryId of categories) {
+      for (const month of new Set(created.map((row) => monthKey(row.date)))) {
+        await evaluateBudgets(userId, {
+          category_id: categoryId,
+          type: "expense",
+          date: `${month}-01`,
+        });
+      }
+    }
+  }
+
+  return created;
+}
+
+export async function listTransactions(userId, month) {
+  await materialiseRecurring(userId);
+  const query = { user_id: userId };
+  const window = monthWindow(month);
+  if (window) query.date = window;
+  const rows = await Transaction.find(query).sort({ date: -1, createdAt: -1 }).lean();
+  return serializeAll(rows, "transaction_id");
 }
 
 // ------------------------------------------------------- budgets and alerts

@@ -9,6 +9,15 @@ import { useAuth } from "./useAuth.js";
 // the registry. Cleared on failure so the next auth change or remount retries.
 let pending = null;
 
+// Everyone holding a category list hears about a change to it, so adding a
+// category in one place does not leave the next dropdown showing the old list.
+const listeners = new Set();
+
+export function invalidateCategories() {
+  pending = null;
+  for (const notify of [...listeners]) notify();
+}
+
 function loadFor(userId) {
   if (pending && pending.userId === userId) return pending.promise;
 
@@ -39,6 +48,13 @@ export function useCategories() {
   // Tagged with the user it belongs to, so an entry left over from the previous
   // account is never read as this account's data.
   const [loaded, setLoaded] = useState({ userId: null, list: null, status: "idle" });
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    const notify = () => setReloadKey((value) => value + 1);
+    listeners.add(notify);
+    return () => listeners.delete(notify);
+  }, []);
 
   useEffect(() => {
     // The server has not said who this is yet. Guessing here is what fired a
@@ -68,7 +84,7 @@ export function useCategories() {
     return () => {
       active = false;
     };
-  }, [authStatus, userId]);
+  }, [authStatus, userId, reloadKey]);
 
   const mine = loaded.userId === userId ? loaded : null;
 

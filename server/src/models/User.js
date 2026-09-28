@@ -2,12 +2,13 @@ import mongoose from "mongoose";
 import { defineSchema } from "../utils/idOptions.js";
 
 export const ACADEMIC_YEARS = [
-  "Year 1",
-  "Year 2",
-  "Year 3",
-  "Year 4",
-  "Year 5",
-  "Postgraduate",
+  "100 Level",
+  "200 Level",
+  "300 Level",
+  "400 Level",
+  "500 Level",
+  "Graduated",
+  "Not a student",
 ];
 
 const userSchema = defineSchema(
@@ -28,6 +29,9 @@ const userSchema = defineSchema(
     allowance_baseline: { type: Number, default: null, min: 0 },
     monthly_savings_goal: { type: Number, default: null, min: 0 },
     role: { type: String, enum: ["student", "admin"], default: "student" },
+    // Set once the first-login profile card has been filled in or skipped, so it
+    // is never shown twice. Seeded accounts ship with it already true.
+    profileOnboarded: { type: Boolean, default: false },
     // An admin can disable an account; login refuses when this is false.
     is_active: { type: Boolean, default: true },
     profile_image_url: { type: String, default: null },

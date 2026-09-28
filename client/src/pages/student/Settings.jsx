@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import AvatarPicker from "../../components/AvatarPicker.jsx";
 import Icon from "../../components/Icon.jsx";
 import AssistantFab from "../../components/AssistantFab.jsx";
@@ -112,6 +113,9 @@ export default function Settings() {
                       <p className="min-w-0 max-w-full truncate font-display text-lg font-bold text-ink-900">{displayName}</p>
                     </div>
                     <p className="mt-0.5 text-sm text-ink-500">{email}</p>
+                    <p className="mt-2 text-sm text-ink-500">
+                      Update your profile info here anytime.
+                    </p>
                     <ul className="mt-3.5 flex flex-col gap-2 text-sm text-ink-500">
                       <li className="flex items-center gap-2">
                         <Icon name="user" size={15} className="text-emerald-600" />
@@ -164,6 +168,25 @@ export default function Settings() {
                           />
                         </span>
                       </button>
+                    ) : row.title === "Notifications" ? (
+                      <Link
+                        key={row.title}
+                        to="/notifications"
+                        className="flex w-full items-center gap-3.5 px-5 py-4 text-left transition hover:bg-slate-50"
+                      >
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                          <Icon name={row.icon} size={17} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold text-ink-900">
+                            {row.title}
+                          </span>
+                          <span className="mt-0.5 block text-xs text-ink-500">
+                            {row.subtitle}
+                          </span>
+                        </span>
+                        <Icon name="chevron-right" size={16} className="shrink-0 text-ink-500" />
+                      </Link>
                     ) : (
                       <button
                         key={row.title}

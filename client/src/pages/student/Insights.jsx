@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import BotAvatar from "../../components/BotAvatar.jsx";
+import BookmarkButton from "../../components/BookmarkButton.jsx";
 import Icon from "../../components/Icon.jsx";
 import AssistantFab, { INLINE_AI_VISIBLE_CLASS } from "../../components/AssistantFab.jsx";
 import MobileNav from "../../components/MobileNav.jsx";
@@ -292,6 +293,11 @@ export default function Insights() {
                 className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-500"
               />
             </div>
+            <BookmarkButton
+              month={month}
+              suggestedNote={view?.narrative ? `${view.narrative}`.slice(0, 200) : ""}
+              onError={(message) => setError(message)}
+            />
           </div>
 
           {error && (

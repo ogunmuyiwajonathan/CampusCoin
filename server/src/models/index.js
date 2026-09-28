@@ -1,6 +1,7 @@
 export { User, ACADEMIC_YEARS } from "./User.js";
 export { Category } from "./Category.js";
 export { Transaction } from "./Transaction.js";
+export { TransactionHistory } from "./TransactionHistory.js";
 export { Budget } from "./Budget.js";
 export { Insight } from "./Insight.js";
 export { Tip } from "./Tip.js";

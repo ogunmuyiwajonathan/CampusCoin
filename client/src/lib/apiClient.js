@@ -194,6 +194,18 @@ export function listCategories() {
   return apiFetch("/categories");
 }
 
+export function createCategory(body) {
+  return apiFetch("/categories", { method: "POST", body });
+}
+
+export function updateCategory(id, body) {
+  return apiFetch(`/categories/${id}`, { method: "PATCH", body });
+}
+
+export function deleteCategory(id) {
+  return apiFetch(`/categories/${id}`, { method: "DELETE" });
+}
+
 export function listTransactions(month) {
   return apiFetch(`/transactions?month=${encodeURIComponent(month)}`);
 }
@@ -208,6 +220,35 @@ export function updateTransaction(id, body) {
 
 export function deleteTransaction(id) {
   return apiFetch(`/transactions/${id}`, { method: "DELETE" });
+}
+
+export function listTransactionHistory() {
+  return apiFetch("/transactions/history");
+}
+
+export function restoreTransaction(historyId) {
+  return apiFetch(`/transactions/history/${historyId}/restore`, { method: "POST" });
+}
+
+export const CSV_MAX_BYTES = 2 * 1024 * 1024;
+
+function checkCsvFile(file) {
+  if (!file) throw new ApiError("Choose a CSV file first.", { status: 0 });
+  if (file.size > CSV_MAX_BYTES) {
+    throw new ApiError("That file is over 2 MB. Split it into smaller files.", { status: 0 });
+  }
+  return file;
+}
+
+export function importTransactionsCsv(file) {
+  checkCsvFile(file);
+  const form = new FormData();
+  form.append("file", file);
+  return apiFetch("/transactions/import", { method: "POST", formData: form });
+}
+
+export function undoImportBatch(batchId) {
+  return apiFetch(`/transactions/import/${batchId}`, { method: "DELETE" });
 }
 
 export function listBudgets(month) {
@@ -240,4 +281,44 @@ export function markNotificationRead(id) {
 
 export function markAllNotificationsRead() {
   return apiFetch("/notifications/read-all", { method: "PATCH" });
+}
+
+// ---------------------------------------------------------------- reports
+
+// The filter is built here rather than in the page so every caller sends the
+// same parameter names, and an empty filter sends nothing at all.
+export function getReports({ from, to, category, granularity } = {}) {
+  const query = new URLSearchParams();
+  if (from) query.set("from", from);
+  if (to) query.set("to", to);
+  if (category) query.set("category", category);
+  if (granularity) query.set("granularity", granularity);
+  const suffix = query.toString();
+  return apiFetch(`/reports${suffix ? `?${suffix}` : ""}`);
+}
+
+export function getReportCategories() {
+  return apiFetch("/reports/categories");
+}
+
+export function shareReport(body) {
+  return apiFetch("/reports/share", { method: "POST", body });
+}
+
+// ---------------------------------------------------------------- bookmarks
+
+export function listBookmarks() {
+  return apiFetch("/bookmarks");
+}
+
+export function saveBookmark(body) {
+  return apiFetch("/bookmarks", { method: "POST", body });
+}
+
+export function editBookmark(id, body) {
+  return apiFetch(`/bookmarks/${id}`, { method: "PATCH", body });
+}
+
+export function removeBookmark(id) {
+  return apiFetch(`/bookmarks/${id}`, { method: "DELETE" });
 }

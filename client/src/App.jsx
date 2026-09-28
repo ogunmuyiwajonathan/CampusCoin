@@ -9,11 +9,15 @@ import { useCategories } from "./hooks/useCategories.js";
 import NotFound from "./pages/NotFound.jsx";
 
 const Assistant = lazy(() => import("./pages/student/Assistant.jsx"));
+const Bookmarks = lazy(() => import("./pages/student/Bookmarks.jsx"));
 const Budgets = lazy(() => import("./pages/student/Budgets.jsx"));
 const Dashboard = lazy(() => import("./pages/student/Dashboard.jsx"));
 const Insights = lazy(() => import("./pages/student/Insights.jsx"));
+const Reports = lazy(() => import("./pages/student/Reports.jsx"));
 const LandingPage = lazy(() => import("./pages/LandingPage.jsx"));
 const Login = lazy(() => import("./pages/LoginPage.jsx"));
+const More = lazy(() => import("./pages/student/More.jsx"));
+const Notifications = lazy(() => import("./pages/student/Notifications.jsx"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
 const Settings = lazy(() => import("./pages/student/Settings.jsx"));
@@ -127,6 +131,38 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <Insights />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <Reports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/bookmarks"
+            element={
+              <ProtectedRoute>
+                <Bookmarks />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/more"
+            element={
+              <ProtectedRoute>
+                <More />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
               </ProtectedRoute>
             }
           />

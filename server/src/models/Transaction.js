@@ -26,11 +26,24 @@ const transactionSchema = defineSchema(
     },
     // Groups the rows created by one CSV upload so the whole batch can be undone.
     import_batch_id: { type: mongoose.Schema.Types.ObjectId, default: null },
+    // Every row one recurring series has produced points back at the row it came
+    // from, so a catch-up pass can tell a genuine new period from one it already
+    // wrote. Both are left unset rather than defaulted to null, for the same
+    // reason as request_id: the index below is sparse and only exempts rows that
+    // omit the field.
+    recurring_root: { type: mongoose.Schema.Types.ObjectId },
+    generated_from: { type: mongoose.Schema.Types.ObjectId, ref: "Transaction" },
     // Client-generated key for one "save this transaction" click. A double click,
     // a retry after a dropped response and a duplicated tab all send the same
     // key, and the unique index below turns the second one into the first row
     // instead of a second expense.
-    request_id: { type: String, default: null },
+    //
+    // Deliberately no default. The index is sparse, which exempts documents that
+    // omit the field but not documents that store an explicit null, so a null
+    // default would make every transaction written without a request_id (the
+    // seeder, a CSV import, a generated recurring row) collide with the previous
+    // one and fail to save.
+    request_id: { type: String },
   },
   { timestamps: true },
 );
@@ -41,8 +54,15 @@ transactionSchema.index({ user_id: 1, date: -1 });
 // aggregation never has to scan the whole collection.
 transactionSchema.index({ user_id: 1, category_id: 1 });
 // Makes the double-click guard a database guarantee rather than a client
-// promise. Sparse, so rows written without a request_id (the seeder, imports)
-// are all exempt and do not collide with one another.
+// promise. Sparse, so rows written without a request_id (the seeder, imports,
+// generated recurring rows) are all exempt and do not collide with one another.
+// This only holds while request_id is left unset rather than set to null.
 transactionSchema.index({ user_id: 1, request_id: 1 }, { unique: true, sparse: true });
+// Makes the recurring catch-up idempotent: the same series cannot write two rows
+// for one date, so a pass that runs twice inserts nothing the second time.
+transactionSchema.index({ user_id: 1, recurring_root: 1, date: 1 }, {
+  sparse: true,
+  unique: true,
+});
 
 export const Transaction = mongoose.model("Transaction", transactionSchema);

@@ -2,6 +2,7 @@ import { Router } from "express";
 import validate from "../middleware/validate.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import * as ledger from "../controllers/ledger.controller.js";
+import { importCsv, undoImport, upload } from "../controllers/import.controller.js";
 import {
   createBudgetSchema,
   createCategorySchema,
@@ -11,6 +12,7 @@ import {
   updateBudgetSchema,
   updateCategorySchema,
   updateTransactionSchema,
+  batchParamsSchema,
 } from "../validators/ledger.schema.js";
 
 const router = Router();
@@ -39,6 +41,27 @@ router.patch(
   ledger.updateTransaction,
 );
 router.delete("/transactions/:id", ...auth, validate({ params: idParamSchema }), ledger.deleteTransaction);
+
+router.get("/transactions/history", ...auth, ledger.listTransactionHistory);
+router.post(
+  "/transactions/history/:id/restore",
+  ...auth,
+  validate({ params: idParamSchema }),
+  ledger.restoreTransaction,
+);
+
+router.post(
+  "/transactions/import",
+  ...auth,
+  upload.single("file"),
+  importCsv,
+);
+router.delete(
+  "/transactions/import/:batchId",
+  ...auth,
+  validate({ params: batchParamsSchema }),
+  undoImport,
+);
 
 router.get("/budgets", ...auth, validate({ query: monthSchema }), ledger.listBudgets);
 router.post("/budgets", ...auth, validate({ body: createBudgetSchema }), ledger.createBudget);

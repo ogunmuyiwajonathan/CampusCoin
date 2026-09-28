@@ -25,10 +25,11 @@ import {
 const DEMO_STUDENT = {
   name: "Alex",
   email: "alex@example.com",
-  academic_year: "Year 2",
+  academic_year: "200 Level",
   allowance_baseline: 20000,
   monthly_savings_goal: 15000,
   role: "student",
+  profileOnboarded: true,
 };
 
 // Two named admin accounts. The admin login form asks for a name rather than
@@ -36,8 +37,8 @@ const DEMO_STUDENT = {
 // unique email to satisfy the schema, and that email is never shown to anyone
 // signing in.
 const DEMO_ADMINS = [
-  { name: "jonathan", email: "jonathan@campuscoin.test", role: "admin" },
-  { name: "senod", email: "senod@campuscoin.test", role: "admin" },
+  { name: "jonathan", email: "jonathan@campuscoin.test", role: "admin", profileOnboarded: true },
+  { name: "senod", email: "senod@campuscoin.test", role: "admin", profileOnboarded: true },
 ];
 
 const DEMO_PASSWORD = "CampusCoin2026!";
@@ -52,10 +53,11 @@ function adminLoginPassword() {
 const DEMO_LOGIN = {
   name: "Student",
   email: "student@campuscoin.test",
-  academic_year: "Year 1",
+  academic_year: "100 Level",
   allowance_baseline: 20000,
   monthly_savings_goal: 10000,
   role: "student",
+  profileOnboarded: true,
 };
 
 const DEMO_LOGIN_PASSWORD = "12345678";

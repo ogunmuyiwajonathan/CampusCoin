@@ -1,5 +1,5 @@
 import ApiError from "../utils/ApiError.js";
-import { env } from "../config/env.js";
+import { isTrustedOrigin } from "../utils/trustedOrigin.js";
 
 // Reads the acting user off the session and puts it on the request. Never reads
 // a user id from the body, the query string or a header: the session is the
@@ -38,14 +38,13 @@ export function requireAdmin(req, _res, next) {
 // Cookie auth is only safe if a cross-site form cannot borrow the cookie.
 // sameSite=lax already blocks cross-site POSTs in current browsers, but that is
 // a browser setting we do not control, so a state-changing request from an
-// origin that is not on the allowlist is refused outright. Requests with no
-// Origin are allowed because curl and server-to-server calls do not send one.
+// origin that is not trusted is refused outright. The rules live in one place
+// with the CORS check so the two can never drift apart: the CORS_ORIGIN
+// allowlist everywhere, plus loopback and same-host origins while developing.
 export function requireTrustedOrigin(req, _res, next) {
   if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") {
     return next();
   }
-  const origin = req.get("origin");
-  if (!origin) return next();
-  if (env.corsOrigins.includes(origin)) return next();
+  if (isTrustedOrigin(req.get("origin"), req.get("host"))) return next();
   return next(ApiError.forbidden("Request origin is not allowed."));
 }
