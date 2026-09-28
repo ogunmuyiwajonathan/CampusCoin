@@ -1,30 +1,85 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "./Icon.jsx";
 import BotAvatar from "./BotAvatar.jsx";
 import { askAssistant } from "../lib/aiAssistant.js";
+import {
+  categories,
+  computeTotals,
+  expenseBreakdown,
+  transactions,
+} from "../data/mockData.js";
+import { formatCurrency } from "../lib/formatCurrency.js";
 
-// The greeting the student sees before they type. It is labelled as a prompt
-// rather than an answer, because Rix has not been asked anything yet.
-function greeting() {
+const CATEGORY_KEYWORDS = [
+  { names: ["Food"], words: ["food", "cafeteria", "canteen", "grocer", "snack", "drink", "restaurant", "lunch", "dinner", "breakfast", "meal", "eat"] },
+  { names: ["Transport"], words: ["transport", "uber", "bus", "bike", "taxi", "fare", "fuel", "ride", "bolt"] },
+  { names: ["Hostel/Rent"], words: ["hostel", "rent", "accommodation", "room", "lodge"] },
+  { names: ["Academics"], words: ["textbook", "book", "printing", "school", "course", "exam", "tutorial", "stationery"] },
+  { names: ["Subscriptions"], words: ["netflix", "subscription", "spotify", "data", "bundle", "wifi", "airtime"] },
+  { names: ["Entertainment"], words: ["movie", "game", "cinema", "party", "concert", "entertainment", "outing"] },
+  { names: ["Allowance", "Gigs", "Scholarships", "Gifts"], words: ["received", "allowance", "salary", "paid", "scholarship", "gift"] },
+];
+
+function parseAmount(text) {
+  const match = text.replace(/₦/g, "").match(/(\d[\d,]*)/);
+  if (!match) return null;
+  const value = Number(match[1].replace(/,/g, ""));
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function matchCategory(text) {
+  const lower = text.toLowerCase();
+  for (const group of CATEGORY_KEYWORDS) {
+    if (group.words.some((w) => lower.includes(w))) {
+      return categories.find((c) => group.names.includes(c.name)) ?? null;
+    }
+  }
+  return categories.find((c) => c.name === "Others") ?? null;
+}
+
+function summarize(categoryName, extraAmount) {
+  const totals = computeTotals(transactions);
+  const breakdown = expenseBreakdown(transactions);
+  const current = breakdown.find((c) => c.name === categoryName)?.amount ?? 0;
+  const categoryTotal = current + (extraAmount ?? 0);
+  const grandTotal = totals.expense + (extraAmount ?? 0);
+  const percentage = grandTotal ? Math.round((categoryTotal / grandTotal) * 100) : 0;
+  return { categoryTotal, percentage };
+}
+
+function tipFor(categoryName, categoryTotal) {
+  const saveTarget = formatCurrency(Math.round(categoryTotal * 0.2));
+  if (categoryName === "Food") {
+    return `Try cooking more or using student discounts to save up to ${saveTarget} next month.`;
+  }
+  const weekly = formatCurrency(Math.round(categoryTotal / 4));
+  return `A weekly cap of ${weekly} keeps ${categoryName.toLowerCase()} on track and frees up to ${saveTarget} a month.`;
+}
+
+function seedConversation() {
+  const userText = "I just bought food at the cafeteria for ₦5,000";
+  const { categoryTotal, percentage } = summarize("Food", 0);
   return [
+    { id: "seed-user", role: "user", kind: "text", text: userText },
     {
-      id: "greeting",
+      id: "seed-assistant",
       role: "assistant",
-      kind: "text",
-      text: "Hi, I am Rix. Ask me where your money went this month, or how to cut a category down.",
-      source: null,
+      kind: "categorize",
+      category: "Food",
+      summary: `This month, you've spent ${formatCurrency(categoryTotal)} on food (${percentage}% of your total expenses).`,
+      tip: tipFor("Food", categoryTotal),
     },
   ];
 }
 
 export default function AssistantChat({ onClose } = {}) {
-  const [messages, setMessages] = useState(greeting);
+  const [messages, setMessages] = useState(seedConversation);
   const [draft, setDraft] = useState("");
   const [status, setStatus] = useState("ready");
-  const [offline, setOffline] = useState(false);
   const idRef = useRef(0);
   const bottomRef = useRef(null);
+  const breakdown = useMemo(() => expenseBreakdown(transactions), []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -35,24 +90,36 @@ export default function AssistantChat({ onClose } = {}) {
     return `msg-${Date.now()}-${idRef.current}`;
   };
 
-  // One path for every question. The old version detected an amount in the text
-  // and answered from a hardcoded keyword table without ever calling the
-  // server, which meant the assistant quoted numbers from a mock dataset rather
-  // than from the signed-in student's ledger.
+  const handleExpense = (text) => {
+    const amount = parseAmount(text);
+    const category = matchCategory(text);
+    const name = category?.name ?? "Others";
+    const { categoryTotal, percentage } = summarize(name, amount ?? 0);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: nextId(),
+        role: "assistant",
+        kind: "categorize",
+        category: name,
+        summary: `This month, you've spent ${formatCurrency(categoryTotal)} on ${name.toLowerCase()} (${percentage}% of your total expenses).`,
+        tip: tipFor(name, categoryTotal),
+      },
+    ]);
+    setStatus("ready");
+  };
+
   const handleQuestion = async (text, id) => {
     try {
-      const answer = await askAssistant(text);
-      if (answer.source !== "poolside") setOffline(true);
+      const answer = await askAssistant(text, breakdown);
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === id
-            ? { ...m, kind: "text", text: answer.reply, source: answer.source }
-            : m,
-        ),
+        prev.map((m) => (m.id === id ? { ...m, kind: "text", text: answer } : m)),
       );
       setStatus("ready");
     } catch {
-      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, kind: "error" } : m)));
+      setMessages((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, kind: "error" } : m)),
+      );
       setStatus("error");
     }
   };
@@ -63,6 +130,11 @@ export default function AssistantChat({ onClose } = {}) {
     if (!text || status === "loading") return;
     setDraft("");
     setMessages((prev) => [...prev, { id: nextId(), role: "user", kind: "text", text }]);
+    if (parseAmount(text)) {
+      setStatus("loading");
+      window.setTimeout(() => handleExpense(text), 450);
+      return;
+    }
     const id = nextId();
     setStatus("loading");
     setMessages((prev) => [...prev, { id, role: "assistant", kind: "typing" }]);
@@ -78,9 +150,7 @@ export default function AssistantChat({ onClose } = {}) {
       .find((m) => m.role === "user")?.text;
     if (!userText) return;
     setStatus("loading");
-    setMessages((prev) =>
-      prev.map((m) => (m.id === failed.id ? { ...m, kind: "typing" } : m)),
-    );
+    setMessages((prev) => prev.map((m) => (m.id === failed.id ? { ...m, kind: "typing" } : m)));
     handleQuestion(userText, failed.id);
   };
 
@@ -154,6 +224,36 @@ export default function AssistantChat({ onClose } = {}) {
               </div>
             );
           }
+          if (message.kind === "categorize") {
+            return (
+              <div key={message.id} className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <BotAvatar />
+                  <p className="break-words rounded-2xl rounded-tl-md bg-slate-100 px-4 py-2.5 text-sm text-ink-900">
+                    Got it! I&apos;ve categorized this as{" "}
+                    <strong>{message.category}</strong>.
+                  </p>
+                </div>
+                <div className="ml-10">
+                  <h3 className="font-display text-sm font-bold text-ink-900">
+                    Quick Summary
+                  </h3>
+                  <p className="mt-1 text-sm leading-relaxed text-ink-500">
+                    {message.summary}
+                  </p>
+                </div>
+                <div className="ml-10 flex gap-2 rounded-2xl bg-sky-50 px-4 py-3">
+                  <Icon name="lightbulb" size={16} className="mt-0.5 shrink-0 text-amber-500" />
+                  <div>
+                    <p className="font-display text-sm font-bold text-ink-900">Tip</p>
+                    <p className="mt-0.5 text-sm leading-relaxed text-ink-500">
+                      {message.tip}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          }
           return (
             <div key={message.id} className="flex items-start gap-2">
               <BotAvatar />
@@ -165,17 +265,6 @@ export default function AssistantChat({ onClose } = {}) {
         })}
         <div ref={bottomRef} />
       </div>
-
-      {offline && (
-        <p className="mb-2 flex items-start gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
-          <Icon name="info" size={14} className="mt-0.5 shrink-0" />
-          <span>
-            Rix is answering from your own figures, not the AI model. Every number above
-            is read from your ledger, but the wording is a fixed rule rather than a
-            generated answer.
-          </span>
-        </p>
-      )}
 
       <form
         onSubmit={submit}
