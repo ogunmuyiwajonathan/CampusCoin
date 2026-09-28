@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Icon from "../components/Icon.jsx";
+import CategoryIcon from "../components/CategoryIcon.jsx";
 import AssistantFab from "../components/AssistantFab.jsx";
 import MobileNav from "../components/MobileNav.jsx";
 import PageHeader from "../components/PageHeader.jsx";
@@ -9,7 +10,6 @@ import TransactionForm from "../components/TransactionForm.jsx";
 import { useTransactions } from "../hooks/useTransactions.js";
 import {
   categoryColor,
-  categoryIcon,
   categoryLookup,
   computeTotals,
   expenseBreakdown,
@@ -338,7 +338,6 @@ export default function Transactions() {
                     {rows.map((item) => {
                       const category = lookup[item.category_id];
                       const name = category?.name ?? "Others";
-                      const icon = categoryIcon(name);
                       const color = categoryColor(item.category_id);
                       const isIncome = item.type === "income";
                       return (
@@ -371,7 +370,7 @@ export default function Transactions() {
                                 className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white"
                                 style={{ backgroundColor: color }}
                               >
-                                <Icon name={icon} size={13} />
+                                <CategoryIcon category={category} size={13} />
                               </span>
                               <span className="min-w-0 max-w-[130px] truncate">{name}</span>
                             </span>

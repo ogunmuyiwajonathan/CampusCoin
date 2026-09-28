@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
 import campusboy from "../assets/campusboy.webp";
 import AssistantFab from "../components/AssistantFab.jsx";
@@ -11,8 +12,8 @@ import AIAssistantCard from "../components/AIAssistantCard.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import {
-  categoryColor,
-  categoryIcon,
+  CATEGORY_COLORS,
+  CATEGORY_ICONS,
   categoryLookup,
   computeTotals,
   expenseBreakdown,
@@ -20,6 +21,15 @@ import {
 } from "../data/mockData.js";
 import { useTransactions } from "../hooks/useTransactions.js";
 import { formatCurrency } from "../lib/formatCurrency.js";
+
+const AddTransactionLink = () => (
+  <Link
+    to="/transactions"
+    className="rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800"
+  >
+    Click to create transactions
+  </Link>
+);
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -42,8 +52,8 @@ export default function Dashboard() {
       return {
         ...t,
         category_name: name,
-        icon: categoryIcon(name),
-        color: categoryColor(t.category_id),
+        icon: CATEGORY_ICONS[name] ?? "ellipsis",
+        color: CATEGORY_COLORS[t.category_id] ?? "#64748b",
       };
     });
 
@@ -100,7 +110,11 @@ export default function Dashboard() {
           <section className="grid grid-cols-1 gap-4 xl:grid-cols-[40fr_35fr_25fr]">
             <div className="rounded-card bg-surface p-5 shadow-card">
               <h2 className="mb-4 font-display text-base font-bold tracking-tight text-ink-900">Spending Overview</h2>
-              <SpendingDonut breakdown={breakdown} totalExpense={totals.expense} />
+              <SpendingDonut
+                breakdown={breakdown}
+                totalExpense={totals.expense}
+                emptyAction={<AddTransactionLink />}
+              />
             </div>
             <RecentTransactions items={recent} />
             <AIAssistantCard breakdown={breakdown} />

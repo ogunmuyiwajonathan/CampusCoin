@@ -17,6 +17,12 @@ const categorySchema = defineSchema(
     // values travel with the category instead.
     color: { type: String, default: null },
     icon: { type: String, default: null },
+    // A category shows either a key from the shared lucide registry or a
+    // sanitised custom SVG, never both. Both are nullable so rows written
+    // before these fields existed keep working; the client falls back to a
+    // default when neither is present.
+    icon_key: { type: String, default: null, trim: true, maxlength: 60 },
+    icon_svg: { type: String, default: null, maxlength: 4096 },
   },
   { timestamps: true },
 );

@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import Icon from "./Icon.jsx";
 import bushSide from "../assets/bush-side.webp";
 import { useAuth } from "../hooks/useAuth.js";
@@ -14,7 +14,6 @@ const NAV_ITEMS = [
 
 export default function Sidebar({ open, onClose }) {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
 
   return (
     <>
@@ -73,10 +72,7 @@ export default function Sidebar({ open, onClose }) {
         {user ? (
           <button
             type="button"
-            onClick={() => {
-              logout();
-              navigate("/login");
-            }}
+            onClick={() => logout()}
             className="mt-4 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sage-400 transition hover:bg-forest-800 hover:text-white"
           >
             <Icon name="log-out" size={18} />

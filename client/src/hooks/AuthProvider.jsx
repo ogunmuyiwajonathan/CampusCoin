@@ -84,6 +84,17 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const refresh = useCallback(async () => {
+    try {
+      const data = await getMe();
+      setUser(decorate(data?.user ?? null));
+      return data?.user ?? null;
+    } catch {
+      setUser(null);
+      return null;
+    }
+  }, []);
+
   const updateProfile = useCallback(async (patch) => {
     try {
       const data = await saveProfile(patch);
@@ -113,10 +124,11 @@ export function AuthProvider({ children }) {
       login,
       register,
       logout,
+      refresh,
       updateProfile,
       uploadProfileAvatar,
     }),
-    [user, status, login, register, logout, updateProfile, uploadProfileAvatar],
+    [user, status, login, register, logout, refresh, updateProfile, uploadProfileAvatar],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

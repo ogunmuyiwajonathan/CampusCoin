@@ -8,12 +8,12 @@ import MobileNav from "../components/MobileNav.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import Sidebar from "../components/Sidebar.jsx";
 import StatCard from "../components/StatCard.jsx";
+import CategoryIcon from "../components/CategoryIcon.jsx";
 import { useBudgets } from "../hooks/useBudgets.js";
 import { useTransactions } from "../hooks/useTransactions.js";
 import {
   categories,
   categoryColor,
-  categoryIcon,
   categoryLookup,
 } from "../data/mockData.js";
 import { formatCurrency } from "../lib/formatCurrency.js";
@@ -145,7 +145,6 @@ export default function Budgets() {
         spent,
         pct,
         status: statusFor(pct),
-        icon: categoryIcon(name),
         color: categoryColor(item.category_id),
       };
     })
@@ -359,7 +358,7 @@ export default function Budgets() {
                               style={{ backgroundColor: `${row.color}1A`, color: row.color }}
                               aria-hidden="true"
                             >
-                              <Icon name={row.icon} size={20} />
+                              <CategoryIcon category={row} size={20} />
                             </span>
                             <div className="min-w-0 flex-1 basis-44">
                               <p className="truncate text-sm font-bold text-ink-900">{row.name}</p>

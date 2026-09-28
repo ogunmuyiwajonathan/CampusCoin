@@ -36,6 +36,15 @@ export default class ErrorBoundary extends Component {
             >
               Try again
             </button>
+            {this.props.showReload ? (
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800"
+              >
+                Reload page
+              </button>
+            ) : null}
             <a
               href="/dashboard"
               className="rounded-lg border border-slate-200 bg-surface px-4 py-2.5 text-sm font-semibold text-ink-900 transition hover:bg-slate-50"

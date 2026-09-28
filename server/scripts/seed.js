@@ -33,28 +33,40 @@ const DEMO_STUDENT = {
 
 const DEMO_ADMIN = {
   name: "Campus Coin Admin",
-  email: "admin@campuscoin.test",
+  email: env.adminEmail || "admin@campuscoin.test",
   role: "admin",
 };
 
-// Documented in the submission as the credentials for each role.
 const DEMO_PASSWORD = "CampusCoin2026!";
-const ADMIN_PASSWORD = "AdminCampus2026!";
+const ADMIN_PASSWORD = env.adminSeedPassword || "AdminCampus2026!";
 
-// name, type, is_default, color, icon - colours and icons are lifted from
-// CATEGORY_COLORS / CATEGORY_ICONS in mockData.js.
+const DEMO_LOGIN = {
+  name: "Student",
+  email: "student@campuscoin.test",
+  academic_year: "Year 1",
+  allowance_baseline: 20000,
+  monthly_savings_goal: 10000,
+  role: "student",
+};
+
+const DEMO_LOGIN_PASSWORD = "12345678";
+
+// name, type, is_default, color, icon, icon_key - colours and icons are lifted
+// from CATEGORY_COLORS / CATEGORY_ICONS in mockData.js. icon_key is the
+// registry key the shared CategoryIcon component renders; "tv" and "ellipsis"
+// are not in the curated set, so those two rows get the nearest equivalent.
 const CATEGORIES = [
-  { name: "Allowance", type: "income", is_default: true, color: null, icon: "wallet" },
-  { name: "Scholarships", type: "income", is_default: true, color: null, icon: "graduation-cap" },
-  { name: "Gigs", type: "income", is_default: false, color: null, icon: "briefcase" },
-  { name: "Gifts", type: "income", is_default: true, color: null, icon: "gift" },
-  { name: "Food", type: "expense", is_default: true, color: "#10b981", icon: "utensils" },
-  { name: "Transport", type: "expense", is_default: true, color: "#3b82f6", icon: "bus" },
-  { name: "Hostel/Rent", type: "expense", is_default: true, color: "#f59e0b", icon: "house" },
-  { name: "Academics", type: "expense", is_default: true, color: "#eab308", icon: "book-open" },
-  { name: "Subscriptions", type: "expense", is_default: false, color: "#8b5cf6", icon: "tv" },
-  { name: "Entertainment", type: "expense", is_default: false, color: "#ec4899", icon: "gamepad-2" },
-  { name: "Others", type: "expense", is_default: true, color: "#64748b", icon: "ellipsis" },
+  { name: "Allowance", type: "income", is_default: true, color: null, icon: "wallet", icon_key: "wallet" },
+  { name: "Scholarships", type: "income", is_default: true, color: null, icon: "graduation-cap", icon_key: "graduation-cap" },
+  { name: "Gigs", type: "income", is_default: false, color: null, icon: "briefcase", icon_key: "briefcase" },
+  { name: "Gifts", type: "income", is_default: true, color: null, icon: "gift", icon_key: "gift" },
+  { name: "Food", type: "expense", is_default: true, color: "#10b981", icon: "utensils", icon_key: "utensils" },
+  { name: "Transport", type: "expense", is_default: true, color: "#3b82f6", icon: "bus", icon_key: "bus" },
+  { name: "Hostel/Rent", type: "expense", is_default: true, color: "#f59e0b", icon: "house", icon_key: "house" },
+  { name: "Academics", type: "expense", is_default: true, color: "#eab308", icon: "book-open", icon_key: "book-open" },
+  { name: "Subscriptions", type: "expense", is_default: false, color: "#8b5cf6", icon: "tv", icon_key: "repeat" },
+  { name: "Entertainment", type: "expense", is_default: false, color: "#ec4899", icon: "gamepad-2", icon_key: "gamepad-2" },
+  { name: "Others", type: "expense", is_default: true, color: "#64748b", icon: "ellipsis", icon_key: "more-horizontal" },
 ];
 
 // category name, type, amount, description, date, is_recurring
@@ -224,6 +236,7 @@ async function seedTipTemplates() {
 export async function runSeed() {
   const student = await upsertUser(DEMO_STUDENT, DEMO_PASSWORD);
   const admin = await upsertUser(DEMO_ADMIN, ADMIN_PASSWORD);
+  const demoLogin = await upsertUser(DEMO_LOGIN, DEMO_LOGIN_PASSWORD);
   const categoriesByName = await seedCategories();
 
   const transactions = await seedTransactions(student._id, categoriesByName);
@@ -231,11 +244,22 @@ export async function runSeed() {
   const notifications = await seedNotifications(student._id);
   const templates = await seedTipTemplates();
 
-  return { student, admin, transactions, budgets, notifications, templates };
+  return { student, admin, demoLogin, transactions, budgets, notifications, templates };
 }
 
 async function main() {
   await connectDb();
+
+  if (env.isProd) {
+    const pwd = env.adminSeedPassword || "";
+    if (pwd === "123456789" || pwd.length < 12) {
+      console.error("Seed aborted: ADMIN_SEED_PASSWORD must not be '123456789' and must be at least 12 characters in production.");
+      console.error("Set a strong password in your production environment variables before seeding.");
+      await disconnectDb();
+      process.exit(1);
+    }
+  }
+
   if (env.useMemoryDb) {
     console.log("\n  NOTE: MONGODB_URI is blank, so this seeded data is discarded");
     console.log("  when this process exits. Set MONGODB_URI to keep it.\n");
@@ -244,7 +268,7 @@ async function main() {
   const result = await runSeed();
 
   console.log("\nseed summary");
-  console.log(`  users             2  (${result.student.email}, ${result.admin.email})`);
+  console.log(`  users             3  (${result.student.email}, ${result.admin.email}, ${result.demoLogin.email})`);
   console.log(`  categories       ${CATEGORIES.length}`);
   console.log(`  transactions     ${result.transactions} inserted this run`);
   console.log(`  budgets          ${result.budgets} inserted this run`);
@@ -252,6 +276,7 @@ async function main() {
   console.log(`  tip templates    ${result.templates} created this run`);
   console.log("\n  demo credentials");
   console.log(`    student  ${DEMO_STUDENT.email} / ${DEMO_PASSWORD}`);
+  console.log(`    demo     ${DEMO_LOGIN.email} / ${DEMO_LOGIN_PASSWORD}`);
   console.log(`    admin    ${DEMO_ADMIN.email} / ${ADMIN_PASSWORD}\n`);
 
   await disconnectDb();

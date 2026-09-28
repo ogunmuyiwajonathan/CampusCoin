@@ -84,10 +84,9 @@ export function logoutAccount() {
   return apiFetch("/auth/logout", { method: "POST" });
 }
 
-// The demo shortcut: the server signs us in as the seeded account, so there is no
-// password in the browser and none in the bundle. The server answers 404 when the
-// shortcut is switched off, which is how the app knows to show the real login
-// form instead.
+// Development shortcut. The server refuses this route in production, so it is
+// not a back door - it signs in as a seeded student with a real session, which
+// is why the data endpoints keep working after it.
 export function demoLogin() {
   return apiFetch("/auth/demo", { method: "POST" });
 }
@@ -208,6 +207,10 @@ export function deleteBudget(id) {
   return apiFetch(`/budgets/${id}`, { method: "DELETE" });
 }
 
+export function listAnnouncements() {
+  return apiFetch("/announcements");
+}
+
 export function listNotifications() {
   return apiFetch("/notifications");
 }
@@ -218,12 +221,4 @@ export function markNotificationRead(id) {
 
 export function markAllNotificationsRead() {
   return apiFetch("/notifications/read-all", { method: "PATCH" });
-}
-
-// ------------------------------------------------------------------- ai
-
-// An empty question is valid: the dashboard card asks for a general summary on
-// mount. The server answers either way.
-export function askAssistant(question) {
-  return apiFetch("/ai/chat", { method: "POST", body: { question: question ?? "" } });
 }

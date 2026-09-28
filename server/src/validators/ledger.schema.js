@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { ACADEMIC_YEARS } from "../models/User.js";
+import { CATEGORY_ICON_KEYS } from "./category.schema.js";
+import { sanitizeSvg } from "../utils/sanitizeSvg.js";
 
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 const DATE = /^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/;
@@ -15,6 +17,33 @@ export const createCategorySchema = z.object({
   type: categoryType,
   color: z.string().trim().max(20).nullable().optional(),
   icon: z.string().trim().max(40).nullable().optional(),
+  icon_key: z
+    .string()
+    .trim()
+    .min(1)
+    .refine((value) => CATEGORY_ICON_KEYS.includes(value), {
+      message: "That icon is not one of the available icons.",
+    })
+    .nullable()
+    .optional(),
+  icon_svg: z
+    .string()
+    .trim()
+    .min(1)
+    .max(4096, "That SVG is too large. The limit is 4 KB.")
+    .refine(
+      (value) => {
+        try {
+          sanitizeSvg(value);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: "That SVG could not be used." },
+    )
+    .nullable()
+    .optional(),
 });
 
 export const updateCategorySchema = createCategorySchema.partial().refine(
@@ -40,6 +69,7 @@ export const createTransactionSchema = z.object({
   is_recurring: z.boolean().default(false),
   frequency: z.enum(["weekly", "monthly"]).nullable().optional(),
   next_run_at: z.string().regex(DATE).nullable().optional(),
+  request_id: z.string().trim().min(8).max(80).optional(),
 });
 
 export const updateTransactionSchema = createTransactionSchema

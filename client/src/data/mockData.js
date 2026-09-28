@@ -94,21 +94,6 @@ export const budgets = [
   { budget_id: "b14", user_id: "demo-student", category_id: "c11", month: "2026-10", limit_amount: 2000 },
 ];
 
-// Categories now come from the API, where the ids are real database ids rather
-// than the c1..c11 the seed used. The lookup helpers below are shared by six
-// files, so instead of rewriting every call site they read a registry that
-// useCategories() fills in once the real list arrives, and fall back to the seed
-// array before that so nothing renders blank on a slow connection.
-let liveCategories = [];
-
-export function applyCategories(list) {
-  liveCategories = Array.isArray(list) ? list : [];
-}
-
-export function allCategories() {
-  return liveCategories.length ? liveCategories : categories;
-}
-
 export const CATEGORY_ICONS = {
   Allowance: "wallet",
   Scholarships: "graduation-cap",
@@ -133,20 +118,44 @@ export const CATEGORY_COLORS = {
   c11: "#64748b",
 };
 
-// Both read the category row itself when one is known, so a category the seed
-// never had still gets its own colour and icon instead of falling back to grey.
-export function categoryColor(categoryId) {
-  const row = allCategories().find((c) => c.category_id === categoryId);
-  return row?.color ?? CATEGORY_COLORS[categoryId] ?? "#64748b";
+export function categoryLookup() {
+  return Object.fromEntries(categories.map((c) => [c.category_id, c]));
+}
+
+const COLOR_BY_NAME = Object.fromEntries(
+  categories
+    .filter((c) => CATEGORY_COLORS[c.category_id])
+    .map((c) => [c.name, CATEGORY_COLORS[c.category_id]]),
+);
+const COLOR_PALETTE = Object.values(CATEGORY_COLORS);
+
+let registry = categories;
+
+export function allCategories() {
+  return registry;
+}
+
+export function applyCategories(list) {
+  if (Array.isArray(list) && list.length) registry = list;
+}
+
+// Puts the built-in seed back. Called when the signed-in user goes away, so the
+// previous account's own categories cannot stay in the registry and turn up in
+// a dropdown on a public page or under the next login.
+export function resetCategories() {
+  registry = categories;
+  return registry;
 }
 
 export function categoryIcon(name) {
-  const row = allCategories().find((c) => c.name === name);
-  return row?.icon ?? CATEGORY_ICONS[name] ?? "ellipsis";
+  return CATEGORY_ICONS[name] ?? "tags";
 }
 
-export function categoryLookup() {
-  return Object.fromEntries(allCategories().map((c) => [c.category_id, c]));
+export function categoryColor(id) {
+  if (CATEGORY_COLORS[id]) return CATEGORY_COLORS[id];
+  const match = registry.find((c) => c.category_id === id);
+  if (match && COLOR_BY_NAME[match.name]) return COLOR_BY_NAME[match.name];
+  return COLOR_PALETTE[0];
 }
 
 export function computeTotals(list) {
@@ -174,7 +183,7 @@ export function expenseBreakdown(list) {
       name: lookup[categoryId]?.name ?? "Others",
       amount,
       percentage: totals.expense ? Math.round((amount / totals.expense) * 100) : 0,
-      color: categoryColor(categoryId),
+      color: CATEGORY_COLORS[categoryId] ?? "#64748b",
     }))
     .sort(
       (a, b) =>

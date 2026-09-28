@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import Icon from "./Icon.jsx";
+import CategoryIcon from "./CategoryIcon.jsx";
 import { formatCurrency } from "../lib/formatCurrency.js";
 
 function relativeDate(isoDate) {
@@ -22,8 +22,19 @@ export default function RecentTransactions({ items }) {
         </Link>
       </div>
 
-      <ul className="flex flex-col divide-y divide-slate-100">
-        {items.map((t) => (
+      {items.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+          <p className="text-sm text-ink-500">No transactions yet.</p>
+          <Link
+            to="/transactions"
+            className="rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800"
+          >
+            Click to create transactions
+          </Link>
+        </div>
+      ) : (
+        <ul className="flex flex-col divide-y divide-slate-100">
+          {items.map((t) => (
           <li key={t.transaction_id} className="flex items-center gap-3 py-2.5">
             <span
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white ${
@@ -31,7 +42,7 @@ export default function RecentTransactions({ items }) {
               }`}
               style={t.type === "expense" ? { backgroundColor: t.color } : undefined}
             >
-              <Icon name={t.icon} size={16} />
+              <CategoryIcon category={t} iconKey={t.icon} size={16} />
             </span>
             <div className="min-w-0 flex-1">
               <p className="line-clamp-2 text-sm font-semibold text-ink-900">{t.description}</p>
@@ -48,8 +59,9 @@ export default function RecentTransactions({ items }) {
               {formatCurrency(t.amount)}
             </span>
           </li>
-        ))}
-      </ul>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
