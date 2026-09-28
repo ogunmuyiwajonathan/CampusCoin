@@ -72,4 +72,25 @@ export const env = {
   resendApiKey: process.env.RESEND_API_KEY?.trim() || null,
   emailFrom: process.env.EMAIL_FROM?.trim() || "CampusCoin <no-reply@campuscoin.app>",
   uploadDir: process.env.UPLOAD_DIR?.trim() || "uploads",
+  // The AI provider. Optional rather than required, so the app still boots and
+  // every non-AI screen still works on a machine with no key. When it is absent
+  // the assistant answers from the student's own numbers using the same rules
+  // the tips engine uses, and every response says so, rather than pretending.
+  poolsideApiKey: process.env.POOLSIDE_API_KEY?.trim() || null,
+  poolsideBaseUrl: process.env.POOLSIDE_BASE_URL?.trim() || "https://inference.poolside.ai/v1",
+  poolsideModel: process.env.POOLSIDE_MODEL?.trim() || "poolside/laguna-xs-2.1",
+  // Which seeded account a demo hands out. Leaving it unset turns the demo
+  // shortcut off entirely and the real login form takes over again, so the
+  // switch is one variable rather than a code change.
+  demoLoginEmail: process.env.DEMO_LOGIN_EMAIL?.trim() || null,
 };
+
+// A demo shortcut that signs everybody in as the same student is a hole in the
+// auth story, not a convenience. It must never reach a deployed environment, so
+// a production boot with it set stops here rather than quietly serving an app
+// where any visitor is already authenticated.
+if (env.demoLoginEmail && env.isProd) {
+  console.error("DEMO_LOGIN_EMAIL is set but NODE_ENV=production.");
+  console.error("The demo shortcut signs every visitor in as one account. Unset it to deploy.");
+  process.exit(1);
+}

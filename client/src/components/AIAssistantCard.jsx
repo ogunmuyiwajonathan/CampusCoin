@@ -3,35 +3,60 @@ import BotAvatar from "./BotAvatar.jsx";
 import Icon from "./Icon.jsx";
 import { askAssistant } from "../lib/aiAssistant.js";
 
-export default function AIAssistantCard({ breakdown }) {
+// The summary card on the dashboard. It asks the server for this month's picture
+// on mount, so what it shows is the same figure the charts above it are drawn
+// from, rather than a separate calculation.
+//
+// The breakdown prop used to be answered here from mockData. The server owns
+// that now, so the prop is not read - Dashboard still passes it, and an ignored
+// prop is not a reason to edit a file another session is working in.
+export default function AIAssistantCard() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [source, setSource] = useState(null);
   const [status, setStatus] = useState("loading");
 
-  const load = useCallback(
-    (q) =>
-      askAssistant(q, breakdown)
-        .then((res) => {
-          setAnswer(res);
-          setStatus("ready");
-        })
-        .catch(() => setStatus("error")),
-    [breakdown],
-  );
+  // Used only for questions the student sends. The mount call below does its own
+  // fetch rather than calling this, because calling a state-setting function from
+  // inside an effect is the cascading-render pattern the linter rejects.
+  const load = useCallback(async (q) => {
+    setStatus("loading");
+    try {
+      const result = await askAssistant(q);
+      setAnswer(result.reply);
+      setSource(result.source);
+      setStatus("ready");
+    } catch {
+      setStatus("error");
+    }
+  }, []);
 
+  // status already starts as "loading", so nothing has to be set synchronously
+  // before the request goes out. The cancelled flag stops a reply that lands
+  // after unmount from writing to a dead component.
   useEffect(() => {
-    load("");
-  }, [load]);
+    let cancelled = false;
+    askAssistant("")
+      .then((result) => {
+        if (cancelled) return;
+        setAnswer(result.reply);
+        setSource(result.source);
+        setStatus("ready");
+      })
+      .catch(() => {
+        if (!cancelled) setStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const submit = (event) => {
     event.preventDefault();
     const q = question.trim();
     if (!q) return;
-    setStatus("loading");
     load(q);
   };
-
-  if (!breakdown?.length) return null;
 
   return (
     <div className="flex h-full flex-col rounded-card bg-surface p-5 shadow-card">
@@ -61,7 +86,15 @@ export default function AIAssistantCard({ breakdown }) {
           </p>
         )}
         {status === "ready" && (
-          <p className="text-sm italic leading-relaxed text-ink-500">{answer}</p>
+          <>
+            <p className="text-sm italic leading-relaxed text-ink-500">{answer}</p>
+            {source !== "poolside" && (
+              <p className="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-amber-800">
+                <Icon name="info" size={13} className="mt-0.5 shrink-0" />
+                <span>Offline mode - this was computed from your ledger, not generated.</span>
+              </p>
+            )}
+          </>
         )}
       </div>
 
