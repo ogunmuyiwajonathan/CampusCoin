@@ -1,20 +1,10 @@
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import mongoose from "mongoose";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import { User } from "../models/index.js";
-import { adminResetPasswordSchema } from "../validators/auth.schema.js";
 import { env } from "../config/env.js";
-import { sendPasswordResetEmail } from "../services/mail.service.js";
-import {
-  consumeResetCode,
-  createResetCode,
-  invalidateResetTokens,
-  markResetTokenUsed,
-  normaliseEmail,
-  setPassword,
-} from "../services/auth.service.js";
+import { normaliseEmail } from "../services/auth.service.js";
 
 // "Remember me" trades convenience for a long-lived cookie. Both paths keep a
 // real expiry, so an admin on a shared machine is never silently signed in
@@ -32,21 +22,10 @@ const adminLoginSchema = z.object({
 
 const GENERIC_FAIL = "Incorrect password.";
 
-const adminForgotSchema = z.object({
-  name: z.string().trim().min(1).max(80),
-});
-
 // Compared against when no admin matches, so a missing or unseeded ADMIN_EMAIL
 // still costs the same time as a real password check and cannot be told apart
 // from one by how long the response took.
 const DUMMY_HASH = "$2a$10$abcdefghijklmnopqrstuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu";
-
-// Case-insensitive exact match, so "Jonathan" finds "jonathan" without letting
-// a student who happens to share an admin's name log in.
-function nameMatcher(username) {
-  const escaped = username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`^${escaped}$`, "i");
-}
 
 export const adminLogin = asyncHandler(async (req, res) => {
   const parsed = adminLoginSchema.safeParse(req.body);
@@ -93,57 +72,4 @@ export const adminLogin = asyncHandler(async (req, res) => {
       role: admin.role,
     },
   });
-});
-
-// The same rule as a student's reset: whatever was typed, the answer is the
-// same, so this endpoint cannot be used to discover which admin names exist.
-const FORGOT_ANSWER = {
-  ok: true,
-  message: "If that admin name exists, a reset link is on its way.",
-};
-
-export const adminForgotPassword = asyncHandler(async (req, res) => {
-  const parsed = adminForgotSchema.safeParse(req.body);
-  if (!parsed.success) throw ApiError.badRequest(FORGOT_ANSWER.message);
-
-  const admin = await User.findOne({
-    name: nameMatcher(parsed.data.name),
-    role: "admin",
-    is_active: true,
-  }).lean();
-
-  if (admin) {
-    // A fresh code supersedes any earlier one for this admin.
-    await invalidateResetTokens(admin._id);
-    const code = await createResetCode(admin._id);
-    await sendPasswordResetEmail({ to: admin.email, firstName: admin.name, code });
-  }
-
-  res.json(FORGOT_ANSWER);
-});
-
-export const adminResetPassword = asyncHandler(async (req, res) => {
-  const parsed = adminResetPasswordSchema.safeParse(req.body);
-  if (!parsed.success) throw ApiError.badRequest("That code is not valid.");
-
-  const admin = await User.findOne({
-    name: nameMatcher(parsed.data.name),
-    role: "admin",
-    is_active: true,
-  }).lean();
-
-  // consumeResetCode throws on an unknown, expired, spent or exhausted code, so
-  // this never sets a password without a live one behind it. An unknown name
-  // falls through to exactly the same answer a wrong code gets.
-  const token = await consumeResetCode(
-    admin?._id ?? new mongoose.Types.ObjectId(),
-    parsed.data.code,
-  );
-
-  await setPassword(admin._id, parsed.data.password);
-  await markResetTokenUsed(token._id);
-  // Every other outstanding code dies with the password.
-  await invalidateResetTokens(admin._id);
-
-  res.json({ ok: true });
 });

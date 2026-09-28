@@ -47,17 +47,6 @@ export const resetPasswordSchema = z.object({
   password,
 });
 
-// Admins sign in by name rather than by email, so their reset asks for the name
-// and reuses the same six digit code and the same password rules.
-export const adminResetPasswordSchema = z.object({
-  name: z.string().trim().min(1, "Enter your admin name."),
-  code: z
-    .string()
-    .trim()
-    .regex(/^\d{6}$/, "Enter the 6 digit code from your email."),
-  password,
-});
-
 export const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Enter your current password.").max(200),

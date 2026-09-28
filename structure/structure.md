@@ -68,7 +68,7 @@ Secrets: real `.env` gitignored, commit only `.env.example`. Linters (oxlint) to
 - **Insight:** refs User, month, summary_text, tip_text, generated_at, history[]
 - **Notification:** refs User, title, body, read_at, link — the bell is seeded from `mockData.js` today
 - **Tip:** template text, savings_impact rank, pin/dismiss per user (SRS module 10, not built)
-- **Bookmark:** refs User + Insight/Tip, optional note (SRS module 11, not built)
+- **Bookmark:** refs User + Insight/Tip, month, optional note — saved from the Insights page, listed at `/bookmarks`
 - **ResetToken:** refs User, hashed token, expires_at — for email password reset
 - User also needs `role` (`student|admin`), `is_active` (admin disable), `profile_image_url`, `created_at`
 
@@ -86,7 +86,9 @@ Relations: User 1—M Transactions/Budgets/Insights, Category 1—M Transactions
 | Categories | `data/mockData.js` | 11 seeded defaults, read-only; personal CRUD not built |
 | Dashboard | `pages/student/Dashboard.jsx` | Balance, top category, recent activity, budget-vs-actual |
 | Budgets + alerts | `pages/student/Budgets.jsx`, `hooks/useBudgets.js` | Limits, progress bars, near/exceed bands (95% / 100%) |
-| Insights | `pages/student/Insights.jsx`, `lib/insights.js` | Narrative, growth flags, 6-month chart with month stepping, donut |
+| Insights | `pages/student/Insights.jsx`, `lib/insights.js` | Narrative, growth flags, 6-month chart with month stepping, donut, bookmark this month |
+| Reports | `pages/student/Reports.jsx`, `services/reports.service.js` | Date/category filters, day-week-month re-bucketing, 6-month income-vs-expense, category table, PDF + image export |
+| Bookmarks | `pages/student/Bookmarks.jsx`, `hooks/useBookmarks.js` | Save a month with a note, grouped by month, edit and delete |
 | AI assistant | `pages/student/Assistant.jsx`, `lib/aiAssistant.js` | Posts to `/api/ai/chat` so the provider key stays server-side, with a local rules fallback while the server is unbuilt |
 | Dark mode + responsive | `ThemeProvider`, Tailwind breakpoints | Light/dark, phone/tablet/desktop, bottom tab bar + FAB |
 
@@ -95,11 +97,8 @@ Relations: User 1—M Transactions/Budgets/Insights, Category 1—M Transactions
 - Personal category add/edit/delete
 - Recurring entry generation and transaction change history
 - AI suggest-as-you-type, learning from corrections, CSV import + batch suggestions
-- Reports (daily/weekly, filters), PDF/image export
 - Persisted insight history (`history[]`)
 - Tips engine with pin/dismiss
-- Bookmarks, notes, share by email
-- Admin panel (users, defaults, tip templates, stats)
 - Recently viewed, forecast, duplicate/unusually-large detection
 - Font-size control, breadcrumbs, sitemap on home
 - Live hosted URL, install docs with credentials for every role, demo video
@@ -127,10 +126,11 @@ Relations: User 1—M Transactions/Budgets/Insights, Category 1—M Transactions
 | Transactions | `GET/POST /api/transactions`, `PATCH/DELETE /api/transactions/:id`, `POST /api/transactions/import` (CSV) |
 | Budgets | `GET/POST /api/budgets`, `PATCH/DELETE /api/budgets/:id` |
 | Insights | `GET /api/insights?month=`, `GET /api/insights/:month/history` |
-| Reports | `GET /api/reports?from=&to=`, `POST /api/reports/share` (email) |
+| Reports | `GET /api/reports?from=&to=&category=&granularity=`, `GET /api/reports/categories`, `POST /api/reports/share` (email) |
+| Bookmarks | `GET/POST /api/bookmarks`, `PATCH/DELETE /api/bookmarks/:id` |
 | Notifications | `GET /api/notifications`, `PATCH /api/notifications/:id/read` |
 | AI | `POST /api/ai/chat`, `POST /api/ai/suggest-category` |
-| Admin | `GET /api/admin/users`, `PATCH /api/admin/users/:id` (disable/reset), `GET/PATCH /api/admin/categories`, `GET/PATCH /api/admin/tips`, `GET /api/admin/stats` |
+| Admin | `POST /api/admin/auth/login` (password + `rememberMe`), `GET /api/admin/users`, `PATCH /api/admin/users/:id` (disable/reset), `GET/PATCH /api/admin/categories`, `GET/PATCH /api/admin/tips`, `GET /api/admin/stats` |
 
 ## Secrets the server will need
 `MONGODB_URI` · `SESSION_SECRET` · `POOLSIDE_API_KEY` (server-only, never rotated by tooling) · `RESEND_API_KEY` (sender `onboarding@resend.dev` until a domain is verified) · `CORS_ORIGIN` · `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` left blank — OAuth is deferred, not cancelled. All live in `server/.env` (gitignored); only `.env.example` is committed. Nothing secret is ever a `VITE_` variable, because Vite inlines those into the client bundle.
