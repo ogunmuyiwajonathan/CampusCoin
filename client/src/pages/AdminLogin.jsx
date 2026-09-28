@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import adminArt from "../assets/Admin.png";
+import adminArt from "../assets/Admin.webp";
 import Icon from "../components/Icon.jsx";
 import SubmitSpinner from "../components/SubmitSpinner.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";

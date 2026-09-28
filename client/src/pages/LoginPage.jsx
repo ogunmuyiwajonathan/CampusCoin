@@ -16,14 +16,11 @@ const FEATURES = [
 const inputClass =
   "w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-11 text-sm text-ink-900 placeholder:text-ink-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
 
-const demoEmail = import.meta.env.DEV ? (import.meta.env.VITE_DEMO_STUDENT_EMAIL ?? "") : "";
-const demoPassword = import.meta.env.DEV ? (import.meta.env.VITE_DEMO_STUDENT_PASSWORD ?? "") : "";
-
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState(demoEmail);
-  const [password, setPassword] = useState(demoPassword);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");

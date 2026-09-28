@@ -101,8 +101,8 @@ export function requestPasswordReset(email) {
   return apiFetch("/auth/forgot-password", { method: "POST", body: { email } });
 }
 
-export function resetPassword({ token, password }) {
-  return apiFetch("/auth/reset-password", { method: "POST", body: { token, password } });
+export function resetPassword({ email, code, password }) {
+  return apiFetch("/auth/reset-password", { method: "POST", body: { email, code, password } });
 }
 
 export function saveProfile(patch) {

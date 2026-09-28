@@ -4,7 +4,7 @@ import ApiError from "../utils/ApiError.js";
 import { ResetToken, User } from "../models/index.js";
 
 const BCRYPT_ROUNDS = 10;
-export const RESET_TOKEN_TTL_MS = 15 * 60 * 1000;
+export const RESET_CODE_TTL_MS = 10 * 60 * 1000;
 
 // bcryptjs rather than bcrypt: same algorithm, no native build step, so a
 // fresh clone on a new machine cannot fail to install.
@@ -32,6 +32,14 @@ export function normaliseName(name) {
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
+}
+
+// The one definition of "what do we call this person in an email". Both mail
+// paths use it, so a signup and a reset cannot greet the same student
+// differently. Returns "there" rather than undefined so a blank name can never
+// produce a literal "Hi undefined" in a delivered email.
+export function firstNameOf(name) {
+  return String(name ?? "").trim().split(/\s+/).filter(Boolean)[0] || "there";
 }
 
 export function isValidEmail(email) {
@@ -83,29 +91,54 @@ export async function authenticate({ email, password }) {
   return user;
 }
 
-// Only the hash of the token is stored, so a database leak does not hand out
-// working reset links. The raw token goes in the email and is never persisted.
-function hashToken(raw) {
-  return crypto.createHash("sha256").update(raw).digest("hex");
+// A reset code is six digits, so a plain hash of it collides constantly: with a
+// unique index on the column, two accounts would fight over the same value long
+// before any attack. Each hash is salted per token, which also means the stored
+// value is not a lookup table of every code in the database.
+function newCodeHash(raw) {
+  const salt = crypto.randomBytes(12).toString("hex");
+  return `${salt}$${crypto.createHash("sha256").update(`${salt}:${raw}`).digest("hex")}`;
 }
 
-export async function createResetToken(userId) {
-  const raw = crypto.randomBytes(32).toString("hex");
+function codeMatches(stored, raw) {
+  const [salt, digest] = String(stored).split("$");
+  if (!salt || !digest) return false;
+  const check = crypto.createHash("sha256").update(`${salt}:${raw}`).digest("hex");
+  if (check.length !== digest.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(check), Buffer.from(digest));
+}
+
+export const RESET_CODE_MAX_ATTEMPTS = 5;
+
+// Every failure gets this one sentence. An address with no account, a wrong
+// code, an expired code and a code that has already been spent must be
+// indistinguishable, because telling them apart is how someone finds out which
+// addresses are registered.
+const INVALID_CODE = "That code is not valid or has expired. Request a new one.";
+
+export async function createResetCode(userId) {
+  const raw = String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
   await ResetToken.create({
     user_id: userId,
-    token_hash: hashToken(raw),
-    expires_at: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+    token_hash: newCodeHash(raw),
+    expires_at: new Date(Date.now() + RESET_CODE_TTL_MS),
   });
   return raw;
 }
 
-export async function consumeResetToken(raw) {
-  const token = await ResetToken.findOne({ token_hash: hashToken(raw) });
-  if (!token) throw ApiError.badRequest("That reset link is not valid.");
-  if (token.used_at) throw ApiError.badRequest("That reset link has already been used.");
-  if (token.expires_at.getTime() < Date.now()) {
-    throw ApiError.badRequest("That reset link has expired. Request a new one.");
+export async function consumeResetCode(userId, raw) {
+  const token = await ResetToken.findOne({ user_id: userId, used_at: null })
+    .sort({ createdAt: -1 });
+
+  if (!token) throw ApiError.badRequest(INVALID_CODE);
+  if (token.expires_at.getTime() < Date.now()) throw ApiError.badRequest(INVALID_CODE);
+  if ((token.attempts ?? 0) >= RESET_CODE_MAX_ATTEMPTS) throw ApiError.badRequest(INVALID_CODE);
+
+  if (!codeMatches(token.token_hash, raw)) {
+    await ResetToken.updateOne({ _id: token._id }, { $inc: { attempts: 1 } });
+    throw ApiError.badRequest(INVALID_CODE);
   }
+
   return token;
 }
 
@@ -135,6 +168,7 @@ export function publicUser(user) {
     allowance_baseline: user.allowance_baseline,
     monthly_savings_goal: user.monthly_savings_goal,
     role: user.role,
+    profileOnboarded: user.profileOnboarded ?? false,
     profile_image_url: user.profile_image_url,
     created_at: user.createdAt ?? user.created_at ?? null,
   };

@@ -53,12 +53,18 @@ export default function ForgotPassword() {
                 Check your email
               </h1>
               <p className="mt-2 text-center text-sm leading-relaxed text-ink-500">
-                If that address is registered, a reset link is on its way. The link works once and
-                expires in 15 minutes.
+                If that address is registered, a 6 digit code is on its way. It works
+                once and expires in 10 minutes.
               </p>
               <Link
+                to={`/reset-password?email=${encodeURIComponent(email.trim())}`}
+                className="mt-6 block rounded-lg bg-brand-500 py-2.5 text-center text-sm font-bold text-white transition hover:bg-brand-600"
+              >
+                Enter the code
+              </Link>
+              <Link
                 to="/login"
-                className="mt-6 block rounded-lg border border-slate-200 py-2.5 text-center text-sm font-semibold text-ink-900 transition hover:bg-slate-50"
+                className="mt-3 block text-center text-sm font-semibold text-brand-600 hover:underline"
               >
                 Back to log in
               </Link>
@@ -67,7 +73,7 @@ export default function ForgotPassword() {
             <>
               <h1 className="font-display text-lg font-bold text-ink-900">Reset your password</h1>
               <p className="mt-1.5 text-sm text-ink-500">
-                Enter your email and we will send you a link to choose a new one.
+                Enter your email and we will send you a 6 digit code to reset with.
               </p>
 
               <form onSubmit={submit} className="mt-5" noValidate>
@@ -95,7 +101,7 @@ export default function ForgotPassword() {
                   className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {locked && <SubmitSpinner />}
-                  {locked ? "Sending..." : "Send reset link"}
+                  {locked ? "Sending..." : "Send reset code"}
                 </button>
               </form>
 

@@ -39,7 +39,22 @@ export const forgotPasswordSchema = z.object({
 });
 
 export const resetPasswordSchema = z.object({
-  token: z.string().trim().min(20, "That reset link is not valid."),
+  email: z.string().trim().email("Enter a valid email address.").max(254),
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "Enter the 6 digit code from your email."),
+  password,
+});
+
+// Admins sign in by name rather than by email, so their reset asks for the name
+// and reuses the same six digit code and the same password rules.
+export const adminResetPasswordSchema = z.object({
+  name: z.string().trim().min(1, "Enter your admin name."),
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "Enter the 6 digit code from your email."),
   password,
 });
 
@@ -59,6 +74,7 @@ export const updateProfileSchema = z
     academic_year: z.enum(ACADEMIC_YEARS).nullable().optional(),
     allowance_baseline: z.number().min(0, "Allowance cannot be negative.").max(100_000_000).nullable().optional(),
     monthly_savings_goal: z.number().min(0, "Savings goal cannot be negative.").max(100_000_000).nullable().optional(),
+    profileOnboarded: z.boolean().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "Send at least one field to update.",

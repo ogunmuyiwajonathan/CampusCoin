@@ -7,7 +7,8 @@ import SubmitSpinner from "../components/SubmitSpinner.jsx";
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
-  const token = params.get("token") ?? "";
+  const [email, setEmail] = useState(params.get("email") ?? "");
+  const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [status, setStatus] = useState("idle");
@@ -17,6 +18,14 @@ export default function ResetPassword() {
   const submit = async (event) => {
     event.preventDefault();
     if (locked) return;
+    if (!email.trim()) {
+      setError("Enter the email address you used to sign up.");
+      return;
+    }
+    if (!/^\d{6}$/.test(code.trim())) {
+      setError("Enter the 6 digit code from your email.");
+      return;
+    }
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
       return;
@@ -29,7 +38,7 @@ export default function ResetPassword() {
     setStatus("saving");
     try {
       await run(async () => {
-        await resetPassword({ token, password });
+        await resetPassword({ email: email.trim(), code: code.trim(), password });
         setStatus("done");
       }, { oneShot: true });
     } catch (err) {
@@ -37,28 +46,6 @@ export default function ResetPassword() {
       setStatus("idle");
     }
   };
-
-  if (!token) {
-    return (
-      <div className="flex min-h-svh items-center justify-center bg-slate-50 px-4">
-        <main className="w-full max-w-sm rounded-card bg-surface p-6 text-center shadow-card">
-          <span className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-red-500">
-            <Icon name="triangle-alert" size={20} />
-          </span>
-          <h1 className="font-display text-lg font-bold text-ink-900">That link is incomplete</h1>
-          <p className="mt-2 text-sm leading-relaxed text-ink-500">
-            Open the link straight from your email, or request a new one.
-          </p>
-          <Link
-            to="/forgot-password"
-            className="mt-6 block rounded-lg bg-brand-500 py-2.5 text-center text-sm font-bold text-white transition hover:bg-brand-600"
-          >
-            Request a new link
-          </Link>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-svh items-center justify-center bg-slate-50 px-4">
@@ -95,11 +82,40 @@ export default function ResetPassword() {
             <>
               <h1 className="font-display text-lg font-bold text-ink-900">Choose a new password</h1>
               <p className="mt-1.5 text-sm text-ink-500">
-                At least 8 characters, with an uppercase letter, a lowercase letter and a number.
+                Enter the 6 digit code we emailed you, then pick a new password.
               </p>
 
               <form onSubmit={submit} className="mt-5" noValidate>
-                <label htmlFor="rp-password" className="block text-sm font-semibold text-ink-900">
+                <label htmlFor="rp-email" className="block text-sm font-semibold text-ink-900">
+                  Email address
+                </label>
+                <input
+                  id="rp-email"
+                  type="email"
+                  value={email}
+                  autoComplete="email"
+                  onChange={(event) => setEmail(event.target.value)}
+                  aria-invalid={Boolean(error)}
+                  className="mt-1.5 w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                />
+
+                <label htmlFor="rp-code" className="mt-4 block text-sm font-semibold text-ink-900">
+                  6 digit code
+                </label>
+                <input
+                  id="rp-code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={code}
+                  onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                  aria-invalid={Boolean(error)}
+                  placeholder="000000"
+                  className="mt-1.5 w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-center font-display text-lg tracking-[0.4em] outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                />
+
+                <label htmlFor="rp-password" className="mt-4 block text-sm font-semibold text-ink-900">
                   New password
                 </label>
                 <input

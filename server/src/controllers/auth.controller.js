@@ -2,13 +2,13 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
-import { appOrigin } from "../config/session.js";
 import { User } from "../models/index.js";
-import { sendPasswordResetEmail } from "../services/mail.service.js";
+import { sendPasswordResetEmail, sendWelcomeEmail } from "../services/mail.service.js";
 import {
   authenticate,
-  consumeResetToken,
-  createResetToken,
+  consumeResetCode,
+  createResetCode,
+  firstNameOf,
   invalidateResetTokens,
   markResetTokenUsed,
   normaliseEmail,
@@ -36,6 +36,9 @@ function startSession(req, user) {
 export const register = asyncHandler(async (req, res) => {
   const user = await registerUser(req.body);
   await startSession(req, user);
+  // Fire and forget on purpose. A mail outage must not turn a successful signup
+  // into an error, and the account is already usable whether or not this lands.
+  void sendWelcomeEmail({ to: user.email, firstName: firstNameOf(user.name) });
   res.status(201).json({ user: publicUser(user) });
 });
 
@@ -113,23 +116,40 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email, is_active: true }).lean();
 
   if (user) {
-    const raw = await createResetToken(user._id);
-    const link = `${appOrigin(req)}/reset-password?token=${raw}`;
-    await sendPasswordResetEmail({ to: user.email, firstName: user.name.split(" ")[0], link });
+    // A fresh code supersedes any earlier one, so a code someone obtained from
+    // an email that has since been replaced can no longer be spent.
+    await invalidateResetTokens(user._id);
+    const code = await createResetCode(user._id);
+    await sendPasswordResetEmail({
+      to: user.email,
+      firstName: firstNameOf(user.name),
+      code,
+    });
   }
 
   res.json({
     ok: true,
-    message: "If that email is registered, a reset link is on its way.",
+    message: "If that email is registered, a reset code is on its way.",
   });
 });
 
 export const resetPassword = asyncHandler(async (req, res) => {
-  const token = await consumeResetToken(req.body.token);
-  await setPassword(token.user_id, req.body.password);
+  const user = await User.findOne({
+    email: normaliseEmail(req.body.email),
+    is_active: true,
+  }).lean();
+
+  // An unknown address is handed a made up id rather than an early return, so
+  // it falls through to the same "that code is not valid" answer a wrong code
+  // gets. Returning quietly here instead would leak which emails exist.
+  const token = await consumeResetCode(
+    user?._id ?? new mongoose.Types.ObjectId(),
+    req.body.code,
+  );
+  await setPassword(user._id, req.body.password);
   await markResetTokenUsed(token._id);
-  // Every other outstanding link for this account dies with the password, so a
-  // link emailed before a compromise cannot be used afterwards.
-  await invalidateResetTokens(token.user_id);
+  // Every other outstanding code for this account dies with the password, so a
+  // code emailed before a compromise cannot be used afterwards.
+  await invalidateResetTokens(user._id);
   res.json({ ok: true });
 });
