@@ -1,0 +1,67 @@
+import { z } from "zod";
+import { ACADEMIC_YEARS } from "../models/User.js";
+
+const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
+const DATE = /^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/;
+
+export const monthSchema = z.object({
+  month: z.string().regex(MONTH, "Use a month like 2026-09.").optional(),
+});
+
+export const categoryType = z.enum(["income", "expense"]);
+
+export const createCategorySchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters.").max(60),
+  type: categoryType,
+  color: z.string().trim().max(20).nullable().optional(),
+  icon: z.string().trim().max(40).nullable().optional(),
+});
+
+export const updateCategorySchema = createCategorySchema.partial().refine(
+  (value) => Object.keys(value).length > 0,
+  { message: "Send at least one field to update." },
+);
+
+const amount = z
+  .number({ message: "Enter an amount." })
+  .finite("Enter an amount.")
+  .nonnegative("Amount cannot be negative.")
+  .max(100_000_000, "That amount is too large.");
+
+export const createTransactionSchema = z.object({
+  category_id: z.string().min(1, "Choose a category."),
+  // Accepted but never trusted: the type always comes from the category the
+  // transaction points at, so an expense cannot be filed as income by posting a
+  // different type here.
+  type: categoryType.optional(),
+  amount,
+  description: z.string().trim().max(140).default(""),
+  date: z.string().regex(DATE, "Use a date like 2026-09-20."),
+  is_recurring: z.boolean().default(false),
+  frequency: z.enum(["weekly", "monthly"]).nullable().optional(),
+  next_run_at: z.string().regex(DATE).nullable().optional(),
+});
+
+export const updateTransactionSchema = createTransactionSchema
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "Send at least one field to update.",
+  });
+
+export const idParamSchema = z.object({
+  id: z.string().min(1),
+});
+
+export const createBudgetSchema = z.object({
+  category_id: z.string().min(1, "Choose a category."),
+  month: z.string().regex(MONTH, "Use a month like 2026-09."),
+  limit_amount: amount,
+});
+
+export const updateBudgetSchema = createBudgetSchema
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "Send at least one field to update.",
+  });
+
+export { ACADEMIC_YEARS };

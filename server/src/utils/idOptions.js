@@ -30,3 +30,17 @@ export function defineSchema(idName, definition, options = {}) {
 
   return schema;
 }
+
+// .lean() hands back raw BSON, which bypasses both the virtual and the toJSON
+// transform, so a lean row would serialise as _id and break the client contract
+// the virtual exists to provide. Every list endpoint maps its rows through here
+// instead of dropping .lean(), which keeps the read cheap and the shape right.
+export function serialize(row, idName) {
+  if (!row) return row;
+  const { _id, __v, ...rest } = row;
+  return { [idName]: _id?.toString(), ...rest };
+}
+
+export function serializeAll(rows, idName) {
+  return rows.map((row) => serialize(row, idName));
+}
