@@ -1,116 +1,122 @@
-import { useCallback, useMemo, useState } from "react";
-import { AuthContext, STORAGE_KEY } from "./authContext.js";
-import { mockUser } from "../data/mockData.js";
-import { updateUserProfile } from "../lib/apiClient.js";
-import { joinedLabel } from "../lib/formatMonth.js";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AuthContext } from "./authContext.js";
+import {
+  getMe,
+  loginAccount,
+  logoutAccount,
+  registerAccount,
+  saveProfile,
+  uploadAvatar,
+} from "../lib/apiClient.js";
 import { formatName } from "../lib/formatName.js";
 
-function withNormalizedName(next) {
-  if (!next || typeof next.name !== "string") return next;
-  return { ...next, name: formatName(next.name) };
+const DATE_LOCALE = "en-GB";
+
+// The server sends created_at; the profile screen has always shown a "Joined
+// Mon YYYY" line, so it is derived here rather than changing that screen.
+function joinedFrom(createdAt) {
+  if (!createdAt) return null;
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(DATE_LOCALE, { month: "short", year: "numeric" });
 }
 
-function joinDate(previous) {
-  return (previous && previous.joined) || joinedLabel();
+// The server already title-cases on save. Doing it again on the way in keeps the
+// header and the profile screen in step in the same tick, rather than showing
+// the raw form value until the next refetch.
+function decorate(user) {
+  if (!user) return null;
+  return {
+    ...user,
+    name: typeof user.name === "string" ? formatName(user.name) : user.name,
+    joined: joinedFrom(user.created_at),
+  };
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? withNormalizedName(JSON.parse(stored)) : null;
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
-      return null;
-    }
-  });
-  const [status] = useState("ready");
+  const [user, setUser] = useState(null);
+  // Starts as "loading" so ProtectedRoute holds the app until the server has
+  // said who this is. Without it every protected page would flash its own
+  // content at a signed-out visitor before the redirect landed.
+  const [status, setStatus] = useState("loading");
 
-  const persist = useCallback((next) => {
-    const value = withNormalizedName(next);
-    setUser(value);
-    if (!value) {
-      localStorage.removeItem(STORAGE_KEY);
-      return { ok: true };
-    }
+  useEffect(() => {
+    let cancelled = false;
+    getMe()
+      .then((data) => {
+        if (cancelled) return;
+        setUser(decorate(data?.user ?? null));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // A server that cannot be reached leaves the app signed out rather than
+        // blocking on an error page.
+        setUser(null);
+      })
+      .finally(() => {
+        if (!cancelled) setStatus("ready");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const login = useCallback(async ({ email, password }) => {
+    const data = await loginAccount({ email, password });
+    setUser(decorate(data.user));
+    return data.user;
+  }, []);
+
+  const register = useCallback(async ({ name, email, password }) => {
+    const data = await registerAccount({ name, email, password });
+    setUser(decorate(data.user));
+    return data.user;
+  }, []);
+
+  const logout = useCallback(async () => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-      return { ok: true };
-    } catch {
-      return {
-        ok: false,
-        error: "Couldn't save your profile. Browser storage may be full or blocked.",
-      };
+      await logoutAccount();
+    } finally {
+      // The local session is dropped even if the call failed: the student asked
+      // to sign out, and leaving them apparently signed in is worse than a
+      // cookie the server still honours until it expires.
+      setUser(null);
     }
   }, []);
 
-  const login = useCallback(
-    async ({ email, password }) => {
-      if (!email || !password) throw new Error("Enter your email and password.");
-      if (password.length < 6) throw new Error("Password must be at least 6 characters.");
-      let previous = null;
-      try {
-        previous = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
-      } catch {
-        previous = null;
-      }
-      persist({
-        user_id: "demo-student",
-        name: email.split("@")[0] || "Student",
-        email,
-        role: "student",
-        monthly_savings_goal: 15000,
-        joined: joinDate(previous),
-      });
-    },
-    [persist],
-  );
+  const updateProfile = useCallback(async (patch) => {
+    try {
+      const data = await saveProfile(patch);
+      const next = decorate(data.user);
+      setUser(next);
+      return { ok: true, user: next };
+    } catch (error) {
+      return { ok: false, error: error.message, details: error.details ?? null };
+    }
+  }, []);
 
-  const register = useCallback(
-    async ({ name, email, password }) => {
-      if (!name || !email || !password) throw new Error("Fill in every field.");
-      if (password.length < 6) throw new Error("Password must be at least 6 characters.");
-      persist({
-        user_id: "demo-student",
-        name,
-        email,
-        role: "student",
-        monthly_savings_goal: 15000,
-        joined: joinDate(null),
-      });
-    },
-    [persist],
-  );
-
-  const logout = useCallback(() => {
-    persist(null);
-  }, [persist]);
-
-  const updateProfile = useCallback(
-    async (patch) => {
-      const base = user ?? {
-        user_id: mockUser.user_id,
-        name: mockUser.name,
-        email: mockUser.email,
-        academic_year: mockUser.academic_year,
-        monthly_savings_goal: mockUser.monthly_savings_goal,
-        allowance_baseline: mockUser.allowance_baseline,
-        role: mockUser.role,
-        joined: mockUser.joined,
-      };
-      try {
-        const saved = await updateUserProfile({ ...base, ...patch });
-        return { ...persist(saved), user: saved };
-      } catch (error) {
-        return { ok: false, error: error.message };
-      }
-    },
-    [user, persist],
-  );
+  const uploadProfileAvatar = useCallback(async (file) => {
+    try {
+      const data = await uploadAvatar(file);
+      const next = decorate(data.user);
+      setUser(next);
+      return { ok: true, user: next };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  }, []);
 
   const value = useMemo(
-    () => ({ user, status, login, register, updateProfile, logout }),
-    [user, status, login, register, updateProfile, logout],
+    () => ({
+      user,
+      status,
+      login,
+      register,
+      logout,
+      updateProfile,
+      uploadProfileAvatar,
+    }),
+    [user, status, login, register, logout, updateProfile, uploadProfileAvatar],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

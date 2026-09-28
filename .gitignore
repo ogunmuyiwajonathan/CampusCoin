@@ -25,3 +25,6 @@ npm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Uploaded avatars (server/src writes here, never committed)
+server/uploads/

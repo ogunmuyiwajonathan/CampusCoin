@@ -2,15 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon.jsx";
 import UserAvatar from "./UserAvatar.jsx";
 import { useAuth } from "../hooks/useAuth.js";
-import { uploadAvatar } from "../lib/apiClient.js";
+import { previewAvatar } from "../lib/apiClient.js";
 
 export default function AvatarPicker({ name, onNotify }) {
-  const { user, updateProfile } = useAuth();
+  const { user, uploadProfileAvatar } = useAuth();
   const inputRef = useRef(null);
   const [pending, setPending] = useState(null);
   const [busy, setBusy] = useState(false);
   const displayName = name ?? user?.name;
 
+  // The preview is an object URL, so it has to be revoked or the blob stays in
+  // memory for as long as the tab is open.
   useEffect(() => {
     if (!pending) return undefined;
     const onKey = (event) => {
@@ -20,25 +22,25 @@ export default function AvatarPicker({ name, onNotify }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [pending, busy]);
 
-  const onPick = async (event) => {
+  useEffect(() => () => {
+    if (pending?.preview) URL.revokeObjectURL(pending.preview);
+  }, [pending]);
+
+  const onPick = (event) => {
     const file = event.target.files && event.target.files[0];
     event.target.value = "";
     if (!file) return;
-    setBusy(true);
     try {
-      const dataUrl = await uploadAvatar(file);
-      setPending({ dataUrl, name: file.name });
+      setPending({ file, preview: previewAvatar(file), name: file.name });
     } catch (error) {
       onNotify({ kind: "error", message: error.message });
-    } finally {
-      setBusy(false);
     }
   };
 
   const confirm = async () => {
     if (!pending) return;
     setBusy(true);
-    const result = await updateProfile({ profile_image_url: pending.dataUrl });
+    const result = await uploadProfileAvatar(pending.file);
     setBusy(false);
     if (!result.ok) {
       onNotify({ kind: "error", message: result.error });
@@ -95,7 +97,7 @@ export default function AvatarPicker({ name, onNotify }) {
           <div className="relative w-full max-w-xs rounded-card bg-surface p-6 text-center shadow-card">
             <h3 className="font-display text-base font-bold text-ink-900">Use this photo?</h3>
             <img
-              src={pending.dataUrl}
+              src={pending.preview}
               alt="Selected profile photo preview"
               className="mx-auto mt-4 h-28 w-28 rounded-full border border-slate-200 object-cover"
             />
