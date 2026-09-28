@@ -92,13 +92,38 @@ export async function createTransaction(userId, body) {
   const category = await assertOwnsCategory(userId, body.category_id);
   // The type is taken from the category rather than trusted from the client, so
   // an expense cannot be filed as income by posting a different type.
-  const transaction = await Transaction.create({
+  const payload = {
     ...body,
     user_id: userId,
     type: category.type,
     frequency: body.is_recurring ? body.frequency ?? "monthly" : null,
     next_run_at: body.is_recurring ? body.next_run_at ?? null : null,
-  });
+  };
+
+  if (body.request_id) {
+    const already = await Transaction.findOne({
+      user_id: userId,
+      request_id: body.request_id,
+    }).lean();
+    if (already) return already;
+  }
+
+  let transaction;
+  try {
+    transaction = await Transaction.create(payload);
+  } catch (error) {
+    // Two copies of the same click raced past the lookup above. The unique
+    // index settles it: the loser reads back the row the winner just wrote
+    // instead of saving the expense twice.
+    if (error?.code === 11000 && body.request_id) {
+      const already = await Transaction.findOne({
+        user_id: userId,
+        request_id: body.request_id,
+      }).lean();
+      if (already) return already;
+    }
+    throw error;
+  }
 
   await evaluateBudgets(userId, transaction);
   return transaction;

@@ -8,17 +8,17 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { useCategories } from "./hooks/useCategories.js";
 import NotFound from "./pages/NotFound.jsx";
 
-const Assistant = lazy(() => import("./pages/Assistant.jsx"));
-const Budgets = lazy(() => import("./pages/Budgets.jsx"));
-const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
-const Insights = lazy(() => import("./pages/Insights.jsx"));
+const Assistant = lazy(() => import("./pages/student/Assistant.jsx"));
+const Budgets = lazy(() => import("./pages/student/Budgets.jsx"));
+const Dashboard = lazy(() => import("./pages/student/Dashboard.jsx"));
+const Insights = lazy(() => import("./pages/student/Insights.jsx"));
 const LandingPage = lazy(() => import("./pages/LandingPage.jsx"));
 const Login = lazy(() => import("./pages/LoginPage.jsx"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
-const Settings = lazy(() => import("./pages/Settings.jsx"));
+const Settings = lazy(() => import("./pages/student/Settings.jsx"));
 const Signup = lazy(() => import("./pages/Signup.jsx"));
-const Transactions = lazy(() => import("./pages/Transactions.jsx"));
+const Transactions = lazy(() => import("./pages/student/Transactions.jsx"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin.jsx"));
 
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout.jsx"));

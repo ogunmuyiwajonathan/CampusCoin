@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import Icon from "../components/Icon.jsx";
-import MobileNav from "../components/MobileNav.jsx";
-import Sidebar from "../components/Sidebar.jsx";
-import AssistantChat from "../components/AssistantChat.jsx";
+import Icon from "../../components/Icon.jsx";
+import MobileNav from "../../components/MobileNav.jsx";
+import Sidebar from "../../components/Sidebar.jsx";
+import AssistantChat from "../../components/AssistantChat.jsx";
 
 export default function Assistant() {
   const [sidebarOpen, setSidebarOpen] = useState(false);

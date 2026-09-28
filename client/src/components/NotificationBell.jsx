@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Icon from "./Icon.jsx";
 import {
+  listAnnouncements,
   listNotifications,
   markAllNotificationsRead,
   markNotificationRead,
@@ -14,15 +15,17 @@ export default function NotificationBell() {
   // The answer is tagged with the request it belongs to, so anything else is
   // still loading. This avoids calling setState synchronously inside an effect.
   const [result, setResult] = useState({ key: null, items: [], error: null });
+  const [announcements, setAnnouncements] = useState([]);
   const rootRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     let cancelled = false;
-    listNotifications()
-      .then((data) => {
+    Promise.all([listNotifications(), listAnnouncements()])
+      .then(([data, news]) => {
         if (cancelled) return;
         setResult({ key: nonce, items: data.notifications, error: null });
+        setAnnouncements(Array.isArray(news) ? news : []);
       })
       .catch((error) => {
         if (cancelled) return;
@@ -144,7 +147,34 @@ export default function NotificationBell() {
             </div>
           )}
 
-          {status === "ready" && items.length === 0 && (
+          {announcements.length > 0 && (
+            <ul className="mb-1 flex flex-col gap-1 border-b border-slate-100 pb-1">
+              {announcements.map((item) => (
+                <li key={item.announcement_id ?? item.id}>
+                  <a
+                    href="/"
+                    onClick={() => setOpen(false)}
+                    className="flex w-full items-start gap-3 rounded-lg bg-mint-50 px-2 py-2 text-left transition hover:bg-sage-50"
+                  >
+                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                      <Icon name="megaphone" size={15} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-ink-900">
+                        {item.title}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-ink-500">{item.body}</span>
+                      <span className="mt-1 block text-[11px] text-slate-400">
+                        {formatDate(item.createdAt)}
+                      </span>
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {status === "ready" && items.length === 0 && announcements.length === 0 && (
             <p className="px-2 py-6 text-center text-sm text-ink-500">
               Nothing here yet. Budget alerts will show up on this bell.
             </p>

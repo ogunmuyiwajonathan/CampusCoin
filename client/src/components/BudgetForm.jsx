@@ -1,18 +1,32 @@
 import { useEffect, useState } from "react";
 import Icon from "./Icon.jsx";
-import { categories } from "../data/mockData.js";
+import { useCategories } from "../hooks/useCategories.js";
+import { useSubmitLock } from "../hooks/useSubmitLock.js";
+import SubmitSpinner from "./SubmitSpinner.jsx";
 
 const inputClass =
   "w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-4 pr-4 text-sm text-ink-900 placeholder:text-ink-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
 
-const EXPENSE_CATEGORIES = categories.filter((category) => category.type === "expense");
-
 export default function BudgetForm({ initial, month, budgets, onClose, onSave, onDelete }) {
+  const { categories, status } = useCategories();
   const [categoryId, setCategoryId] = useState(initial?.category_id ?? "");
   const [limit, setLimit] = useState(initial ? String(initial.limit_amount) : "");
   const [monthValue, setMonthValue] = useState(initial?.month ?? month);
   const [errors, setErrors] = useState({});
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const { locked, done, run, minWidth, measure } = useSubmitLock();
+  const {
+    locked: deleteLocked,
+    done: deleteDone,
+    run: runDelete,
+    minWidth: deleteMinWidth,
+    measure: measureDelete,
+  } = useSubmitLock();
+
+  const expenseCategories =
+    status === "ready" ? categories.filter((category) => category.type === "expense") : [];
 
   useEffect(() => {
     const onKey = (event) => {
@@ -22,8 +36,9 @@ export default function BudgetForm({ initial, month, budgets, onClose, onSave, o
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
+    if (locked) return;
     const next = {};
     const value = Number(limit);
     if (limit.trim() === "") {
@@ -31,7 +46,14 @@ export default function BudgetForm({ initial, month, budgets, onClose, onSave, o
     } else if (!Number.isFinite(value) || value <= 0) {
       next.limit = "Limit must be greater than ₦0.";
     }
-    if (!categoryId) next.category = "Choose a category.";
+    if (status !== "ready") {
+      next.category =
+        status === "error"
+          ? "Categories could not be loaded. Try again."
+          : "Categories are still loading. Try again in a moment.";
+    } else if (!categoryId) {
+      next.category = "Choose a category.";
+    }
     if (!monthValue) next.month = "Pick a month for this budget.";
     if (!next.category && !next.month) {
       const duplicate = budgets.some(
@@ -46,19 +68,43 @@ export default function BudgetForm({ initial, month, budgets, onClose, onSave, o
     }
     setErrors(next);
     if (Object.keys(next).length > 0) return;
-    onSave({
-      category_id: categoryId,
-      month: monthValue,
-      limit_amount: Math.round(value),
-    });
+    setSaveError("");
+    try {
+      await run(
+        () =>
+          onSave({
+            category_id: categoryId,
+            month: monthValue,
+            limit_amount: Math.round(value),
+          }),
+        { oneShot: true },
+      );
+    } catch (err) {
+      setSaveError(err?.message ?? "Couldn't save that budget.");
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
+    if (deleteLocked) return;
     if (!confirmDelete) {
       setConfirmDelete(true);
       return;
     }
-    onDelete(initial.budget_id);
+    setDeleteError("");
+    try {
+      await runDelete(
+        async () => {
+          const result = await onDelete(initial.budget_id);
+          if (result && result.ok === false) {
+            throw new Error(result.error ?? "Couldn't delete that budget.");
+          }
+        },
+        { oneShot: true },
+      );
+    } catch (err) {
+      setConfirmDelete(false);
+      setDeleteError(err?.message ?? "Couldn't delete that budget.");
+    }
   };
 
   return (
@@ -112,7 +158,7 @@ export default function BudgetForm({ initial, month, budgets, onClose, onSave, o
                 }`}
               >
                 <option value="">Choose category</option>
-                {EXPENSE_CATEGORIES.map((category) => (
+                {expenseCategories.map((category) => (
                   <option key={category.category_id} value={category.category_id}>
                     {category.name}
                   </option>
@@ -194,29 +240,50 @@ export default function BudgetForm({ initial, month, budgets, onClose, onSave, o
           {initial && (
             <button
               type="button"
+              ref={measureDelete}
+              disabled={deleteLocked || locked}
+              aria-busy={deleteLocked}
+              style={deleteMinWidth ? { minWidth: deleteMinWidth } : undefined}
               onClick={handleDelete}
-              className="text-sm font-semibold text-red-500 transition hover:text-red-600"
+              className="flex items-center gap-1.5 text-sm font-semibold text-red-500 transition hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {confirmDelete ? "Confirm delete?" : "Delete budget"}
+              {deleteLocked && <SubmitSpinner className="h-3 w-3" />}
+              {deleteLocked
+                ? "Deleting..."
+                : deleteDone
+                  ? "Deleted"
+                  : confirmDelete
+                    ? "Confirm delete?"
+                    : "Delete budget"}
             </button>
           )}
           <div className="flex flex-1 gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-ink-500 transition hover:bg-slate-50"
+              disabled={locked || deleteLocked}
+              className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-ink-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-800"
+              ref={measure}
+              disabled={locked || deleteLocked}
+              aria-busy={locked}
+              style={minWidth ? { minWidth } : undefined}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              <Icon name="save" size={16} />
-              {initial ? "Save Changes" : "Save Budget"}
+              {locked ? <SubmitSpinner /> : <Icon name="save" size={16} />}
+              {locked ? "Saving..." : done ? "Saved" : initial ? "Save Changes" : "Save Budget"}
             </button>
           </div>
         </div>
+        {(saveError || deleteError) && (
+          <p className="mt-3 text-sm font-semibold text-red-500" role="alert">
+            {saveError || deleteError}
+          </p>
+        )}
       </form>
     </div>
   );

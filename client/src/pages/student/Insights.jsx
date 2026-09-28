@@ -9,32 +9,31 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import BotAvatar from "../components/BotAvatar.jsx";
-import Icon from "../components/Icon.jsx";
-import AssistantFab from "../components/AssistantFab.jsx";
-import MobileNav from "../components/MobileNav.jsx";
-import PageHeader from "../components/PageHeader.jsx";
-import Sidebar from "../components/Sidebar.jsx";
-import SpendingDonut from "../components/SpendingDonut.jsx";
-import StatCard from "../components/StatCard.jsx";
-import { useAuth } from "../hooks/useAuth.js";
-import { useBudgets } from "../hooks/useBudgets.js";
-import { useTransactions } from "../hooks/useTransactions.js";
-import { mockUser } from "../data/mockData.js";
+import BotAvatar from "../../components/BotAvatar.jsx";
+import Icon from "../../components/Icon.jsx";
+import AssistantFab, { INLINE_AI_VISIBLE_CLASS } from "../../components/AssistantFab.jsx";
+import MobileNav from "../../components/MobileNav.jsx";
+import PageHeader from "../../components/PageHeader.jsx";
+import Sidebar from "../../components/Sidebar.jsx";
+import SpendingDonut from "../../components/SpendingDonut.jsx";
+import StatCard from "../../components/StatCard.jsx";
+import { useAuth } from "../../hooks/useAuth.js";
+import { useBudgets } from "../../hooks/useBudgets.js";
+import { useTransactions } from "../../hooks/useTransactions.js";
 import {
   buildInsights,
   HISTORY_MONTHS,
   percentChange,
   WINDOW_MONTHS,
-} from "../lib/insights.js";
-import { formatCurrency } from "../lib/formatCurrency.js";
+} from "../../lib/insights.js";
+import { formatCurrency } from "../../lib/formatCurrency.js";
 import {
   currentMonthKey,
   monthKey,
   monthLabel,
   monthRangeShort,
   shiftMonthKey,
-} from "../lib/formatMonth.js";
+} from "../../lib/formatMonth.js";
 
 const TONE_TEXT = {
   warn: "text-red-500",
@@ -193,7 +192,7 @@ export default function Insights() {
     return [...keys].sort().reverse();
   }, [availableMonths, month]);
 
-  const goal = user?.monthly_savings_goal ?? mockUser.monthly_savings_goal ?? 0;
+  const goal = user?.monthly_savings_goal ?? 0;
   const error = [txError, budgetError].filter(Boolean).join(" ") || null;
 
   const view = useMemo(
@@ -573,7 +572,7 @@ export default function Insights() {
                   </section>
                 </div>
 
-                <section className="relative overflow-hidden rounded-card bg-emerald-50 p-5 shadow-card dark:bg-emerald-500/10 lg:col-span-2">
+                <section className={`relative overflow-hidden rounded-card bg-emerald-50 p-5 shadow-card dark:bg-emerald-500/10 lg:col-span-2 ${INLINE_AI_VISIBLE_CLASS}`}>
                   <div className="flex items-center gap-2.5">
                     <BotAvatar className="h-9 w-9" animate={false} />
                     <div className="min-w-0 flex-1">

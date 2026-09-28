@@ -1,23 +1,25 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import BudgetForm from "../components/BudgetForm.jsx";
-import Icon from "../components/Icon.jsx";
-import AssistantFab from "../components/AssistantFab.jsx";
-import MobileNav from "../components/MobileNav.jsx";
-import PageHeader from "../components/PageHeader.jsx";
-import Sidebar from "../components/Sidebar.jsx";
-import StatCard from "../components/StatCard.jsx";
-import CategoryIcon from "../components/CategoryIcon.jsx";
-import { useBudgets } from "../hooks/useBudgets.js";
-import { useTransactions } from "../hooks/useTransactions.js";
+import BudgetForm from "../../components/BudgetForm.jsx";
+import Icon from "../../components/Icon.jsx";
+import AssistantFab from "../../components/AssistantFab.jsx";
+import MobileNav from "../../components/MobileNav.jsx";
+import PageHeader from "../../components/PageHeader.jsx";
+import Sidebar from "../../components/Sidebar.jsx";
+import StatCard from "../../components/StatCard.jsx";
+import CategoryIcon from "../../components/CategoryIcon.jsx";
+import { useBudgets } from "../../hooks/useBudgets.js";
+import { useSubmitLock } from "../../hooks/useSubmitLock.js";
+import SubmitSpinner from "../../components/SubmitSpinner.jsx";
+import { useTransactions } from "../../hooks/useTransactions.js";
 import {
   categories,
   categoryColor,
   categoryLookup,
-} from "../data/mockData.js";
-import { formatCurrency } from "../lib/formatCurrency.js";
-import { currentMonthKey, monthKey, monthLabel, monthRange } from "../lib/formatMonth.js";
+} from "../../data/mockData.js";
+import { formatCurrency } from "../../lib/formatCurrency.js";
+import { currentMonthKey, monthKey, monthLabel, monthRange } from "../../lib/formatMonth.js";
 
 function statusFor(pct) {
   if (pct >= 100) return "exceeded";
@@ -109,6 +111,53 @@ const QUICK_ACTIONS = [
   },
 ];
 
+function MenuDeleteButton({ onConfirm, onCancel }) {
+  const { locked, done, run, minWidth, measure } = useSubmitLock();
+  const [error, setError] = useState("");
+
+  return (
+    <>
+      <button
+        type="button"
+        role="menuitem"
+        ref={measure}
+        disabled={locked}
+        aria-busy={locked}
+        style={minWidth ? { minWidth } : undefined}
+        onClick={async () => {
+          if (locked) return;
+          setError("");
+          try {
+            await run(onConfirm, { oneShot: true });
+          } catch (err) {
+            setError(err.message);
+          }
+        }}
+        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-70"
+      >
+        {locked ? <SubmitSpinner className="h-3.5 w-3.5" /> : <Icon name="trash-2" size={15} />}
+        {locked ? "Deleting..." : done ? "Deleted" : "Confirm delete"}
+      </button>
+      {error && (
+        <p className="px-3 py-1 text-xs font-semibold text-red-500" role="alert">
+          {error}
+        </p>
+      )}
+      {!locked && (
+        <button
+          type="button"
+          role="menuitem"
+          onClick={onCancel}
+          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink-500 transition hover:bg-slate-50"
+        >
+          <Icon name="x" size={15} />
+          Cancel
+        </button>
+      )}
+    </>
+  );
+}
+
 export default function Budgets() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
@@ -197,18 +246,18 @@ export default function Budgets() {
     setFormOpen(true);
   };
 
-  const handleSave = (payload) => {
-    if (editing) {
-      update(editing.budget_id, payload);
-    } else {
-      add(payload);
-    }
+  const handleSave = async (payload) => {
+    const result = editing
+      ? await update(editing.budget_id, payload)
+      : await add(payload);
+    if (!result?.ok) throw new Error(result?.error ?? "Couldn't save that budget.");
     if (payload.month !== month) setMonth(payload.month);
     closeForm();
   };
 
-  const handleDelete = (budgetId) => {
-    remove(budgetId);
+  const handleDelete = async (budgetId) => {
+    const result = await remove(budgetId);
+    if (!result?.ok) throw new Error(result?.error ?? "Couldn't delete that budget.");
     setMenuId(null);
     setConfirmDeleteId(null);
     closeForm();
@@ -408,29 +457,10 @@ export default function Budgets() {
                                   className="absolute right-0 top-full z-20 mt-1 w-40 overflow-hidden rounded-lg border border-slate-200 bg-surface py-1 shadow-card"
                                 >
                                   {confirming ? (
-                                    <>
-                                      <p className="px-3 py-2 text-xs font-semibold text-ink-500">
-                                        Delete this budget?
-                                      </p>
-                                      <button
-                                        type="button"
-                                        role="menuitem"
-                                        onClick={() => handleDelete(row.item.budget_id)}
-                                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-red-500 transition hover:bg-red-50"
-                                      >
-                                        <Icon name="trash-2" size={15} />
-                                        Confirm delete
-                                      </button>
-                                      <button
-                                        type="button"
-                                        role="menuitem"
-                                        onClick={closeMenu}
-                                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink-500 transition hover:bg-slate-50"
-                                      >
-                                        <Icon name="x" size={15} />
-                                        Cancel
-                                      </button>
-                                    </>
+                                    <MenuDeleteButton
+                                      onConfirm={() => handleDelete(row.item.budget_id)}
+                                      onCancel={closeMenu}
+                                    />
                                   ) : (
                                     <>
                                       <button

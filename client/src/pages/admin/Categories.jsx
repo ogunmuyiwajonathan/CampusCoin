@@ -1,38 +1,40 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Icon from "../../components/Icon.jsx";
 import CategoryIcon from "../../components/CategoryIcon.jsx";
 import CategoryIconPicker from "../../components/CategoryIconPicker.jsx";
+import SubmitSpinner from "../../components/SubmitSpinner.jsx";
+import { useSubmitLock } from "../../hooks/useSubmitLock.js";
 
 function CategoryModal({ cat, onClose, onSave }) {
   const [name, setName] = useState(cat?.name ?? "");
   const [type, setType] = useState(cat?.type ?? "expense");
   const [iconKey, setIconKey] = useState(cat?.icon_key ?? null);
   const [iconSvg, setIconSvg] = useState(cat?.icon_svg ?? null);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const { locked: saving, done, run, minWidth, measure } = useSubmitLock();
 
   const submit = async (e) => {
     e.preventDefault();
+    if (saving) return;
     setError("");
-    setSaving(true);
     try {
-      const url = cat ? `/api/admin/categories/${cat.id}` : "/api/admin/categories";
-      const method = cat ? "PUT" : "POST";
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), type, icon_key: iconKey, icon_svg: iconSvg }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        const detail = data.error?.details?.icon_svg ?? data.error?.details?.icon_key;
-        throw new Error(detail ?? data.error?.message ?? data.message ?? "Save failed");
-      }
-      onSave(data);
+      await run(async () => {
+        const url = cat ? `/api/admin/categories/${cat.id}` : "/api/admin/categories";
+        const method = cat ? "PUT" : "POST";
+        const res = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name.trim(), type, icon_key: iconKey, icon_svg: iconSvg }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const detail = data.error?.details?.icon_svg ?? data.error?.details?.icon_key;
+          throw new Error(detail ?? data.error?.message ?? data.message ?? "Save failed");
+        }
+        onSave(data);
+      }, { oneShot: true });
     } catch (err) {
       setError(err.message);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -74,11 +76,19 @@ function CategoryModal({ cat, onClose, onSave }) {
           </div>
           {error && <p role="alert" className="text-sm font-medium text-red-600">{error}</p>}
           <div className="flex gap-3">
-            <button type="button" onClick={onClose} className="flex-1 rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-ink-500 transition hover:bg-mint-50">
+            <button type="button" onClick={onClose} disabled={saving} className="flex-1 rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-ink-500 transition hover:bg-mint-50 disabled:opacity-50">
               Cancel
             </button>
-            <button type="submit" disabled={saving || !name.trim()} className="flex-1 rounded-lg bg-brand-600 py-2.5 text-sm font-bold text-white transition hover:bg-brand-700 disabled:opacity-50">
-              {saving ? "Saving..." : "Save"}
+            <button
+              type="submit"
+              ref={measure}
+              disabled={saving || !name.trim()}
+              aria-busy={saving}
+              style={minWidth ? { minWidth } : undefined}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-bold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {saving && <SubmitSpinner className="h-3.5 w-3.5" />}
+              {saving ? "Saving..." : done ? "Saved" : "Save"}
             </button>
           </div>
         </form>
@@ -94,6 +104,8 @@ export default function Categories() {
   const [modal, setModal] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const deleteLockRef = useRef(false);
+  const loadLockRef = useRef(false);
 
   const requestCategories = async () => {
     const res = await fetch("/api/admin/categories");
@@ -133,7 +145,9 @@ export default function Categories() {
   }, []);
 
   const handleDelete = async (cat) => {
+    if (deleteLockRef.current) return;
     if (!window.confirm(`Delete category "${cat.name}"?`)) return;
+    deleteLockRef.current = true;
     setDeleteError(null);
     setDeleting(cat.id);
     try {
@@ -144,13 +158,20 @@ export default function Categories() {
     } catch (err) {
       setDeleteError(err.message);
     } finally {
+      deleteLockRef.current = false;
       setDeleting(null);
     }
   };
 
   const handleSave = async () => {
     setModal(null);
-    await load();
+    if (loadLockRef.current) return;
+    loadLockRef.current = true;
+    try {
+      await load();
+    } finally {
+      loadLockRef.current = false;
+    }
   };
 
   if (loading && categories.length === 0) {
@@ -258,11 +279,14 @@ export default function Categories() {
                             Edit
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleDelete(cat)}
                             disabled={deleting === cat.id}
-                            className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                            aria-busy={deleting === cat.id}
+                            className="flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            {deleting === cat.id ? "..." : "Delete"}
+                            {deleting === cat.id && <SubmitSpinner className="h-3 w-3" />}
+                            {deleting === cat.id ? "Deleting..." : "Delete"}
                           </button>
                         </div>
                       </td>

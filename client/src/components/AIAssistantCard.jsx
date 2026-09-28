@@ -1,61 +1,44 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import BotAvatar from "./BotAvatar.jsx";
 import Icon from "./Icon.jsx";
-import { askAssistant } from "../lib/aiAssistant.js";
+import { sendMessage, friendlyAiError } from "../lib/aiAssistant.js";
+import { useSubmitLock } from "../hooks/useSubmitLock.js";
+import SubmitSpinner from "./SubmitSpinner.jsx";
 
-// The summary card on the dashboard. It asks the server for this month's picture
-// on mount, so what it shows is the same figure the charts above it are drawn
-// from, rather than a separate calculation.
-//
-// The breakdown prop used to be answered here from mockData. The server owns
-// that now, so the prop is not read - Dashboard still passes it, and an ignored
-// prop is not a reason to edit a file another session is working in.
+// No breakdown guard here. Rix answers from the server's ledger, not from a
+// prop, so a student who has logged nothing yet still gets the card and its
+// idle prompt. Dashboard keeps passing breakdown; the extra prop is ignored.
 export default function AIAssistantCard() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
-  const [source, setSource] = useState(null);
-  const [status, setStatus] = useState("loading");
+  const [lastQuestion, setLastQuestion] = useState("");
+  const [status, setStatus] = useState("idle");
+  const { locked, lock: lockSend, unlock: unlockSend, measure: measureSend } = useSubmitLock();
 
-  // Used only for questions the student sends. The mount call below does its own
-  // fetch rather than calling this, because calling a state-setting function from
-  // inside an effect is the cascading-render pattern the linter rejects.
-  const load = useCallback(async (q) => {
+  const load = (value) => {
+    const text = value.trim();
+    if (!text) return;
+    setLastQuestion(text);
     setStatus("loading");
-    try {
-      const result = await askAssistant(q);
-      setAnswer(result.reply);
-      setSource(result.source);
-      setStatus("ready");
-    } catch {
-      setStatus("error");
-    }
-  }, []);
-
-  // status already starts as "loading", so nothing has to be set synchronously
-  // before the request goes out. The cancelled flag stops a reply that lands
-  // after unmount from writing to a dead component.
-  useEffect(() => {
-    let cancelled = false;
-    askAssistant("")
-      .then((result) => {
-        if (cancelled) return;
-        setAnswer(result.reply);
-        setSource(result.source);
+    sendMessage(text)
+      .then((res) => {
+        setAnswer(res.reply);
         setStatus("ready");
       })
-      .catch(() => {
-        if (!cancelled) setStatus("error");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      .catch((error) => {
+        setAnswer(friendlyAiError(error).message);
+        setStatus("error");
+      })
+      .finally(() => unlockSend());
+  };
 
   const submit = (event) => {
     event.preventDefault();
-    const q = question.trim();
-    if (!q) return;
-    load(q);
+    const value = question.trim();
+    if (!value || status === "loading") return;
+    if (!lockSend()) return;
+    setQuestion("");
+    load(value);
   };
 
   return (
@@ -66,6 +49,12 @@ export default function AIAssistantCard() {
       </div>
 
       <div className="min-h-23 flex-1" aria-live="polite">
+        {status === "idle" && (
+          <p className="text-sm leading-relaxed text-ink-500">
+            Ask me anything about your spending and I&apos;ll answer from your
+            real transactions.
+          </p>
+        )}
         {status === "loading" && (
           <div className="animate-pulse space-y-2.5" aria-busy="true">
             <div className="h-3 w-full rounded bg-slate-200" />
@@ -75,10 +64,10 @@ export default function AIAssistantCard() {
         )}
         {status === "error" && (
           <p className="text-sm text-red-500">
-            Couldn&apos;t reach Rix.{" "}
+            {answer}{" "}
             <button
               type="button"
-              onClick={() => load(question.trim())}
+              onClick={() => load(lastQuestion)}
               className="font-semibold underline"
             >
               Try again
@@ -86,15 +75,7 @@ export default function AIAssistantCard() {
           </p>
         )}
         {status === "ready" && (
-          <>
-            <p className="text-sm italic leading-relaxed text-ink-500">{answer}</p>
-            {source !== "poolside" && (
-              <p className="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-amber-800">
-                <Icon name="info" size={13} className="mt-0.5 shrink-0" />
-                <span>Offline mode - this was computed from your ledger, not generated.</span>
-              </p>
-            )}
-          </>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-900">{answer}</p>
         )}
       </div>
 
@@ -107,14 +88,18 @@ export default function AIAssistantCard() {
           onChange={(event) => setQuestion(event.target.value)}
           placeholder="Ask a question about your spending..."
           aria-label="Ask the AI assistant a question"
-          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-ink-500"
+          disabled={status === "loading"}
+          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-ink-500 disabled:cursor-not-allowed"
         />
         <button
           type="submit"
+          ref={measureSend}
           aria-label="Send question"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-700 text-white transition hover:bg-brand-800"
+          aria-busy={locked}
+          disabled={locked || question.trim().length === 0}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-700 text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <Icon name="arrow-up" size={16} />
+          {locked ? <SubmitSpinner className="h-3.5 w-3.5" /> : <Icon name="arrow-up" size={16} />}
         </button>
       </form>
     </div>

@@ -26,6 +26,11 @@ const transactionSchema = defineSchema(
     },
     // Groups the rows created by one CSV upload so the whole batch can be undone.
     import_batch_id: { type: mongoose.Schema.Types.ObjectId, default: null },
+    // Client-generated key for one "save this transaction" click. A double click,
+    // a retry after a dropped response and a duplicated tab all send the same
+    // key, and the unique index below turns the second one into the first row
+    // instead of a second expense.
+    request_id: { type: String, default: null },
   },
   { timestamps: true },
 );
@@ -35,5 +40,9 @@ transactionSchema.index({ user_id: 1, date: -1 });
 // Serves per-category spend totals for budgets, insights and the donut, so the
 // aggregation never has to scan the whole collection.
 transactionSchema.index({ user_id: 1, category_id: 1 });
+// Makes the double-click guard a database guarantee rather than a client
+// promise. Sparse, so rows written without a request_id (the seeder, imports)
+// are all exempt and do not collide with one another.
+transactionSchema.index({ user_id: 1, request_id: 1 }, { unique: true, sparse: true });
 
 export const Transaction = mongoose.model("Transaction", transactionSchema);

@@ -5,6 +5,7 @@ import Reveal from "../components/Reveal.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import SpendingDonut from "../components/SpendingDonut.jsx";
 import { CATEGORY_COLORS } from "../data/mockData.js";
+import { demoLogin } from "../lib/apiClient.js";
 import { formatCurrency } from "../lib/formatCurrency.js";
 import aibot from "../assets/aibot.webp";
 import aboutArt from "../assets/about.webp";
@@ -132,6 +133,23 @@ function SocialIcon({ icon }) {
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+
+  // Get Started goes straight to the dashboard in development, by signing in
+  // as the seeded demo student. The session is real, so every data endpoint keeps
+  // working, and /login and /signup are untouched.
+  const start = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await demoLogin();
+      navigate("/dashboard");
+    } catch {
+      navigate("/signup");
+    } finally {
+      setBusy(false);
+    }
+  };
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -205,7 +223,7 @@ export default function LandingPage() {
             </button>
             <button
               type="button"
-              onClick={() => navigate("/signup")}
+              onClick={start}
               className="hidden rounded-full bg-brand-700 px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-800 md:inline-flex"
             >
               Get Started
@@ -246,7 +264,7 @@ export default function LandingPage() {
               </button>
               <button
                 type="button"
-                onClick={() => navigate("/signup")}
+                onClick={start}
                 className="flex-1 rounded-full bg-brand-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-800"
               >
                 Get Started
@@ -271,7 +289,7 @@ export default function LandingPage() {
             </p>
             <button
               type="button"
-              onClick={() => navigate("/signup")}
+              onClick={start}
               className="group mt-6 inline-flex items-center gap-2 rounded-full bg-brand-700 px-6 py-3 text-sm font-bold text-white shadow-card transition hover:bg-brand-800 active:scale-[0.98]"
             >
               Get Started Free
@@ -409,7 +427,7 @@ export default function LandingPage() {
           <Reveal className="mt-10 flex justify-center">
             <button
               type="button"
-              onClick={() => navigate("/signup")}
+              onClick={start}
               className="group inline-flex items-center gap-2 rounded-full bg-brand-700 px-8 py-3.5 text-sm font-bold text-white shadow-card transition hover:bg-brand-800 active:scale-[0.98]"
             >
               Get Started
@@ -545,7 +563,7 @@ export default function LandingPage() {
             </div>
             <button
               type="button"
-              onClick={() => navigate("/signup")}
+              onClick={start}
               className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-forest-900 transition hover:bg-emerald-50"
             >
               Create Your Account

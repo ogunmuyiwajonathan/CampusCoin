@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
-import AvatarPicker from "../components/AvatarPicker.jsx";
-import Icon from "../components/Icon.jsx";
-import AssistantFab from "../components/AssistantFab.jsx";
-import MobileNav from "../components/MobileNav.jsx";
-import PageHeader from "../components/PageHeader.jsx";
-import ProfileEditor from "../components/ProfileEditor.jsx";
-import Sidebar from "../components/Sidebar.jsx";
-import Toast from "../components/Toast.jsx";
-import { useAuth } from "../hooks/useAuth.js";
-import { useTheme } from "../hooks/useTheme.js";
-import { formatCurrency } from "../lib/formatCurrency.js";
+import AvatarPicker from "../../components/AvatarPicker.jsx";
+import Icon from "../../components/Icon.jsx";
+import AssistantFab from "../../components/AssistantFab.jsx";
+import MobileNav from "../../components/MobileNav.jsx";
+import PageHeader from "../../components/PageHeader.jsx";
+import PasswordDialog from "../../components/PasswordDialog.jsx";
+import ProfileEditor from "../../components/ProfileEditor.jsx";
+import Sidebar from "../../components/Sidebar.jsx";
+import Toast from "../../components/Toast.jsx";
+import { useAuth } from "../../hooks/useAuth.js";
+import { useTheme } from "../../hooks/useTheme.js";
+import { formatCurrency } from "../../lib/formatCurrency.js";
 
 const QUICK_ROWS = [
   { icon: "bell", title: "Notifications", subtitle: "Manage alerts and reminder preferences" },
@@ -31,6 +32,7 @@ function SoonPill() {
 export default function Settings() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const { user, updateProfile } = useAuth();
   const { theme, toggle } = useTheme();
@@ -56,6 +58,7 @@ export default function Settings() {
   const allowanceLabel = allowance == null ? NOT_ADDED : formatCurrency(allowance);
 
   const accountRows = [
+    { icon: "user", label: "Username", value: displayName || NOT_ADDED },
     { icon: "mail", label: "Email Address", value: email },
     { icon: "graduation-cap", label: "Academic Year", value: academicLabel },
     { icon: "wallet", label: "Monthly Allowance", value: allowanceLabel },
@@ -232,8 +235,8 @@ export default function Settings() {
                 <div className="divide-y divide-slate-100 border-t border-slate-100">
                   <button
                     type="button"
-                    disabled
-                    className="flex w-full items-center gap-3.5 px-5 py-4 text-left opacity-70"
+                    onClick={() => setPasswordOpen(true)}
+                    className="flex w-full items-center gap-3.5 px-5 py-4 text-left transition hover:bg-slate-50"
                   >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                       <Icon name="lock" size={16} />
@@ -246,7 +249,7 @@ export default function Settings() {
                         Update your password regularly
                       </span>
                     </span>
-                    <SoonPill />
+                    <Icon name="chevron-right" size={16} className="shrink-0 text-slate-400" />
                   </button>
                   <button
                     type="button"
@@ -328,6 +331,16 @@ export default function Settings() {
               notify({ kind: "success", message: "Profile updated." });
             }
             return result;
+          }}
+        />
+      )}
+
+      {passwordOpen && (
+        <PasswordDialog
+          onClose={() => setPasswordOpen(false)}
+          onSaved={() => {
+            setPasswordOpen(false);
+            notify({ kind: "success", message: "Password updated. Other devices were signed out." });
           }}
         />
       )}

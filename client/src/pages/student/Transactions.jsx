@@ -1,20 +1,22 @@
 import { useEffect, useState } from "react";
-import Icon from "../components/Icon.jsx";
-import CategoryIcon from "../components/CategoryIcon.jsx";
-import AssistantFab from "../components/AssistantFab.jsx";
-import MobileNav from "../components/MobileNav.jsx";
-import PageHeader from "../components/PageHeader.jsx";
-import Sidebar from "../components/Sidebar.jsx";
-import StatCard from "../components/StatCard.jsx";
-import TransactionForm from "../components/TransactionForm.jsx";
-import { useTransactions } from "../hooks/useTransactions.js";
+import Icon from "../../components/Icon.jsx";
+import CategoryIcon from "../../components/CategoryIcon.jsx";
+import AssistantFab from "../../components/AssistantFab.jsx";
+import MobileNav from "../../components/MobileNav.jsx";
+import PageHeader from "../../components/PageHeader.jsx";
+import Sidebar from "../../components/Sidebar.jsx";
+import StatCard from "../../components/StatCard.jsx";
+import TransactionForm from "../../components/TransactionForm.jsx";
+import SubmitSpinner from "../../components/SubmitSpinner.jsx";
+import { useTransactions } from "../../hooks/useTransactions.js";
+import { useSubmitLock } from "../../hooks/useSubmitLock.js";
 import {
   categoryColor,
   categoryLookup,
   computeTotals,
   expenseBreakdown,
-} from "../data/mockData.js";
-import { formatCurrency } from "../lib/formatCurrency.js";
+} from "../../data/mockData.js";
+import { formatCurrency } from "../../lib/formatCurrency.js";
 import {
   currentMonthKey,
   formatDate,
@@ -22,7 +24,7 @@ import {
   monthKey,
   monthLabel,
   monthRange,
-} from "../lib/formatMonth.js";
+} from "../../lib/formatMonth.js";
 
 const ALL = "all";
 
@@ -43,6 +45,56 @@ function TableSkeleton() {
           <div className="h-4 w-20 rounded bg-slate-100" />
         </div>
       ))}
+    </div>
+  );
+}
+
+function ConfirmDeleteButton({ onConfirm, onCancel }) {
+  const { locked, done, run, minWidth, measure } = useSubmitLock();
+  const [error, setError] = useState("");
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-ink-500">Delete?</span>
+      <button
+        type="button"
+        ref={measure}
+        disabled={locked}
+        aria-busy={locked}
+        style={minWidth ? { minWidth } : undefined}
+        onClick={async () => {
+          if (locked) return;
+          setError("");
+          try {
+            await run(async () => {
+              const result = await onConfirm();
+              if (result && result.ok === false) {
+                throw new Error(result.error ?? "Couldn't delete that transaction.");
+              }
+            }, { oneShot: true });
+          } catch (err) {
+            setError(err.message);
+          }
+        }}
+        className="flex items-center gap-1 rounded-lg bg-red-600 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+      >
+        {locked && <SubmitSpinner className="h-3 w-3" />}
+        {locked ? "Deleting..." : done ? "Deleted" : "Delete"}
+      </button>
+      {!locked && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-lg px-2 py-1 text-xs font-semibold text-ink-500 transition hover:bg-slate-50"
+        >
+          Cancel
+        </button>
+      )}
+      {error && (
+        <span className="text-xs font-semibold text-red-500" role="alert">
+          {error}
+        </span>
+      )}
     </div>
   );
 }
@@ -104,14 +156,13 @@ export default function Transactions() {
     setFormOpen(true);
   };
 
-  const handleSave = (payload) => {
-    if (editing) {
-      update(editing.transaction_id, payload);
-    } else {
-      add(payload);
-      if (monthFilter !== ALL && monthFilter !== monthKey(payload.date)) {
-        setMonthFilter(monthKey(payload.date));
-      }
+  const handleSave = async (payload) => {
+    const result = editing
+      ? await update(editing.transaction_id, payload)
+      : await add(payload);
+    if (!result?.ok) throw new Error(result?.error ?? "Couldn't save that transaction.");
+    if (!editing && monthFilter !== ALL && monthFilter !== monthKey(payload.date)) {
+      setMonthFilter(monthKey(payload.date));
     }
     if (typeFilter !== ALL && typeFilter !== payload.type) setTypeFilter(ALL);
     setMenuId(null);
@@ -394,26 +445,10 @@ export default function Transactions() {
                           <td className="px-2 py-3 sm:px-3" data-row-actions>
                             <div className="relative flex justify-end">
                               {confirmId === item.transaction_id ? (
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs text-ink-500">Delete?</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      remove(item.transaction_id);
-                                      setConfirmId(null);
-                                    }}
-                                    className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-red-700"
-                                  >
-                                    Delete
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setConfirmId(null)}
-                                    className="rounded-lg px-2 py-1 text-xs font-semibold text-ink-500 transition hover:bg-slate-50"
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
+                                <ConfirmDeleteButton
+                                  onConfirm={() => remove(item.transaction_id)}
+                                  onCancel={() => setConfirmId(null)}
+                                />
                               ) : (
                                 <>
                                   <button

@@ -2,14 +2,18 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
 import { requestPasswordReset } from "../lib/apiClient.js";
+import { useSubmitLock } from "../hooks/useSubmitLock.js";
+import SubmitSpinner from "../components/SubmitSpinner.jsx";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
+  const { locked, run, minWidth, measure } = useSubmitLock();
 
   const submit = async (event) => {
     event.preventDefault();
+    if (locked) return;
     if (!email.trim()) {
       setError("Enter the email you signed up with.");
       return;
@@ -17,8 +21,10 @@ export default function ForgotPassword() {
     setError("");
     setStatus("sending");
     try {
-      await requestPasswordReset(email.trim());
-      setStatus("sent");
+      await run(async () => {
+        await requestPasswordReset(email.trim());
+        setStatus("sent");
+      }, { oneShot: true });
     } catch (err) {
       setError(err.message);
       setStatus("idle");
@@ -82,10 +88,14 @@ export default function ForgotPassword() {
 
                 <button
                   type="submit"
-                  disabled={status === "sending"}
-                  className="mt-5 w-full rounded-lg bg-brand-500 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600 disabled:opacity-60"
+                  ref={measure}
+                  disabled={locked}
+                  aria-busy={locked}
+                  style={minWidth ? { minWidth } : undefined}
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {status === "sending" ? "Sending..." : "Send reset link"}
+                  {locked && <SubmitSpinner />}
+                  {locked ? "Sending..." : "Send reset link"}
                 </button>
               </form>
 

@@ -31,14 +31,23 @@ const DEMO_STUDENT = {
   role: "student",
 };
 
-const DEMO_ADMIN = {
-  name: "Campus Coin Admin",
-  email: env.adminEmail || "admin@campuscoin.test",
-  role: "admin",
-};
+// Two named admin accounts. The admin login form asks for a name rather than
+// an email, so `name` is the identifier an admin types. Each still needs a
+// unique email to satisfy the schema, and that email is never shown to anyone
+// signing in.
+const DEMO_ADMINS = [
+  { name: "jonathan", email: "jonathan@campuscoin.test", role: "admin" },
+  { name: "senod", email: "senod@campuscoin.test", role: "admin" },
+];
 
 const DEMO_PASSWORD = "CampusCoin2026!";
-const ADMIN_PASSWORD = env.adminSeedPassword || "AdminCampus2026!";
+
+// In development this is the password the demo accounts use. In production the
+// operator's ADMIN_SEED_PASSWORD wins, and main() already refuses to seed a
+// weak or guessable one, so a real deploy never ends up with these.
+function adminLoginPassword() {
+  return env.isProd ? env.adminSeedPassword || "" : "123456789";
+}
 
 const DEMO_LOGIN = {
   name: "Student",
@@ -235,7 +244,10 @@ async function seedTipTemplates() {
 
 export async function runSeed() {
   const student = await upsertUser(DEMO_STUDENT, DEMO_PASSWORD);
-  const admin = await upsertUser(DEMO_ADMIN, ADMIN_PASSWORD);
+  const admins = [];
+  for (const details of DEMO_ADMINS) {
+    admins.push(await upsertUser(details, adminLoginPassword()));
+  }
   const demoLogin = await upsertUser(DEMO_LOGIN, DEMO_LOGIN_PASSWORD);
   const categoriesByName = await seedCategories();
 
@@ -244,7 +256,7 @@ export async function runSeed() {
   const notifications = await seedNotifications(student._id);
   const templates = await seedTipTemplates();
 
-  return { student, admin, demoLogin, transactions, budgets, notifications, templates };
+  return { student, admins, demoLogin, transactions, budgets, notifications, templates };
 }
 
 async function main() {
@@ -268,7 +280,7 @@ async function main() {
   const result = await runSeed();
 
   console.log("\nseed summary");
-  console.log(`  users             3  (${result.student.email}, ${result.admin.email}, ${result.demoLogin.email})`);
+  console.log(`  users         ${2 + DEMO_ADMINS.length}  (${result.student.email}, ${DEMO_ADMINS.map((a) => a.name).join(", ")}, ${result.demoLogin.email})`);
   console.log(`  categories       ${CATEGORIES.length}`);
   console.log(`  transactions     ${result.transactions} inserted this run`);
   console.log(`  budgets          ${result.budgets} inserted this run`);
@@ -277,7 +289,7 @@ async function main() {
   console.log("\n  demo credentials");
   console.log(`    student  ${DEMO_STUDENT.email} / ${DEMO_PASSWORD}`);
   console.log(`    demo     ${DEMO_LOGIN.email} / ${DEMO_LOGIN_PASSWORD}`);
-  console.log(`    admin    ${DEMO_ADMIN.email} / ${ADMIN_PASSWORD}\n`);
+  console.log(`    admins   ${DEMO_ADMINS.map((a) => a.name).join(", ")} / ${adminLoginPassword()}\n`);
 
   await disconnectDb();
 }

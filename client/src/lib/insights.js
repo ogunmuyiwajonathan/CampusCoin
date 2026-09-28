@@ -1,6 +1,6 @@
 import {
-  categoryColor,
-  categoryIcon,
+  CATEGORY_COLORS,
+  CATEGORY_ICONS,
   categoryLookup,
   computeTotals,
   expenseBreakdown,
@@ -72,7 +72,7 @@ export function buildInsights({ items, month, budgets = [], goal = 0 }) {
       ...entry,
       previous,
       delta: previous > 0 ? Math.round(((entry.amount - previous) / previous) * 100) : null,
-      icon: categoryIcon(entry.name),
+      icon: CATEGORY_ICONS[entry.name] ?? "ellipsis",
     };
   });
 
@@ -93,8 +93,8 @@ export function buildInsights({ items, month, budgets = [], goal = 0 }) {
         name,
         spent,
         pct: item.limit_amount > 0 ? Math.round((spent / item.limit_amount) * 100) : 0,
-        icon: categoryIcon(name),
-        color: categoryColor(item.category_id),
+        icon: CATEGORY_ICONS[name] ?? "ellipsis",
+        color: CATEGORY_COLORS[item.category_id] ?? "#64748b",
       };
     })
     .sort((a, b) => b.pct - a.pct);

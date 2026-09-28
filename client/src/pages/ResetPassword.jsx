@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
 import { resetPassword } from "../lib/apiClient.js";
+import { useSubmitLock } from "../hooks/useSubmitLock.js";
+import SubmitSpinner from "../components/SubmitSpinner.jsx";
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
@@ -10,9 +12,11 @@ export default function ResetPassword() {
   const [confirm, setConfirm] = useState("");
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
+  const { locked, run, minWidth, measure } = useSubmitLock();
 
   const submit = async (event) => {
     event.preventDefault();
+    if (locked) return;
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
       return;
@@ -24,8 +28,10 @@ export default function ResetPassword() {
     setError("");
     setStatus("saving");
     try {
-      await resetPassword({ token, password });
-      setStatus("done");
+      await run(async () => {
+        await resetPassword({ token, password });
+        setStatus("done");
+      }, { oneShot: true });
     } catch (err) {
       setError(err.message);
       setStatus("idle");
@@ -126,10 +132,14 @@ export default function ResetPassword() {
 
                 <button
                   type="submit"
-                  disabled={status === "saving"}
-                  className="mt-5 w-full rounded-lg bg-brand-500 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600 disabled:opacity-60"
+                  ref={measure}
+                  disabled={locked}
+                  aria-busy={locked}
+                  style={minWidth ? { minWidth } : undefined}
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {status === "saving" ? "Saving..." : "Save new password"}
+                  {locked && <SubmitSpinner />}
+                  {locked ? "Saving..." : "Save new password"}
                 </button>
               </form>
             </>

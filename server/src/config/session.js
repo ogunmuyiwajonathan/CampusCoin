@@ -4,6 +4,11 @@ import { env } from "./env.js";
 
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 
+// The Mongo store has to outlive the longest cookie we ever hand out, otherwise
+// the TTL sweep deletes a still-valid session and a "Remember me" admin is
+// logged out early.
+export const SESSION_STORE_TTL_SECONDS = 60 * 60 * 24 * 30;
+
 // Cookie sessions stored in MongoDB, so a server restart does not log every
 // student out and two instances behind a load balancer see the same session.
 //
@@ -19,7 +24,7 @@ export function sessionMiddleware() {
     store: connectMongo.create({
       mongoUrl: env.mongoUri,
       collectionName: "sessions",
-      ttl: SESSION_TTL_SECONDS,
+      ttl: SESSION_STORE_TTL_SECONDS,
       autoRemove: "native",
     }),
     resave: false,

@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import Icon from "../components/Icon.jsx";
-import campusboy from "../assets/campusboy.webp";
-import AssistantFab from "../components/AssistantFab.jsx";
-import MobileNav from "../components/MobileNav.jsx";
-import Sidebar from "../components/Sidebar.jsx";
-import StatCard from "../components/StatCard.jsx";
-import SpendingDonut from "../components/SpendingDonut.jsx";
-import RecentTransactions from "../components/RecentTransactions.jsx";
-import AIAssistantCard from "../components/AIAssistantCard.jsx";
-import PageHeader from "../components/PageHeader.jsx";
-import { useAuth } from "../hooks/useAuth.js";
+import Icon from "../../components/Icon.jsx";
+import campusboy from "../../assets/campusboy.webp";
+import AssistantFab from "../../components/AssistantFab.jsx";
+import MobileNav from "../../components/MobileNav.jsx";
+import { INLINE_AI_VISIBLE_CLASS } from "../../components/AssistantFab.jsx";
+import Sidebar from "../../components/Sidebar.jsx";
+import StatCard from "../../components/StatCard.jsx";
+import SpendingDonut from "../../components/SpendingDonut.jsx";
+import RecentTransactions from "../../components/RecentTransactions.jsx";
+import AIAssistantCard from "../../components/AIAssistantCard.jsx";
+import PageHeader from "../../components/PageHeader.jsx";
+import { useAuth } from "../../hooks/useAuth.js";
 import {
   CATEGORY_COLORS,
   CATEGORY_ICONS,
@@ -18,9 +19,9 @@ import {
   computeTotals,
   expenseBreakdown,
   mockUser,
-} from "../data/mockData.js";
-import { useTransactions } from "../hooks/useTransactions.js";
-import { formatCurrency } from "../lib/formatCurrency.js";
+} from "../../data/mockData.js";
+import { useTransactions } from "../../hooks/useTransactions.js";
+import { formatCurrency } from "../../lib/formatCurrency.js";
 
 const AddTransactionLink = () => (
   <Link
@@ -117,7 +118,9 @@ export default function Dashboard() {
               />
             </div>
             <RecentTransactions items={recent} />
-            <AIAssistantCard breakdown={breakdown} />
+            <div className={INLINE_AI_VISIBLE_CLASS}>
+              <AIAssistantCard breakdown={breakdown} />
+            </div>
           </section>
         </main>
       </div>

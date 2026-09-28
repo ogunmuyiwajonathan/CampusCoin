@@ -1,32 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Icon from "../../components/Icon.jsx";
+import SubmitSpinner from "../../components/SubmitSpinner.jsx";
+import { useSubmitLock } from "../../hooks/useSubmitLock.js";
 
 function AnnouncementModal({ ann, onClose, onSave }) {
   const [title, setTitle] = useState(ann?.title ?? "");
   const [body, setBody] = useState(ann?.body ?? "");
   const [active, setActive] = useState(ann?.active ?? true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const { locked: saving, done, run, minWidth, measure } = useSubmitLock();
 
   const submit = async (e) => {
     e.preventDefault();
+    if (saving) return;
     setError("");
-    setSaving(true);
     try {
-      const url = ann ? `/api/admin/announcements/${ann.id}` : "/api/admin/announcements";
-      const method = ann ? "PUT" : "POST";
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), body: body.trim(), active }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Save failed");
-      onSave(data);
+      await run(async () => {
+        const url = ann ? `/api/admin/announcements/${ann.id}` : "/api/admin/announcements";
+        const method = ann ? "PUT" : "POST";
+        const res = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: title.trim(), body: body.trim(), active }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Save failed");
+        onSave(data);
+      }, { oneShot: true });
     } catch (err) {
       setError(err.message);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -51,9 +53,17 @@ function AnnouncementModal({ ann, onClose, onSave }) {
           </label>
           {error && <p className="text-sm font-medium text-red-600">{error}</p>}
           <div className="flex gap-3">
-            <button type="button" onClick={onClose} className="flex-1 rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-ink-500 transition hover:bg-mint-50">Cancel</button>
-            <button type="submit" disabled={saving || !title.trim() || !body.trim()} className="flex-1 rounded-lg bg-brand-600 py-2.5 text-sm font-bold text-white transition hover:bg-brand-700 disabled:opacity-50">
-              {saving ? "Saving..." : "Save"}
+            <button type="button" onClick={onClose} disabled={saving} className="flex-1 rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-ink-500 transition hover:bg-mint-50 disabled:opacity-50">Cancel</button>
+            <button
+              type="submit"
+              ref={measure}
+              disabled={saving || !title.trim() || !body.trim()}
+              aria-busy={saving}
+              style={minWidth ? { minWidth } : undefined}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-bold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {saving && <SubmitSpinner className="h-3.5 w-3.5" />}
+              {saving ? "Saving..." : done ? "Saved" : "Save"}
             </button>
           </div>
         </form>
@@ -68,6 +78,7 @@ export default function Announcements() {
   const [error, setError] = useState(null);
   const [modal, setModal] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const deleteLockRef = useRef(false);
 
   const requestAnnouncements = async () => {
     const res = await fetch("/api/admin/announcements");
@@ -107,13 +118,16 @@ export default function Announcements() {
   }, []);
 
   const handleDelete = async (ann) => {
+    if (deleteLockRef.current) return;
     if (!window.confirm(`Delete announcement "${ann.title}"?`)) return;
+    deleteLockRef.current = true;
     setDeleting(ann.id);
     try {
       await fetch(`/api/admin/announcements/${ann.id}`, { method: "DELETE" });
       await load();
     } catch {
     } finally {
+      deleteLockRef.current = false;
       setDeleting(null);
     }
   };
@@ -177,10 +191,16 @@ export default function Announcements() {
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  <button onClick={() => setModal({ ann })} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-ink-500 transition hover:bg-mint-50">Edit</button>
-                  <button onClick={() => handleDelete(ann)} disabled={deleting === ann.id}
-                    className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-50">
-                    {deleting === ann.id ? "..." : "Delete"}
+                  <button type="button" onClick={() => setModal({ ann })} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-ink-500 transition hover:bg-mint-50">Edit</button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(ann)}
+                    disabled={deleting === ann.id}
+                    aria-busy={deleting === ann.id}
+                    className="flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {deleting === ann.id && <SubmitSpinner className="h-3 w-3" />}
+                    {deleting === ann.id ? "Deleting..." : "Delete"}
                   </button>
                 </div>
               </div>

@@ -4,6 +4,8 @@ import GoogleG from "../components/GoogleG.jsx";
 import Icon from "../components/Icon.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import { useAuth } from "../hooks/useAuth.js";
+import { useSubmitLock } from "../hooks/useSubmitLock.js";
+import SubmitSpinner from "../components/SubmitSpinner.jsx";
 
 const FEATURES = [
   { icon: "chart-column", title: "Track Spending", description: "See where your money goes" },
@@ -25,23 +27,27 @@ export default function Signup() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState("");
+  const { locked, done, run, minWidth, measure } = useSubmitLock();
 
   const handleSignup = (details) => register(details);
 
   const submit = async (event) => {
     event.preventDefault();
+    if (locked) return;
     setError("");
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
     try {
-      await handleSignup({
-        name: fullName.trim(),
-        email: email.trim(),
-        password,
-      });
-      navigate("/dashboard");
+      await run(async () => {
+        await handleSignup({
+          name: fullName.trim(),
+          email: email.trim(),
+          password,
+        });
+        navigate("/dashboard");
+      }, { oneShot: true });
     } catch (err) {
       setError(err.message);
     }
@@ -236,11 +242,15 @@ export default function Signup() {
 
             <button
               type="submit"
-              disabled={!canSubmit}
+              ref={measure}
+              disabled={locked || !canSubmit}
+              aria-busy={locked}
+              style={minWidth ? { minWidth } : undefined}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Create Account
-              <Icon name="arrow-right" size={16} />
+              {locked && <SubmitSpinner />}
+              {locked ? "Creating account..." : done ? "Account created" : "Create Account"}
+              {!locked && <Icon name="arrow-right" size={16} />}
             </button>
 
             <p className="text-center text-xs text-ink-500">

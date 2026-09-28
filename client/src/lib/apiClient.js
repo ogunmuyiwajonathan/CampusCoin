@@ -103,6 +103,19 @@ export function saveProfile(patch) {
   return apiFetch("/auth/me", { method: "PATCH", body: patch });
 }
 
+// Changing the display name goes through the same profile patch, so both
+// settings live behind one call.
+export function changeUsername(name) {
+  return apiFetch("/auth/me", { method: "PATCH", body: { name } });
+}
+
+export function changePassword({ currentPassword, newPassword }) {
+  return apiFetch("/auth/me/password", {
+    method: "PATCH",
+    body: { currentPassword, newPassword },
+  });
+}
+
 export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 export const AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp"];
 

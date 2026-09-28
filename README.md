@@ -6,7 +6,7 @@ TechWiz 7 competition project.
 
 ## Status
 
-This repository currently contains the **frontend only**. There is no `server/` directory yet: all data lives in `localStorage` (seeded with realistic demo data) and all "auth" is a demo session. Nothing here talks to a database, an email service or an AI provider unless an environment variable is supplied.
+This repository has two parts: a React frontend in `client/` and an Express API in `server/` that reads and writes MongoDB. Sessions are real HTTP-only cookies, the ledger lives in the database rather than the browser, and the only thing still kept in `localStorage` is the light/dark theme preference.
 
 | Area | State |
 |---|---|
@@ -16,7 +16,7 @@ This repository currently contains the **frontend only**. There is no `server/` 
 | Dashboard | Working — balance, top category, recent activity, budget-vs-actual |
 | Budgets | Working — per-category monthly limits, progress bars, near/exceed alerts |
 | Insights | Working client-side — monthly narrative, growth flags, 6-month chart with month navigation, category breakdown |
-| AI assistant | Rule-based responses locally. If `VITE_AI_API_KEY` is set it calls OpenAI **directly from the browser** — for anything real this must move behind a server proxy (see below) |
+| AI assistant | **"Rix"**, live on the server. It reads the student's own transactions and budgets and uses Poolside's `laguna-xs-2.1` to phrase the answer. **Rix sends the student's own transaction data to the Poolside API to generate answers.** The key sits in `server/.env` and never reaches the browser bundle |
 | Reports, CSV import, AI categorisation, tips engine, bookmarks/share, admin panel | Not built |
 | Accessibility | Dark mode and responsive layout done; font-size control and breadcrumbs not built |
 
@@ -29,42 +29,76 @@ This repository currently contains the **frontend only**. There is no `server/` 
 | Routing | React Router 7 |
 | Charts | Recharts 3 |
 | Linting | oxlint |
-| Backend | Node.js + Express — **not started** |
-| Database | MongoDB + Mongoose — **not started** |
+| Backend | Node.js + Express — `server/` with cookie sessions, zod validation and rate limiting |
+| Database | MongoDB + Mongoose — Atlas, with a seeded demo dataset |
 
 ## Project Structure
 
 ```
 CampusCoin/
-├── client/      # React frontend (the whole app today)
+├── client/       # React frontend
+├── server/       # Express API, Mongoose models, Rix, seeds, tests
 ├── instructions/ # SRS + study reference (gitignored)
-└── structure/   # design decisions, DB design, backend plan
+└── structure/    # design decisions, DB design, backend plan
 ```
 
 ## Run
 
+Backend and frontend in two terminals:
+
+```bash
+cd server
+npm install
+npm run seed     # demo accounts, categories, transactions
+npm run dev      # http://localhost:5000
+```
+
 ```bash
 cd client
 npm install
-npm run dev
+npm run dev      # http://localhost:5173
 ```
 
-Open http://localhost:5173 — the landing page needs no account; `/dashboard` and the rest use the demo session created by signing up or logging in.
+Open http://localhost:5173 — the landing page needs no account; `/dashboard` and the rest use the session created by signing up or logging in. Seeded accounts are printed by the seed.
 
 ```bash
 cd client
 npm run lint     # must report 0 warnings
 npm run build    # production build
+
+cd server
+npm run lint
+npm test          # security baseline
+npm run test:auth # auth end-to-end
+node tests/rix.e2e.mjs   # Rix end-to-end (needs NODE_ENV=test)
 ```
 
 ## Environment
 
-Copy `client/.env.example` to `client/.env` if you need it. Everything is optional:
+The client reads `client/.env`; the server reads `server/.env`, which is gitignored and never committed.
+
+**Client — `client/.env.example`**
 
 | Variable | Purpose |
 |---|---|
-| `VITE_API_URL` | Base URL for the future Express API |
-| `VITE_AI_API_KEY` | OpenAI key for the assistant. **Any `VITE_*` value is inlined into the built JavaScript and is public.** It is fine for a local test and unsafe for a deployed build — a real deployment must call OpenAI from a server and keep the key there. |
+| `VITE_API_URL` | Base URL of the Express API |
+| `VITE_DEMO_STUDENT_EMAIL` / `VITE_DEMO_STUDENT_PASSWORD` | Development-only pre-fill for the login form; both left blank in production |
+
+**Server — `server/.env.example`**
+
+| Variable | Purpose |
+|---|---|
+| `MONGODB_URI` | MongoDB connection string |
+| `CORS_ORIGIN` | Comma-separated browser origins allowed to call the API |
+| `SESSION_SECRET` | Signs the session cookie; required when `NODE_ENV=production` |
+| `POOLSIDE_API_KEY` | Rix's model key. Server-side only — never sent to the browser and never committed; `server/.env.example` carries a blank placeholder |
+| `POOLSIDE_BASE_URL` / `POOLSIDE_MODEL` | Poolside endpoint and model |
+| `AI_RATE_LIMIT` | Questions per hour one account may ask Rix; defaults to 60 |
+| `RESEND_API_KEY` / `EMAIL_FROM` | Password-reset email; with no key the reset link is logged to the console instead |
+| `ADMIN_EMAIL` / `ADMIN_SEED_PASSWORD` | Admin account created by the seed |
+| `APP_ORIGIN` | Overrides the origin used in password-reset links |
+
+No AI key exists in the client bundle at all: **Rix sends the student's own transaction data to the Poolside API to generate answers**, from the server.
 
 ## Architecture
 

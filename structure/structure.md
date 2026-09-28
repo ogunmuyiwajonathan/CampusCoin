@@ -10,8 +10,11 @@ CampusCoin/
 │       │                          #   + PageHeader, ThemeToggle, NotificationBell, AssistantFab
 │       │                          #   + ErrorBoundary (app-wide crash fallback)
 │       │                          #   + Icon.jsx (single lucide-react registry)
-│       ├── pages/                 # LandingPage, LoginPage, Signup, Dashboard, Transactions,
-│       │                          #   Budgets, Insights, Assistant, Settings
+│       ├── pages/                 # LandingPage, LoginPage, Signup, AdminLogin, NotFound
+│       │   ├── student/           #   Dashboard, Transactions, Budgets, Insights,
+│       │   │                       #   Assistant, Settings
+│       │   └── admin/             #   AdminLayout, Dashboard, Users, Categories,
+│       │                           #   Tips, Announcements
 │       ├── hooks/                 # AuthProvider/useAuth, useBudgets, useTransactions, ThemeProvider/useTheme
 │       ├── data/                  # mockData.js — seed data, category constants, derived totals
 │       ├── lib/                   # formatCurrency, formatMonth, formatName, insights, apiClient, aiAssistant
@@ -79,12 +82,12 @@ Relations: User 1—M Transactions/Budgets/Insights, Category 1—M Transactions
 | Landing page | `pages/LandingPage.jsx` | Marketing page at `/`, redirects to `/dashboard` when signed in |
 | Auth (demo) | `hooks/AuthProvider.jsx` | localStorage session, no server, no password reset |
 | Profile + avatar | `components/ProfileEditor.jsx`, `AvatarPicker.jsx` | Avatar is a 192px data URL in the session, not object storage |
-| Transactions | `pages/Transactions.jsx`, `hooks/useTransactions.js` | CRUD, filters, month picker, `is_recurring` flag only — nothing generates future entries |
+| Transactions | `pages/student/Transactions.jsx`, `hooks/useTransactions.js` | CRUD, filters, month picker, `is_recurring` flag only — nothing generates future entries |
 | Categories | `data/mockData.js` | 11 seeded defaults, read-only; personal CRUD not built |
-| Dashboard | `pages/Dashboard.jsx` | Balance, top category, recent activity, budget-vs-actual |
-| Budgets + alerts | `pages/Budgets.jsx`, `hooks/useBudgets.js` | Limits, progress bars, near/exceed bands (95% / 100%) |
-| Insights | `pages/Insights.jsx`, `lib/insights.js` | Narrative, growth flags, 6-month chart with month stepping, donut |
-| AI assistant | `pages/Assistant.jsx`, `lib/aiAssistant.js` | Posts to `/api/ai/chat` so the provider key stays server-side, with a local rules fallback while the server is unbuilt |
+| Dashboard | `pages/student/Dashboard.jsx` | Balance, top category, recent activity, budget-vs-actual |
+| Budgets + alerts | `pages/student/Budgets.jsx`, `hooks/useBudgets.js` | Limits, progress bars, near/exceed bands (95% / 100%) |
+| Insights | `pages/student/Insights.jsx`, `lib/insights.js` | Narrative, growth flags, 6-month chart with month stepping, donut |
+| AI assistant | `pages/student/Assistant.jsx`, `lib/aiAssistant.js` | Posts to `/api/ai/chat` so the provider key stays server-side, with a local rules fallback while the server is unbuilt |
 | Dark mode + responsive | `ThemeProvider`, Tailwind breakpoints | Light/dark, phone/tablet/desktop, bottom tab bar + FAB |
 
 **Not built (SRS-scored)**

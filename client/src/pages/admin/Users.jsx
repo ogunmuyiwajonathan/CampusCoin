@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Icon from "../../components/Icon.jsx";
+import SubmitSpinner from "../../components/SubmitSpinner.jsx";
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -11,6 +12,8 @@ export default function Users() {
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
   const [resetModal, setResetModal] = useState(null);
+  const actionLockRef = useRef(false);
+  const searchLockRef = useRef(false);
 
   const requestUsers = async (p, s) => {
     const res = await fetch(`/api/admin/users?page=${p}&limit=10&search=${encodeURIComponent(s)}`);
@@ -58,10 +61,16 @@ export default function Users() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchUsers(1, search);
+    if (searchLockRef.current) return;
+    searchLockRef.current = true;
+    fetchUsers(1, search).finally(() => {
+      searchLockRef.current = false;
+    });
   };
 
   const toggleDisable = async (user) => {
+    if (actionLockRef.current) return;
+    actionLockRef.current = true;
     try {
       setActionLoading(user.user_id);
       const endpoint = user.is_active ? 'disable' : 'enable';
@@ -74,11 +83,14 @@ export default function Users() {
     } catch (err) {
       alert(err.message);
     } finally {
+      actionLockRef.current = false;
       setActionLoading(null);
     }
   };
 
   const handleReset = async (id) => {
+    if (actionLockRef.current) return;
+    actionLockRef.current = true;
     try {
       setActionLoading(id);
       const res = await fetch(`/api/admin/users/${id}/reset`, { method: 'PUT' });
@@ -91,6 +103,7 @@ export default function Users() {
     } catch (err) {
       alert(err.message);
     } finally {
+      actionLockRef.current = false;
       setActionLoading(null);
     }
   };
@@ -196,26 +209,37 @@ export default function Users() {
                     {u.role !== "admin" && (
                       <div className="flex justify-end gap-2">
                         <button
+                          type="button"
                           onClick={() => {
+                            if (actionLockRef.current) return;
                             if (window.confirm("Are you sure you want to reset this user's password?")) {
                               handleReset(u.user_id);
                             }
                           }}
                           disabled={actionLoading === u.user_id}
-                          className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-ink-500 transition hover:bg-mint-50 hover:text-ink-900 disabled:opacity-50"
+                          aria-busy={actionLoading === u.user_id}
+                          className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-ink-500 transition hover:bg-mint-50 hover:text-ink-900 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          Reset
+                          {actionLoading === u.user_id && <SubmitSpinner className="h-3 w-3" />}
+                          {actionLoading === u.user_id ? "Working..." : "Reset"}
                         </button>
                         <button
+                          type="button"
                           onClick={() => toggleDisable(u)}
                           disabled={actionLoading === u.user_id}
-                          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
-                            u.is_active 
-                              ? "bg-red-50 text-red-700 hover:bg-red-100" 
+                          aria-busy={actionLoading === u.user_id}
+                          className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                            u.is_active
+                              ? "bg-red-50 text-red-700 hover:bg-red-100"
                               : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                           }`}
                         >
-                          {u.is_active ? "Disable" : "Enable"}
+                          {actionLoading === u.user_id && <SubmitSpinner className="h-3 w-3" />}
+                          {actionLoading === u.user_id
+                            ? "Working..."
+                            : u.is_active
+                              ? "Disable"
+                              : "Enable"}
                         </button>
                       </div>
                     )}

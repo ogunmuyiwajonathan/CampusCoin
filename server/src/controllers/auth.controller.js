@@ -1,5 +1,7 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
+import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 import { appOrigin } from "../config/session.js";
 import { User } from "../models/index.js";
 import { sendPasswordResetEmail } from "../services/mail.service.js";
@@ -83,6 +85,29 @@ export const updateProfile = asyncHandler(async (req, res) => {
 // Always the same 200 with the same body, whether the address exists, is
 // already used, or the mail provider is down. Anything else turns this
 // endpoint into an account-enumeration oracle.
+// Changing a password is how someone reacts to a stolen account, so every other
+// session for this user dies with it. The session making the change is kept,
+// otherwise the user is thrown out of the tab they are working in.
+export const changePassword = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.user_id).select("+password_hash");
+  if (!user) throw ApiError.notFound("Account not found.");
+
+  const currentOk = await bcrypt.compare(req.body.currentPassword, user.password_hash);
+  if (!currentOk) throw ApiError.unauthorized("Your current password is not correct.");
+
+  await setPassword(user._id, req.body.newPassword);
+  await invalidateResetTokens(user._id);
+
+  // connect-mongo stores the session as a serialised string, so the user id is
+  // matched by pattern rather than a query.
+  await mongoose.connection.collection("sessions").deleteMany({
+    _id: { $ne: req.sessionID },
+    session: { $regex: `"userId":"${user._id.toString()}"` },
+  });
+
+  res.json({ ok: true });
+});
+
 export const forgotPassword = asyncHandler(async (req, res) => {
   const email = normaliseEmail(req.body.email);
   const user = await User.findOne({ email, is_active: true }).lean();

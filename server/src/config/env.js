@@ -38,6 +38,35 @@ const nodeEnv = process.env.NODE_ENV ?? "production";
 // everyone out and there would be no way to reproduce a session locally.
 const sessionSecret = process.env.SESSION_SECRET?.trim() || "";
 
+export const AI_DEFAULT_LIMIT = 60;
+export const AI_TEST_LIMIT = 1000;
+
+// The test suite fires far more questions than a student ever would, so it runs
+// under a raised ceiling. That ceiling must never reach production: a deployed
+// instance quietly accepting 1000 questions an hour would turn a paid API into
+// an open one, so the process refuses to start rather than clamp it silently.
+function readAiRateLimit(raw) {
+  if (nodeEnv === "test") return AI_TEST_LIMIT;
+
+  const value = raw?.trim();
+  if (!value) return AI_DEFAULT_LIMIT;
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    console.error(`AI_RATE_LIMIT must be a whole number of questions per hour, got "${value}".`);
+    process.exit(1);
+  }
+
+  if (nodeEnv === "production" && parsed >= AI_TEST_LIMIT) {
+    console.error(
+      `AI_RATE_LIMIT=${parsed} is the test override and NODE_ENV is production. Refusing to start.`,
+    );
+    process.exit(1);
+  }
+
+  return parsed;
+}
+
 if (sessionSecret === "" && nodeEnv === "production") {
   console.error("SESSION_SECRET is required when NODE_ENV=production.");
   console.error('Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
@@ -72,6 +101,8 @@ export const env = {
   resendApiKey: process.env.RESEND_API_KEY?.trim() || null,
   emailFrom: process.env.EMAIL_FROM?.trim() || "CampusCoin <no-reply@campuscoin.app>",
   uploadDir: process.env.UPLOAD_DIR?.trim() || "uploads",
+  adminEmail: process.env.ADMIN_EMAIL?.trim() || null,
+  adminSeedPassword: process.env.ADMIN_SEED_PASSWORD?.trim() || null,
   // The AI provider. Optional rather than required, so the app still boots and
   // every non-AI screen still works on a machine with no key. When it is absent
   // the assistant answers from the student's own numbers using the same rules
@@ -79,6 +110,7 @@ export const env = {
   poolsideApiKey: process.env.POOLSIDE_API_KEY?.trim() || null,
   poolsideBaseUrl: process.env.POOLSIDE_BASE_URL?.trim() || "https://inference.poolside.ai/v1",
   poolsideModel: process.env.POOLSIDE_MODEL?.trim() || "poolside/laguna-xs-2.1",
+  aiRateLimit: readAiRateLimit(process.env.AI_RATE_LIMIT),
   // Which seeded account a demo hands out. Leaving it unset turns the demo
   // shortcut off entirely and the real login form takes over again, so the
   // switch is one variable rather than a code change.

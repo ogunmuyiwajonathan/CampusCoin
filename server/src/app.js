@@ -2,11 +2,11 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import morgan from "morgan";
-import rateLimit from "express-rate-limit";
 
 import { env } from "./config/env.js";
 import { sessionMiddleware } from "./config/session.js";
 import { loadUser, requireTrustedOrigin } from "./middleware/requireAuth.js";
+import { apiLimiter } from "./middleware/rateLimiters.js";
 import routes from "./routes/index.js";
 import notFound from "./middleware/notFound.js";
 import errorHandler from "./middleware/errorHandler.js";
@@ -46,24 +46,10 @@ app.use(sessionMiddleware());
 app.use(loadUser);
 app.use(requireTrustedOrigin);
 
-// Brute-force guard on the auth routes. The limit is per IP per window, and the
-// message never says whether an account exists.
-//
-// The test run raises the ceiling so the suite's own deliberate bad-credential
-// attempts do not throttle each other. Development and production keep the real
-// limit of 5, because that is the behaviour worth having.
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: env.nodeEnv === "test" ? 1000 : 5,
-  standardHeaders: "draft-7",
-  legacyHeaders: false,
-  skipSuccessfulRequests: true,
-  message: {
-    error: { message: "Too many attempts. Please try again in 15 minutes." },
-  },
-});
-
-app.use("/api/auth", authLimiter);
+// Broad ceiling for the whole API. The routes that are worth guessing at -
+// sign-in, registration, password reset - carry their own tighter limiter in
+// routes/*.routes.js, which stacks on top of this one.
+app.use("/api", apiLimiter);
 
 app.use("/api", routes);
 

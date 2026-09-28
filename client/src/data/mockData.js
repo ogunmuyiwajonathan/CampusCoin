@@ -119,7 +119,7 @@ export const CATEGORY_COLORS = {
 };
 
 export function categoryLookup() {
-  return Object.fromEntries(categories.map((c) => [c.category_id, c]));
+  return Object.fromEntries(registry.map((c) => [c.category_id, c]));
 }
 
 const COLOR_BY_NAME = Object.fromEntries(

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import Icon from "./Icon.jsx";
 import { ACADEMIC_YEARS } from "../data/mockData.js";
+import { useSubmitLock } from "../hooks/useSubmitLock.js";
+import SubmitSpinner from "./SubmitSpinner.jsx";
 
 const AMOUNT_FIELDS = [
   {
@@ -33,7 +35,8 @@ export default function ProfileEditor({ initial, onClose, onSave }) {
     monthly_savings_goal: initial.monthly_savings_goal ?? "",
   });
   const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
+  const { locked, done, run, minWidth, measure } = useSubmitLock();
+  const saving = locked;
 
   useEffect(() => {
     const onKey = (event) => {
@@ -45,6 +48,7 @@ export default function ProfileEditor({ initial, onClose, onSave }) {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (locked) return;
     setError("");
 
     if (!name.trim()) {
@@ -63,10 +67,14 @@ export default function ProfileEditor({ initial, onClose, onSave }) {
     }
     patch.academic_year = academicYear || null;
 
-    setSaving(true);
-    const result = await onSave(patch);
-    setSaving(false);
-    if (!result.ok) setError(result.error);
+    try {
+      await run(async () => {
+        const result = await onSave(patch);
+        if (!result?.ok) throw new Error(result?.error ?? "Couldn't save your profile.");
+      });
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
@@ -227,12 +235,14 @@ export default function ProfileEditor({ initial, onClose, onSave }) {
           </button>
           <button
             type="submit"
+            ref={measure}
             disabled={saving}
             aria-busy={saving}
-            className="flex items-center gap-2 rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-800 disabled:opacity-70"
+            style={minWidth ? { minWidth } : undefined}
+            className="flex items-center justify-center gap-2 rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {saving && <Icon name="clock" size={15} className="animate-spin" />}
-            {saving ? "Saving..." : "Save Changes"}
+            {saving && <SubmitSpinner />}
+            {saving ? "Saving..." : done ? "Saved" : "Save Changes"}
           </button>
         </div>
       </form>

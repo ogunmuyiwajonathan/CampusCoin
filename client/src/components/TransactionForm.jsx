@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon.jsx";
-import { categories } from "../data/mockData.js";
+import { useCategories } from "../hooks/useCategories.js";
+import { useSubmitLock } from "../hooks/useSubmitLock.js";
+import SubmitSpinner from "./SubmitSpinner.jsx";
 import { todayISO } from "../lib/formatMonth.js";
 
 const inputClass =
@@ -11,7 +13,13 @@ const TYPE_OPTIONS = [
   { id: "income", label: "Income", icon: "piggy-bank" },
 ];
 
+const newRequestId = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `req-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
 export default function TransactionForm({ initial, onClose, onSave }) {
+  const { categories, status } = useCategories();
   const [type, setType] = useState(initial?.type ?? "expense");
   const [amount, setAmount] = useState(initial ? String(initial.amount) : "");
   const [categoryId, setCategoryId] = useState(initial?.category_id ?? "");
@@ -19,6 +27,10 @@ export default function TransactionForm({ initial, onClose, onSave }) {
   const [date, setDate] = useState(initial?.date ?? todayISO());
   const [recurring, setRecurring] = useState(initial?.is_recurring ?? false);
   const [errors, setErrors] = useState({});
+  const [saveError, setSaveError] = useState("");
+  const { locked, done, run, minWidth, measure } = useSubmitLock();
+  const requestIdRef = useRef(null);
+  if (requestIdRef.current === null) requestIdRef.current = newRequestId();
 
   useEffect(() => {
     const onKey = (event) => {
@@ -28,7 +40,8 @@ export default function TransactionForm({ initial, onClose, onSave }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const typeCategories = categories.filter((category) => category.type === type);
+  const typeCategories =
+    status === "ready" ? categories.filter((category) => category.type === type) : [];
 
   const switchType = (nextType) => {
     if (nextType === type) return;
@@ -44,8 +57,9 @@ export default function TransactionForm({ initial, onClose, onSave }) {
     }
   };
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
+    if (locked) return;
     const next = {};
     const value = Number(amount);
     if (amount.trim() === "") {
@@ -53,18 +67,32 @@ export default function TransactionForm({ initial, onClose, onSave }) {
     } else if (!Number.isFinite(value) || value <= 0) {
       next.amount = "Amount must be greater than ₦0.";
     }
-    if (!categoryId) next.category = "Choose a category.";
+    if (status !== "ready") {
+      next.category =
+        status === "error"
+          ? "Categories could not be loaded. Try again."
+          : "Categories are still loading. Try again in a moment.";
+    } else if (!categoryId) {
+      next.category = "Choose a category.";
+    }
     if (!date) next.date = "Pick a date for this transaction.";
     setErrors(next);
     if (Object.keys(next).length > 0) return;
-    onSave({
+    setSaveError("");
+    const payload = {
       type,
       amount: Math.round(value),
       category_id: categoryId,
       description: description.trim(),
       date,
       is_recurring: recurring,
-    });
+    };
+    if (!initial) payload.request_id = requestIdRef.current;
+    try {
+      await run(() => onSave(payload), { oneShot: true });
+    } catch (err) {
+      setSaveError(err?.message ?? "Couldn't save that transaction.");
+    }
   };
 
   return (
@@ -262,18 +290,34 @@ export default function TransactionForm({ initial, onClose, onSave }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-ink-500 transition hover:bg-slate-50"
+            disabled={locked}
+            className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-ink-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-800"
+            ref={measure}
+            disabled={locked}
+            aria-busy={locked}
+            style={minWidth ? { minWidth } : undefined}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            <Icon name="save" size={16} />
-            {initial ? "Save Changes" : "Save Transaction"}
+            {locked ? <SubmitSpinner /> : <Icon name="save" size={16} />}
+            {locked
+              ? "Saving..."
+              : done
+                ? "Saved"
+                : initial
+                  ? "Save Changes"
+                  : "Save Transaction"}
           </button>
         </div>
+        {saveError && (
+          <p className="mt-3 text-sm font-semibold text-red-500" role="alert">
+            {saveError}
+          </p>
+        )}
       </form>
     </div>
   );

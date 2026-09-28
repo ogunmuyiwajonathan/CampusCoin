@@ -43,6 +43,16 @@ export const resetPasswordSchema = z.object({
   password,
 });
 
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Enter your current password.").max(200),
+    newPassword: password,
+  })
+  .refine((value) => value.currentPassword !== value.newPassword, {
+    message: "Your new password must be different from the current one.",
+    path: ["newPassword"],
+  });
+
 export const updateProfileSchema = z
   .object({
     name: name.optional(),

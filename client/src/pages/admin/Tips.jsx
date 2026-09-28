@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Icon from "../../components/Icon.jsx";
+import SubmitSpinner from "../../components/SubmitSpinner.jsx";
+import { useSubmitLock } from "../../hooks/useSubmitLock.js";
 
 function TipModal({ tip, onClose, onSave }) {
   const [key, setKey] = useState(tip?.key ?? "");
@@ -8,36 +10,36 @@ function TipModal({ tip, onClose, onSave }) {
   const [threshold, setThreshold] = useState(tip?.threshold ?? "");
   const [savingsImpact, setSavingsImpact] = useState(tip?.savings_impact ?? "");
   const [isActive, setIsActive] = useState(tip?.is_active ?? true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const { locked: saving, done, run, minWidth, measure } = useSubmitLock();
 
   const submit = async (e) => {
     e.preventDefault();
+    if (saving) return;
     setError("");
-    setSaving(true);
     try {
-      const url = tip ? `/api/admin/tips/${tip.id}` : "/api/admin/tips";
-      const method = tip ? "PUT" : "POST";
-      const body = {
-        key: key.trim(),
-        text: text.trim(),
-        rule: rule.trim(),
-        is_active: isActive,
-      };
-      if (threshold !== "") body.threshold = Number(threshold);
-      if (savingsImpact !== "") body.savings_impact = Number(savingsImpact);
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Save failed");
-      onSave(data);
+      await run(async () => {
+        const url = tip ? `/api/admin/tips/${tip.id}` : "/api/admin/tips";
+        const method = tip ? "PUT" : "POST";
+        const body = {
+          key: key.trim(),
+          text: text.trim(),
+          rule: rule.trim(),
+          is_active: isActive,
+        };
+        if (threshold !== "") body.threshold = Number(threshold);
+        if (savingsImpact !== "") body.savings_impact = Number(savingsImpact);
+        const res = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Save failed");
+        onSave(data);
+      }, { oneShot: true });
     } catch (err) {
       setError(err.message);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -82,9 +84,17 @@ function TipModal({ tip, onClose, onSave }) {
           </label>
           {error && <p className="text-sm font-medium text-red-600">{error}</p>}
           <div className="flex gap-3">
-            <button type="button" onClick={onClose} className="flex-1 rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-ink-500 transition hover:bg-mint-50">Cancel</button>
-            <button type="submit" disabled={saving || !key.trim() || !text.trim()} className="flex-1 rounded-lg bg-brand-600 py-2.5 text-sm font-bold text-white transition hover:bg-brand-700 disabled:opacity-50">
-              {saving ? "Saving..." : "Save"}
+            <button type="button" onClick={onClose} disabled={saving} className="flex-1 rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-ink-500 transition hover:bg-mint-50 disabled:opacity-50">Cancel</button>
+            <button
+              type="submit"
+              ref={measure}
+              disabled={saving || !key.trim() || !text.trim()}
+              aria-busy={saving}
+              style={minWidth ? { minWidth } : undefined}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-bold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {saving && <SubmitSpinner className="h-3.5 w-3.5" />}
+              {saving ? "Saving..." : done ? "Saved" : "Save"}
             </button>
           </div>
         </form>
@@ -100,6 +110,7 @@ export default function Tips() {
   const [modal, setModal] = useState(null);
   const [toggling, setToggling] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const deleteLockRef = useRef(false);
 
   const requestTips = async () => {
     const res = await fetch("/api/admin/tips");
@@ -155,13 +166,16 @@ export default function Tips() {
   };
 
   const handleDelete = async (tip) => {
+    if (deleteLockRef.current) return;
     if (!window.confirm(`Delete tip "${tip.key}"?`)) return;
+    deleteLockRef.current = true;
     setDeleting(tip.id);
     try {
       await fetch(`/api/admin/tips/${tip.id}`, { method: "DELETE" });
       await load();
     } catch {
     } finally {
+      deleteLockRef.current = false;
       setDeleting(null);
     }
   };
@@ -235,10 +249,16 @@ export default function Tips() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button onClick={() => setModal({ tip })} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-ink-500 transition hover:bg-mint-50">Edit</button>
-                      <button onClick={() => handleDelete(tip)} disabled={deleting === tip.id}
-                        className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-50">
-                        {deleting === tip.id ? "..." : "Delete"}
+                      <button type="button" onClick={() => setModal({ tip })} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-ink-500 transition hover:bg-mint-50">Edit</button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(tip)}
+                        disabled={deleting === tip.id}
+                        aria-busy={deleting === tip.id}
+                        className="flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {deleting === tip.id && <SubmitSpinner className="h-3 w-3" />}
+                        {deleting === tip.id ? "Deleting..." : "Delete"}
                       </button>
                     </div>
                   </td>

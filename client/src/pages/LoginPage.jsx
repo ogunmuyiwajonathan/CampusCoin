@@ -4,6 +4,8 @@ import GoogleG from "../components/GoogleG.jsx";
 import Icon from "../components/Icon.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import { useAuth } from "../hooks/useAuth.js";
+import { useSubmitLock } from "../hooks/useSubmitLock.js";
+import SubmitSpinner from "../components/SubmitSpinner.jsx";
 
 const FEATURES = [
   { icon: "chart-column", title: "Track Spending", description: "See where your money goes" },
@@ -14,24 +16,34 @@ const FEATURES = [
 const inputClass =
   "w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-11 text-sm text-ink-900 placeholder:text-ink-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
 
+const demoEmail = import.meta.env.DEV ? (import.meta.env.VITE_DEMO_STUDENT_EMAIL ?? "") : "";
+const demoPassword = import.meta.env.DEV ? (import.meta.env.VITE_DEMO_STUDENT_PASSWORD ?? "") : "";
+
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(demoEmail);
+  const [password, setPassword] = useState(demoPassword);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
+  const { locked, done, run, minWidth, measure } = useSubmitLock();
 
   const handleLogin = (emailAddress, passwordValue) =>
     login({ email: emailAddress, password: passwordValue });
 
   const submit = async (event) => {
     event.preventDefault();
+    if (locked) return;
     setError("");
     try {
-      await handleLogin(email.trim(), password);
-      navigate("/");
+      await run(
+        async () => {
+          await handleLogin(email.trim(), password);
+          navigate("/dashboard");
+        },
+        { oneShot: true },
+      );
     } catch (err) {
       setError(err.message);
     }
@@ -190,11 +202,15 @@ export default function Login() {
 
             <button
               type="submit"
-              disabled={!email.trim() || !password}
+              ref={measure}
+              disabled={locked || !email.trim() || !password}
+              aria-busy={locked}
+              style={minWidth ? { minWidth } : undefined}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Log In
-              <Icon name="arrow-right" size={16} />
+              {locked && <SubmitSpinner />}
+              {locked ? "Logging in..." : done ? "Logged in" : "Log In"}
+              {!locked && <Icon name="arrow-right" size={16} />}
             </button>
 
             <p className="text-center text-xs text-ink-500">
