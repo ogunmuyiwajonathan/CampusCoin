@@ -17,7 +17,6 @@ const POINTS = [
 ];
 
 export default function AdminLogin() {
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -36,7 +35,7 @@ export default function AdminLogin() {
           const res = await fetch("/api/admin/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: username.trim(), password, rememberMe }),
+            body: JSON.stringify({ password, rememberMe }),
           });
           const data = await res.json().catch(() => ({}));
           if (!res.ok) {
@@ -45,7 +44,7 @@ export default function AdminLogin() {
                 data.error?.message || "Too many attempts. Please wait a few minutes.",
               );
             }
-            throw new Error(data.error?.message || "That name and password do not match.");
+            throw new Error(data.error?.message || "That password does not match.");
           }
           await refresh();
           navigate("/admin", { replace: true });
@@ -145,33 +144,10 @@ export default function AdminLogin() {
             </div>
 
             <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
+              {/* One field on purpose. The admin account is resolved server side
+                  from ADMIN_EMAIL, so there is nothing here to mistype and no
+                  other admin to be named. */}
               <div className="animate-auth-rise">
-                <label htmlFor="admin-name" className="mb-1.5 block text-sm font-semibold text-ink-900">
-                  Admin name
-                </label>
-                <div className="relative">
-                  <Icon
-                    name="user"
-                    size={17}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500"
-                  />
-                  <input
-                    id="admin-name"
-                    type="text"
-                    autoComplete="username"
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    value={username}
-                    onChange={(event) => setUsername(event.target.value)}
-                    placeholder="Enter your admin name"
-                    className={inputClass}
-                    disabled={locked}
-                  />
-                </div>
-              </div>
-
-              <div className="animate-auth-rise" style={{ animationDelay: "90ms" }}>
                 <label htmlFor="admin-password" className="mb-1.5 block text-sm font-semibold text-ink-900">
                   Password
                 </label>
@@ -223,7 +199,7 @@ export default function AdminLogin() {
               <button
                 type="submit"
                 ref={measure}
-                disabled={(!username.trim() && !password) || locked}
+                disabled={!password || locked}
                 aria-busy={locked}
                 className="animate-auth-rise flex w-full items-center justify-center gap-2 rounded-lg bg-forest-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-forest-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ animationDelay: "240ms", ...(minWidth ? { minWidth } : {}) }}
