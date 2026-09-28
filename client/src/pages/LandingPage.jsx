@@ -6,7 +6,7 @@ import ThemeToggle from "../components/ThemeToggle.jsx";
 import SpendingDonut from "../components/SpendingDonut.jsx";
 import { CATEGORY_COLORS } from "../data/mockData.js";
 import { formatCurrency } from "../lib/formatCurrency.js";
-import aibot from "../assets/aibot.png";
+import aibot from "../assets/aibot.webp";
 import aboutArt from "../assets/about.webp";
 import laptop from "../assets/laptop.webp";
 import student from "../assets/student.webp";

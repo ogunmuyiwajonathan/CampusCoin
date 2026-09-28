@@ -1,4 +1,4 @@
-import aibot from "../assets/aibot.png";
+import aibot from "../assets/aibot.webp";
 
 export default function BotAvatar({ className = "h-10 w-10", animate = true }) {
   return (
