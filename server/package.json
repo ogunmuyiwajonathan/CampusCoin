@@ -12,24 +12,25 @@
     "start": "node src/index.js",
     "lint": "oxlint",
     "test": "node tests/security-baseline.mjs",
-    "test:db": "node tests/db-smoke.mjs",
     "test:seed": "node tests/seed-idempotency.mjs",
     "seed": "node scripts/seed.js",
-    "fetch:db": "node scripts/fetch-mongod.mjs"
+    "test:auth": "node tests/auth.e2e.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "connect-mongo": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^18.0.4",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.0",
+    "express-session": "^1.19.0",
     "helmet": "^8.3.0",
     "mongoose": "^9.10.2",
     "morgan": "^1.12.1",
+    "resend": "^6.30.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "mongodb-memory-server": "^11.3.0",
     "oxlint": "^1.85.0"
   }
 }

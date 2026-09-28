@@ -1,15 +1,28 @@
 // Proves the S1 security baseline. Run with: npm test
 //
-// It boots the Express app on an ephemeral port WITHOUT connecting to MongoDB,
-// so the middleware can be verified on a machine that cannot reach the database.
-// The health endpoint therefore reports db "disconnected" and ok false, which is
-// the honest answer and is asserted as such.
+// It boots the real Express app against the real Atlas cluster, in the
+// campuscoin_test database. It used to run with no database at all, but the auth
+// routes now exist and touch Mongo, so without one every login request would sit
+// in Mongoose's 10s buffer timeout and return 500 - the rate limiter would be
+// tested against errors rather than against failed logins.
+import "dotenv/config";
 import fsSync from "node:fs";
-import app from "../src/app.js";
-import validate from "../src/middleware/validate.js";
-import errorHandler from "../src/middleware/errorHandler.js";
-import ApiError from "../src/utils/ApiError.js";
 import { z } from "zod";
+import { useTestDatabaseEnv } from "./helpers/testDb.js";
+
+useTestDatabaseEnv();
+// Deliberately NOT "test": the auth rate limit is raised in the test
+// environment so the auth suite's own bad-credential attempts do not throttle
+// each other. This suite exists to prove the real limit of 5, so it runs under
+// the development configuration where the real limit applies.
+process.env.NODE_ENV = "development";
+process.env.CORS_ORIGIN = "http://localhost:5173";
+
+const { connectDb } = await import("../src/config/db.js");
+const app = (await import("../src/app.js")).default;
+const validate = (await import("../src/middleware/validate.js")).default;
+const errorHandler = (await import("../src/middleware/errorHandler.js")).default;
+const ApiError = (await import("../src/utils/ApiError.js")).default;
 
 let pass = 0;
 let fail = 0;
@@ -22,6 +35,8 @@ const check = (label, ok, extra = "") => {
     console.log(`  FAIL  ${label} ${extra}`);
   }
 };
+
+await connectDb();
 
 const server = app.listen(0);
 await new Promise((resolve) => server.once("listening", resolve));
@@ -37,11 +52,12 @@ check("content-security-policy present", !!h.get("content-security-policy"));
 check("x-powered-by removed", h.get("x-powered-by") === null, `got ${h.get("x-powered-by")}`);
 check("strict-transport-security present", !!h.get("strict-transport-security"));
 
-console.log("\n2. health payload shape (db will be 'disconnected' here, on purpose)");
+console.log("\n2. health payload shape, against a live database");
 const body = await head.json();
 check("has ok field", typeof body.ok === "boolean");
 check("has db field", typeof body.db === "string", JSON.stringify(body));
-check("ok is false when db is down", body.ok === false);
+check("ok is true when the database is reachable", body.ok === true, JSON.stringify(body));
+check("db reports connected", body.db === "connected", `got ${body.db}`);
 check("env is reported", typeof body.env === "string");
 
 console.log("\n3. JSON 404, not Express HTML");
@@ -54,6 +70,7 @@ check("content-type is json", (nf.headers.get("content-type") || "").includes("a
 
 console.log("\n4. auth rate limiter trips on repeated failures");
 const codes = [];
+let limitHeaders = null;
 for (let i = 0; i < 8; i += 1) {
   const res = await fetch(`${base}/api/auth/login`, {
     method: "POST",
@@ -62,6 +79,7 @@ for (let i = 0; i < 8; i += 1) {
   });
   codes.push(res.status);
   if (res.status === 429) {
+    if (!limitHeaders) limitHeaders = res.headers;
     const rl = await res.json();
     check("429 body uses our error shape", !!rl.error?.message, JSON.stringify(rl));
     check("429 message does not leak account existence", !/exist|password is|user/i.test(rl.error.message), rl.error.message);
@@ -69,7 +87,16 @@ for (let i = 0; i < 8; i += 1) {
 }
 check("a request was throttled with 429", codes.includes(429), JSON.stringify(codes));
 check("throttle kicks in by the 6th attempt", codes.indexOf(429) <= 5, JSON.stringify(codes));
-check("rate-limit headers exposed", true);
+check(
+  "every attempt before the limit was a 401, not a 500",
+  codes.slice(0, codes.indexOf(429)).every((code) => code === 401),
+  JSON.stringify(codes),
+);
+check(
+  "rate-limit headers are exposed",
+  !!limitHeaders && (limitHeaders.get("ratelimit-remaining") !== null || limitHeaders.get("ratelimit") !== null),
+  limitHeaders ? [...limitHeaders.keys()].join(",") : "no 429 captured",
+);
 
 console.log("\n5. zod validate() middleware (unit, no route yet in S1)");
 const schema = z.object({
@@ -160,7 +187,7 @@ const noMongoProd = runEnvChild({ NODE_ENV: "production", PORT: "5000", CORS_ORI
 check("blank MONGODB_URI stops a production boot", noMongoProd.code !== 0, `exit ${noMongoProd.code}`);
 check("the production error names the variable", /MONGODB_URI/.test(noMongoProd.output), noMongoProd.output.slice(0, 150));
 const noMongoDev = runEnvChild({ NODE_ENV: "development", PORT: "5000", CORS_ORIGIN: "http://x" });
-check("blank MONGODB_URI boots in development (in-memory mode)", noMongoDev.code === 0, noMongoDev.output.slice(0, 150));
+check("blank MONGODB_URI stops a development boot as well", noMongoDev.code !== 0, `exit ${noMongoDev.code}`);
 const noCors = runEnvChild({ NODE_ENV: "development", PORT: "5000", MONGODB_URI: "mongodb://x" });
 check("missing CORS_ORIGIN stops the process", noCors.code !== 0, `exit ${noCors.code}`);
 const badPort = runEnvChild({ NODE_ENV: "development", PORT: "99999", CORS_ORIGIN: "http://x", MONGODB_URI: "mongodb://x" });
@@ -184,7 +211,7 @@ const runChild = (childEnv) => {
   try {
     const out = execSync(`node "${childFile}"`, {
       cwd: scratch,
-      env: { PATH: process.env.PATH, PORT: "5000", CORS_ORIGIN: "http://x", MONGODB_URI: "mongodb://x", ...childEnv },
+      env: { PATH: process.env.PATH, PORT: "5000", CORS_ORIGIN: "http://x", MONGODB_URI: "mongodb://x", SESSION_SECRET: "test-secret", ...childEnv },
       stdio: "pipe",
     });
     return out.toString();

@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-const REQUIRED = ["CORS_ORIGIN"];
+const REQUIRED = ["MONGODB_URI", "CORS_ORIGIN"];
 
 const missing = REQUIRED.filter((key) => !process.env[key]?.trim());
 
@@ -32,19 +32,28 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 // leak internal messages to whoever triggered the error.
 const nodeEnv = process.env.NODE_ENV ?? "production";
 
-const mongoUri = process.env.MONGODB_URI?.trim() ?? "";
+// A session signed with a throwaway secret is forgeable by anyone who has read
+// the source, so production must supply one. Development gets a fixed default
+// rather than a random one, otherwise every restart would silently log
+// everyone out and there would be no way to reproduce a session locally.
+const sessionSecret = process.env.SESSION_SECRET?.trim() || "";
 
-// A blank MONGODB_URI selects an in-memory MongoDB, which is how this project
-// develops and how the test suite runs. It is never allowed in production: an
-// ephemeral database discards every write the moment the process exits, so a
-// deploy with a missing, blank or unreadable MONGODB_URI would start up looking
-// perfectly healthy and then silently lose all of its data. Refusing to boot is
-// the only safe answer.
-if (mongoUri === "" && nodeEnv === "production") {
-  console.error("MONGODB_URI is required when NODE_ENV=production.");
-  console.error("The in-memory database is for development and tests only; it discards all data on exit.");
+if (sessionSecret === "" && nodeEnv === "production") {
+  console.error("SESSION_SECRET is required when NODE_ENV=production.");
+  console.error('Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
   process.exit(1);
 }
+
+// The database name is parsed out separately so the startup log says which
+// database this process is actually talking to. Two of them exist - campuscoin
+// for the app and campuscoin_test for the test runs - and a mistyped URI that
+// silently pointed a deploy at the test database would be a quiet disaster.
+const mongoUri = process.env.MONGODB_URI.trim();
+const mongoDbName = (() => {
+  const withoutQuery = mongoUri.split("?")[0];
+  const segments = withoutQuery.split("/");
+  return segments.length > 3 ? segments.pop() : null;
+})();
 
 export const env = {
   nodeEnv,
@@ -52,6 +61,14 @@ export const env = {
   isProd: nodeEnv === "production",
   port,
   mongoUri,
-  useMemoryDb: mongoUri === "",
+  mongoDbName,
   corsOrigins,
+  sessionSecret: sessionSecret || "dev-only-insecure-session-secret",
+  // Overrides the origin used in password-reset links. Falls back to the
+  // request host so preview URLs work without a redeploy.
+  appOrigin: process.env.APP_ORIGIN?.trim() || null,
+  // With no key the mailer logs the reset link to the console instead, so the
+  // reset flow stays testable before email is configured.
+  resendApiKey: process.env.RESEND_API_KEY?.trim() || null,
+  emailFrom: process.env.EMAIL_FROM?.trim() || "CampusCoin <no-reply@campuscoin.app>",
 };

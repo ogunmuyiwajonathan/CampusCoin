@@ -5,6 +5,8 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 
 import { env } from "./config/env.js";
+import { sessionMiddleware } from "./config/session.js";
+import { loadUser, requireTrustedOrigin } from "./middleware/requireAuth.js";
 import routes from "./routes/index.js";
 import notFound from "./middleware/notFound.js";
 import errorHandler from "./middleware/errorHandler.js";
@@ -31,11 +33,21 @@ if (!env.isProd) {
   app.use(morgan("dev"));
 }
 
+// Session first, then the user it identifies. Both have to sit above the
+// routes, and loadUser has to sit above every route that reads req.user.
+app.use(sessionMiddleware());
+app.use(loadUser);
+app.use(requireTrustedOrigin);
+
 // Brute-force guard on the auth routes. The limit is per IP per window, and the
 // message never says whether an account exists.
+//
+// The test run raises the ceiling so the suite's own deliberate bad-credential
+// attempts do not throttle each other. Development and production keep the real
+// limit of 5, because that is the behaviour worth having.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 5,
+  limit: env.nodeEnv === "test" ? 1000 : 5,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   skipSuccessfulRequests: true,

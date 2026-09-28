@@ -1,0 +1,110 @@
+import asyncHandler from "../utils/asyncHandler.js";
+import ApiError from "../utils/ApiError.js";
+import { appOrigin } from "../config/session.js";
+import { User } from "../models/index.js";
+import { sendPasswordResetEmail } from "../services/mail.service.js";
+import {
+  authenticate,
+  consumeResetToken,
+  createResetToken,
+  invalidateResetTokens,
+  markResetTokenUsed,
+  normaliseEmail,
+  normaliseName,
+  publicUser,
+  registerUser,
+  setPassword,
+} from "../services/auth.service.js";
+
+// A new session id on every privilege change. Without this, a session cookie
+// captured before login would keep working as the signed-in user afterwards,
+// which is the whole point of rotating it.
+function startSession(req, user) {
+  return new Promise((resolve, reject) => {
+    const previous = req.session.userId;
+    req.session.regenerate((error) => {
+      if (error) return reject(error);
+      req.session.userId = user.user_id;
+      if (previous) req.session.previousUserId = previous;
+      return req.session.save((saveError) => (saveError ? reject(saveError) : resolve()));
+    });
+  });
+}
+
+export const register = asyncHandler(async (req, res) => {
+  const user = await registerUser(req.body);
+  await startSession(req, user);
+  res.status(201).json({ user: publicUser(user) });
+});
+
+export const login = asyncHandler(async (req, res) => {
+  const user = await authenticate(req.body);
+  await startSession(req, user);
+  res.json({ user: publicUser(user) });
+});
+
+export const logout = asyncHandler(async (req, res) => {
+  await new Promise((resolve) => {
+    if (!req.session) return resolve();
+    return req.session.destroy(() => resolve());
+  });
+  res.clearCookie("campuscoin.sid");
+  res.json({ ok: true });
+});
+
+// The client calls this on every page load to find out who it is. It returns
+// 200 with user: null rather than 401, because "not logged in" is a normal
+// state for this endpoint and the client branches on it.
+export const me = asyncHandler(async (req, res) => {
+  if (!req.user) return res.json({ user: null });
+  return res.json({ user: publicUser(req.user) });
+});
+
+export const updateProfile = asyncHandler(async (req, res) => {
+  const patch = { ...req.body };
+  if (patch.name !== undefined) patch.name = normaliseName(patch.name);
+  // Email is deliberately not updatable here. Changing it needs a
+  // verification step on the new address; the client renders it read-only and
+  // the SRS only asks for reset by email.
+  delete patch.email;
+  delete patch.role;
+  delete patch.is_active;
+  delete patch.user_id;
+
+  const user = await User.findByIdAndUpdate(
+    req.user.user_id,
+    { $set: patch },
+    { new: true, runValidators: true },
+  );
+  if (!user) throw ApiError.notFound("Account not found.");
+  res.json({ user: publicUser(user) });
+});
+
+// Always the same 200 with the same body, whether the address exists, is
+// already used, or the mail provider is down. Anything else turns this
+// endpoint into an account-enumeration oracle.
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const email = normaliseEmail(req.body.email);
+  const user = await User.findOne({ email, is_active: true }).lean();
+
+  if (user) {
+    const raw = await createResetToken(user._id);
+    const link = `${appOrigin(req)}/reset-password?token=${raw}`;
+    await sendPasswordResetEmail({ to: user.email, firstName: user.name.split(" ")[0], link });
+  }
+
+  res.json({
+    ok: true,
+    message: "If that email is registered, a reset link is on its way.",
+  });
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const token = await consumeResetToken(req.body.token);
+  await setPassword(token.user_id, req.body.password);
+  await markResetTokenUsed(token._id);
+  // Every other outstanding link for this account dies with the password, so a
+  // link emailed before a compromise cannot be used afterwards.
+  await invalidateResetTokens(token.user_id);
+  res.json({ ok: true });
+});
