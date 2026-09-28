@@ -2,6 +2,7 @@ import { Router } from "express";
 import validate from "../middleware/validate.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import * as auth from "../controllers/auth.controller.js";
+import { avatarUpload, uploadAvatar } from "../controllers/avatar.controller.js";
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -22,5 +23,6 @@ router.post("/reset-password", validate({ body: resetPasswordSchema }), auth.res
 // requireAuth and has to report "not signed in" as a normal answer.
 router.get("/me", auth.me);
 router.patch("/me", requireAuth, validate({ body: updateProfileSchema }), auth.updateProfile);
+router.post("/me/avatar", requireAuth, avatarUpload, uploadAvatar);
 
 export default router;

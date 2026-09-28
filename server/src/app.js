@@ -29,6 +29,13 @@ app.use(
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: false, limit: "100kb" }));
 
+// Uploaded avatars. Served from here rather than the client bundle so the URL
+// on the user record keeps working after a redeploy.
+app.use(
+  "/uploads",
+  express.static(env.uploadDir, { maxAge: "7d", index: false, dotfiles: "deny" }),
+);
+
 if (!env.isProd) {
   app.use(morgan("dev"));
 }

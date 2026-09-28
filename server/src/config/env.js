@@ -71,4 +71,5 @@ export const env = {
   // reset flow stays testable before email is configured.
   resendApiKey: process.env.RESEND_API_KEY?.trim() || null,
   emailFrom: process.env.EMAIL_FROM?.trim() || "CampusCoin <no-reply@campuscoin.app>",
+  uploadDir: process.env.UPLOAD_DIR?.trim() || "uploads",
 };
