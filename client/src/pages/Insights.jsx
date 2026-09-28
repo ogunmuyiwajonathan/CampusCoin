@@ -319,7 +319,7 @@ export default function Insights() {
               </div>
               <Link
                 to="/transactions"
-                className="mt-1 flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-600"
+                className="mt-1 flex items-center gap-1.5 rounded-lg bg-brand-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-800"
               >
                 <Icon name="plus" size={16} />
                 Add Transaction
@@ -420,7 +420,7 @@ export default function Insights() {
                             aria-pressed={focus === entry.key}
                             className={`rounded-lg px-4 py-1.5 text-xs font-bold transition ${
                               focus === entry.key
-                                ? "bg-brand-500 text-white"
+                                ? "bg-brand-700 text-white"
                                 : "text-ink-500 hover:text-ink-900"
                             }`}
                           >
@@ -581,7 +581,7 @@ export default function Insights() {
                         <h2 className="font-display text-base font-bold tracking-tight text-ink-900">
                           AI Assistant
                         </h2>
-                        <span className="rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                        <span className="rounded-full bg-brand-700 px-2 py-0.5 text-[10px] font-bold text-white">
                           Beta
                         </span>
                       </div>
@@ -600,7 +600,7 @@ export default function Insights() {
 
                   <Link
                     to="/assistant"
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-600"
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-800"
                   >
                     <Icon name="message-square" size={17} />
                     Chat with Rix

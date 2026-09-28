@@ -238,7 +238,7 @@ export default function Budgets() {
       <button
         type="button"
         onClick={openAdd}
-        className="mt-1 flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-600"
+        className="mt-1 flex items-center gap-1.5 rounded-lg bg-brand-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-800"
       >
         <Icon name="plus" size={16} />
         Set New Budget
@@ -298,7 +298,7 @@ export default function Budgets() {
                 <button
                   type="button"
                   onClick={openAdd}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-bold text-white shadow-card transition hover:bg-brand-600 sm:w-auto"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-bold text-white shadow-card transition hover:bg-brand-800 sm:w-auto"
                 >
                   <Icon name="plus" size={17} />
                   Set New Budget

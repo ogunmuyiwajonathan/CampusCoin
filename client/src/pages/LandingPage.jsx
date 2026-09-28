@@ -206,7 +206,7 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={() => navigate("/signup")}
-              className="hidden rounded-full bg-brand-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 md:inline-flex"
+              className="hidden rounded-full bg-brand-700 px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-800 md:inline-flex"
             >
               Get Started
             </button>
@@ -247,7 +247,7 @@ export default function LandingPage() {
               <button
                 type="button"
                 onClick={() => navigate("/signup")}
-                className="flex-1 rounded-full bg-brand-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700"
+                className="flex-1 rounded-full bg-brand-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-800"
               >
                 Get Started
               </button>
@@ -272,7 +272,7 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={() => navigate("/signup")}
-              className="group mt-6 inline-flex items-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-sm font-bold text-white shadow-card transition hover:bg-emerald-700 active:scale-[0.98]"
+              className="group mt-6 inline-flex items-center gap-2 rounded-full bg-brand-700 px-6 py-3 text-sm font-bold text-white shadow-card transition hover:bg-brand-800 active:scale-[0.98]"
             >
               Get Started Free
               <Icon
@@ -410,7 +410,7 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={() => navigate("/signup")}
-              className="group inline-flex items-center gap-2 rounded-full bg-brand-600 px-8 py-3.5 text-sm font-bold text-white shadow-card transition hover:bg-emerald-700 active:scale-[0.98]"
+              className="group inline-flex items-center gap-2 rounded-full bg-brand-700 px-8 py-3.5 text-sm font-bold text-white shadow-card transition hover:bg-brand-800 active:scale-[0.98]"
             >
               Get Started
               <Icon
@@ -434,7 +434,7 @@ export default function LandingPage() {
               <ul className="mt-5 space-y-3">
                 {FINANCE_CHECKLIST.map((item) => (
                   <li key={item.id} className="flex items-center gap-2.5 text-sm font-semibold">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-700 text-white">
                       <Icon name="check" size={14} />
                     </span>
                     {item.text}
@@ -533,13 +533,13 @@ export default function LandingPage() {
         </section>
 
         <section className="mx-auto max-w-7xl px-4 pt-6">
-          <Reveal className="flex flex-col items-center gap-6 rounded-card bg-brand-600 p-8 md:flex-row">
+          <Reveal className="flex flex-col items-center gap-6 rounded-card bg-brand-700 p-8 md:flex-row">
             <img src="/logo.png" alt="" className="h-12 w-12 shrink-0 object-contain" />
             <div className="min-w-0 flex-1 text-center md:text-left">
               <h2 className="font-display text-xl font-extrabold tracking-tight text-white sm:text-2xl">
                 Your money. Your goals. Your Campus Coin.
               </h2>
-              <p className="mt-1 text-sm text-white/85">
+              <p className="mt-1 text-sm text-white">
                 Join thousands of students who are already making smarter financial decisions.
               </p>
             </div>

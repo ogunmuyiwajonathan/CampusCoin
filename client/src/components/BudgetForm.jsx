@@ -3,7 +3,7 @@ import Icon from "./Icon.jsx";
 import { categories } from "../data/mockData.js";
 
 const inputClass =
-  "w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-4 pr-4 text-sm text-ink-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
+  "w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-4 pr-4 text-sm text-ink-900 placeholder:text-ink-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
 
 const EXPENSE_CATEGORIES = categories.filter((category) => category.type === "expense");
 
@@ -210,7 +210,7 @@ export default function BudgetForm({ initial, month, budgets, onClose, onSave, o
             </button>
             <button
               type="submit"
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-800"
             >
               <Icon name="save" size={16} />
               {initial ? "Save Changes" : "Save Budget"}

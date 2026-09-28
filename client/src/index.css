@@ -9,10 +9,13 @@
   --color-sage-400: #a8c3b5;
   --color-sage-100: #e3ede7;
   --color-mint-50: #f7faf8;
-  --color-brand-500: #10b981;
-  --color-brand-600: #059669;
+  --color-brand-500: #059669;
+  --color-brand-600: #047857;
+  --color-brand-700: #047857;
+  --color-brand-800: #065f46;
   --color-ink-900: #0f172a;
-  --color-ink-500: #64748b;
+  --color-ink-500: #5b6b7f;
+  --color-red-500: #b91c1c;
   --color-surface: #ffffff;
   --font-display: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
   --radius-card: 1rem;
@@ -50,6 +53,8 @@
 
 .dark {
   color-scheme: dark;
+  --color-brand-500: #10b981;
+  --color-brand-600: #34d399;
   --color-surface: #13211b;
   --color-mint-50: #0a1512;
   --color-ink-900: #e9f1ec;
@@ -64,6 +69,7 @@
   --color-emerald-600: #34d399;
   --color-emerald-700: #6ee7b7;
   --color-teal-50: #122824;
+  --color-red-500: #f87171;
   --color-red-50: #2b1717;
   --color-red-100: #3b1e1e;
   --color-sky-50: #14262e;
@@ -76,6 +82,7 @@
   --color-amber-100: #3b2f1a;
   --color-amber-200: #5a4623;
   --color-amber-600: #fbbf24;
+  --color-amber-700: #f59e0b;
 }
 
 body {

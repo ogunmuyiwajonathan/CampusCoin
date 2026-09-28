@@ -79,7 +79,7 @@ export default function AIAssistantCard({ breakdown }) {
         <button
           type="submit"
           aria-label="Send question"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white transition hover:bg-brand-600"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-700 text-white transition hover:bg-brand-800"
         >
           <Icon name="arrow-up" size={16} />
         </button>

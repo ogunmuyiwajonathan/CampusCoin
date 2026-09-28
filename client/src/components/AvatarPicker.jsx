@@ -111,7 +111,7 @@ export default function AvatarPicker({ name, onNotify }) {
               <button
                 type="button"
                 onClick={confirm}
-                className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-500"
+                className="rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-800"
               >
                 Use photo
               </button>

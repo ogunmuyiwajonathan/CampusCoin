@@ -177,7 +177,7 @@ export default function Transactions() {
         <button
           type="button"
           onClick={openAdd}
-          className="mt-1 flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-600"
+          className="mt-1 flex items-center gap-1.5 rounded-lg bg-brand-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-800"
         >
           <Icon name="plus" size={16} />
           Add Transaction
@@ -283,7 +283,7 @@ export default function Transactions() {
                 <button
                   type="button"
                   onClick={openAdd}
-                  className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-600"
+                  className="flex items-center gap-1.5 rounded-lg bg-brand-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-800"
                 >
                   <Icon name="plus" size={16} />
                   Add Transaction
@@ -403,7 +403,7 @@ export default function Transactions() {
                                       remove(item.transaction_id);
                                       setConfirmId(null);
                                     }}
-                                    className="rounded-lg bg-red-500 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-red-600"
+                                    className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-red-700"
                                   >
                                     Delete
                                   </button>

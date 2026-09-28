@@ -189,7 +189,7 @@ export default function AssistantChat({ onClose } = {}) {
           if (message.role === "user") {
             return (
               <div key={message.id} className="flex justify-end">
-                <p className="max-w-[85%] break-words rounded-2xl rounded-br-md bg-brand-500 px-4 py-2.5 text-sm font-medium text-white">
+                <p className="max-w-[85%] break-words rounded-2xl rounded-br-md bg-brand-700 px-4 py-2.5 text-sm font-medium text-white">
                   {message.text}
                 </p>
               </div>
@@ -280,7 +280,7 @@ export default function AssistantChat({ onClose } = {}) {
         <button
           type="submit"
           aria-label="Send message"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white transition hover:bg-brand-600"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-700 text-white transition hover:bg-brand-800"
         >
           <Icon name="send" size={16} />
         </button>

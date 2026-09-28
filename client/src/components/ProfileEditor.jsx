@@ -119,7 +119,7 @@ export default function ProfileEditor({ initial, onClose, onSave }) {
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder="Your name"
-                className="w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-11 pr-4 text-sm text-ink-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                className="w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-11 pr-4 text-sm text-ink-900 placeholder:text-ink-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
               />
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function ProfileEditor({ initial, onClose, onSave }) {
                     setAmounts((current) => ({ ...current, [field.key]: event.target.value }))
                   }
                   placeholder="0"
-                  className="w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-9 pr-4 text-sm tabular-nums text-ink-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  className="w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-9 pr-4 text-sm tabular-nums text-ink-900 placeholder:text-ink-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 />
               </div>
               <p className="mt-1.5 text-xs text-ink-500">{field.hint}</p>
@@ -229,7 +229,7 @@ export default function ProfileEditor({ initial, onClose, onSave }) {
             type="submit"
             disabled={saving}
             aria-busy={saving}
-            className="flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-500 disabled:opacity-70"
+            className="flex items-center gap-2 rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-800 disabled:opacity-70"
           >
             {saving && <Icon name="clock" size={15} className="animate-spin" />}
             {saving ? "Saving..." : "Save Changes"}

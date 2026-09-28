@@ -12,7 +12,7 @@ const FEATURES = [
 ];
 
 const inputClass =
-  "w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-11 text-sm text-ink-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
+  "w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-11 text-sm text-ink-900 placeholder:text-ink-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
 
 export default function Login() {
   const { login } = useAuth();
@@ -191,7 +191,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={!email.trim() || !password}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Log In
               <Icon name="arrow-right" size={16} />
@@ -208,7 +208,7 @@ export default function Login() {
             >
               <GoogleG />
               Continue with Google
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-slate-500 uppercase">
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-ink-500 uppercase">
                 Soon
               </span>
             </button>
