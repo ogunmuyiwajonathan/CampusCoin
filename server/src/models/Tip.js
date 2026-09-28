@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
-import { idOptions } from "../utils/idOptions.js";
+import { defineSchema } from "../utils/idOptions.js";
 
-const tipSchema = new mongoose.Schema(
-  {
+const tipSchema = defineSchema(
+    "tip_id",
+    {
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     insight_id: { type: mongoose.Schema.Types.ObjectId, ref: "Insight", default: null },
     text: { type: String, required: true, trim: true, maxlength: 400 },
@@ -13,7 +14,7 @@ const tipSchema = new mongoose.Schema(
     is_dismissed: { type: Boolean, default: false },
     dismissed_at: { type: Date, default: null },
   },
-  { ...idOptions("tip_id"), timestamps: true },
+  { timestamps: true },
 );
 
 tipSchema.index({ user_id: 1, is_dismissed: 1, savings_impact: -1 });

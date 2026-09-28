@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
-import { idOptions } from "../utils/idOptions.js";
+import { defineSchema } from "../utils/idOptions.js";
 
-const notificationSchema = new mongoose.Schema(
-  {
+const notificationSchema = defineSchema(
+    "notification_id",
+    {
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     title: { type: String, required: true, trim: true, maxlength: 120 },
     body: { type: String, required: true, trim: true, maxlength: 300 },
@@ -17,7 +18,7 @@ const notificationSchema = new mongoose.Schema(
     // logs ten transactions in a row from getting ten identical alerts.
     dedupe_key: { type: String, required: true },
   },
-  { ...idOptions("notification_id"), timestamps: true },
+  { timestamps: true },
 );
 
 notificationSchema.index({ user_id: 1, dedupe_key: 1 }, { unique: true });

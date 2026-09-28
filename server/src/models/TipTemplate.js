@@ -1,12 +1,13 @@
 import mongoose from "mongoose";
-import { idOptions } from "../utils/idOptions.js";
+import { defineSchema } from "../utils/idOptions.js";
 
 // The admin-managed wording behind the tips engine. An admin edits the text and
 // the rule here; the engine decides when a template applies and renders it
 // against the student's own numbers. That split is why the admin panel never
 // has to know anything about a specific student.
-const tipTemplateSchema = new mongoose.Schema(
-  {
+const tipTemplateSchema = defineSchema(
+    "tip_template_id",
+    {
     key: { type: String, required: true, unique: true, lowercase: true, trim: true },
     text: { type: String, required: true, trim: true, maxlength: 400 },
     // A short machine-readable condition the engine understands, e.g.
@@ -18,7 +19,7 @@ const tipTemplateSchema = new mongoose.Schema(
     savings_impact: { type: Number, default: 0 },
     is_active: { type: Boolean, default: true },
   },
-  { ...idOptions("tip_template_id"), timestamps: true },
+  { timestamps: true },
 );
 
 tipTemplateSchema.index({ is_active: 1, savings_impact: -1 });

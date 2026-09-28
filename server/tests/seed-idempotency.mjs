@@ -1,11 +1,10 @@
-// Proves the seed is idempotent.
+// Proves the seed is idempotent, against the real Atlas cluster in the
+// campuscoin_test database so the demo data in campuscoin is never at risk.
 //
-// Both runs have to hit the SAME database. A second `node scripts/seed.js` in
-// in-memory mode would get a brand new empty database, insert 19 transactions
-// again, and prove nothing at all - so all three runs happen inside this one
-// process against one MongoMemoryServer.
-import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
+// Both runs have to hit the SAME database, which is why all three happen inside
+// this one process rather than as three `npm run seed` invocations.
+import "dotenv/config";
+import { closeTestDb, connectTestDb, resetTestDb } from "./helpers/testDb.js";
 import { runSeed } from "../scripts/seed.js";
 import {
   Budget,
@@ -33,8 +32,8 @@ async function countAll() {
   };
 }
 
-const server = await MongoMemoryServer.create();
-await mongoose.connect(server.getUri(), { dbName: "campuscoin_idempotency" });
+await connectTestDb();
+await resetTestDb();
 
 const first = await runSeed();
 const counts1 = await countAll();
@@ -77,8 +76,29 @@ check("all 19 transactions are dated September 2026", september === 19, `got ${s
 const recurring = await Transaction.countDocuments({ is_recurring: true });
 check("3 transactions are recurring", recurring === 3, `got ${recurring}`);
 
-console.log("\n5. the unique constraints the SRS relies on actually reject duplicates");
-let budgetDuplicateRejected = false;
+console.log("\n5. ids are exposed under the snake_case names the client already uses");
+// This is the assertion whose absence let a real bug through. Mongoose's `id`
+// schema option ignores the string it is given and always names the virtual
+// "id", so every model was silently serialising as id rather than user_id and
+// transaction_id. Nothing caught it because the other assertions only counted
+// rows. If a model ever loses its virtual again, this fails.
+const idContract = [
+  [User, "user_id"],
+  [Category, "category_id"],
+  [Transaction, "transaction_id"],
+  [Budget, "budget_id"],
+];
+for (const [Model, field] of idContract) {
+  const doc = await Model.findOne();
+  const expected = doc?._id.toString();
+  check(`${Model.modelName} exposes ${field}`, doc?.[field] === expected, `${doc?.[field]} vs ${expected}`);
+  const asJson = doc?.toJSON() ?? {};
+  check(`${Model.modelName} serialises ${field}`, asJson[field] === expected, JSON.stringify(asJson[field]));
+  check(`${Model.modelName} hides the raw _id`, asJson._id === undefined);
+  check(`${Model.modelName} hides __v`, asJson.__v === undefined);
+}
+
+console.log("\n6. the unique constraints the SRS relies on actually reject duplicates");let budgetDuplicateRejected = false;
 const anyBudget = await Budget.findOne();
 try {
   await Budget.create({
@@ -100,9 +120,8 @@ try {
 }
 check("a duplicate email is rejected", emailDuplicateRejected);
 
-await mongoose.connection.dropDatabase();
-await mongoose.disconnect();
-await server.stop();
+await resetTestDb();
+await closeTestDb();
 
 const failed = results.filter((passed) => !passed).length;
 console.log(`\n${results.length - failed} passed, ${failed} failed\n`);

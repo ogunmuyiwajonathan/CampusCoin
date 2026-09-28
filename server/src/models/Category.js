@@ -1,12 +1,13 @@
 import mongoose from "mongoose";
-import { idOptions } from "../utils/idOptions.js";
+import { defineSchema } from "../utils/idOptions.js";
 
 // A system default category has user_id: null. A personal category belongs to
 // exactly one student. That single field is the is_default story the SRS asks
 // for, and it is also the ownership check: a student may only ever read or
 // write categories where user_id matches their session.
-const categorySchema = new mongoose.Schema(
-  {
+const categorySchema = defineSchema(
+    "category_id",
+    {
     name: { type: String, required: true, trim: true, maxlength: 60 },
     type: { type: String, enum: ["income", "expense"], required: true },
     is_default: { type: Boolean, default: false },
@@ -17,7 +18,7 @@ const categorySchema = new mongoose.Schema(
     color: { type: String, default: null },
     icon: { type: String, default: null },
   },
-  { ...idOptions("category_id"), timestamps: true },
+  { timestamps: true },
 );
 
 categorySchema.index({ user_id: 1, type: 1 });

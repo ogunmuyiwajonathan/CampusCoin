@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { idOptions } from "../utils/idOptions.js";
+import { defineSchema } from "../utils/idOptions.js";
 
 export const ACADEMIC_YEARS = [
   "Year 1",
@@ -10,8 +10,9 @@ export const ACADEMIC_YEARS = [
   "Postgraduate",
 ];
 
-const userSchema = new mongoose.Schema(
-  {
+const userSchema = defineSchema(
+    "user_id",
+    {
     name: { type: String, required: true, trim: true, maxlength: 80 },
     email: {
       type: String,
@@ -31,7 +32,7 @@ const userSchema = new mongoose.Schema(
     is_active: { type: Boolean, default: true },
     profile_image_url: { type: String, default: null },
   },
-  { ...idOptions("user_id"), timestamps: true },
+  { timestamps: true },
 );
 
 export const User = mongoose.model("User", userSchema);

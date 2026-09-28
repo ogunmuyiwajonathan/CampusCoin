@@ -1,12 +1,13 @@
 import mongoose from "mongoose";
-import { idOptions } from "../utils/idOptions.js";
+import { defineSchema } from "../utils/idOptions.js";
 
 // date is stored as a YYYY-MM-DD string rather than a BSON Date on purpose.
 // The client already passes dates as strings, ISO strings sort and range-query
 // correctly as strings, and it removes every timezone bug from "which day is
 // this transaction on" for a student logging today vs tomorrow.
-const transactionSchema = new mongoose.Schema(
-  {
+const transactionSchema = defineSchema(
+    "transaction_id",
+    {
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     category_id: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
     type: { type: String, enum: ["income", "expense"], required: true },
@@ -26,7 +27,7 @@ const transactionSchema = new mongoose.Schema(
     // Groups the rows created by one CSV upload so the whole batch can be undone.
     import_batch_id: { type: mongoose.Schema.Types.ObjectId, default: null },
   },
-  { ...idOptions("transaction_id"), timestamps: true },
+  { timestamps: true },
 );
 
 // Serves the monthly ledger read: one user, newest first.
