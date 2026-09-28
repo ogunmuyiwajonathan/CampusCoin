@@ -11,8 +11,8 @@ import AIAssistantCard from "../components/AIAssistantCard.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import {
-  CATEGORY_COLORS,
-  CATEGORY_ICONS,
+  categoryColor,
+  categoryIcon,
   categoryLookup,
   computeTotals,
   expenseBreakdown,
@@ -42,8 +42,8 @@ export default function Dashboard() {
       return {
         ...t,
         category_name: name,
-        icon: CATEGORY_ICONS[name] ?? "ellipsis",
-        color: CATEGORY_COLORS[t.category_id] ?? "#64748b",
+        icon: categoryIcon(name),
+        color: categoryColor(t.category_id),
       };
     });
 

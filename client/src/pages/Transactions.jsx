@@ -8,8 +8,8 @@ import StatCard from "../components/StatCard.jsx";
 import TransactionForm from "../components/TransactionForm.jsx";
 import { useTransactions } from "../hooks/useTransactions.js";
 import {
-  CATEGORY_COLORS,
-  CATEGORY_ICONS,
+  categoryColor,
+  categoryIcon,
   categoryLookup,
   computeTotals,
   expenseBreakdown,
@@ -338,8 +338,8 @@ export default function Transactions() {
                     {rows.map((item) => {
                       const category = lookup[item.category_id];
                       const name = category?.name ?? "Others";
-                      const icon = CATEGORY_ICONS[name] ?? "ellipsis";
-                      const color = CATEGORY_COLORS[item.category_id] ?? "#64748b";
+                      const icon = categoryIcon(name);
+                      const color = categoryColor(item.category_id);
                       const isIncome = item.type === "income";
                       return (
                         <tr key={item.transaction_id} className="transition hover:bg-slate-50/70">

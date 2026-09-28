@@ -5,6 +5,7 @@ import { ThemeProvider } from "./hooks/ThemeProvider.jsx";
 import { useAuth } from "./hooks/useAuth.js";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import { useCategories } from "./hooks/useCategories.js";
 
 const Assistant = lazy(() => import("./pages/Assistant.jsx"));
 const Budgets = lazy(() => import("./pages/Budgets.jsx"));
@@ -49,6 +50,11 @@ function RootRoute() {
 }
 
 export default function App() {
+  // Loaded once here rather than in each page: it fills the shared category
+  // registry that every name, colour and icon lookup reads from, so one request
+  // covers the whole app.
+  useCategories();
+
   return (
     <ThemeProvider>
       <AuthProvider>

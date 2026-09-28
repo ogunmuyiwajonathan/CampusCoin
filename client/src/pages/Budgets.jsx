@@ -11,9 +11,9 @@ import StatCard from "../components/StatCard.jsx";
 import { useBudgets } from "../hooks/useBudgets.js";
 import { useTransactions } from "../hooks/useTransactions.js";
 import {
-  CATEGORY_COLORS,
-  CATEGORY_ICONS,
   categories,
+  categoryColor,
+  categoryIcon,
   categoryLookup,
 } from "../data/mockData.js";
 import { formatCurrency } from "../lib/formatCurrency.js";
@@ -145,8 +145,8 @@ export default function Budgets() {
         spent,
         pct,
         status: statusFor(pct),
-        icon: CATEGORY_ICONS[name] ?? "ellipsis",
-        color: CATEGORY_COLORS[item.category_id] ?? "#64748b",
+        icon: categoryIcon(name),
+        color: categoryColor(item.category_id),
       };
     })
     .sort(

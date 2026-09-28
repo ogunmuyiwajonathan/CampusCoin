@@ -94,6 +94,21 @@ export const budgets = [
   { budget_id: "b14", user_id: "demo-student", category_id: "c11", month: "2026-10", limit_amount: 2000 },
 ];
 
+// Categories now come from the API, where the ids are real database ids rather
+// than the c1..c11 the seed used. The lookup helpers below are shared by six
+// files, so instead of rewriting every call site they read a registry that
+// useCategories() fills in once the real list arrives, and fall back to the seed
+// array before that so nothing renders blank on a slow connection.
+let liveCategories = [];
+
+export function applyCategories(list) {
+  liveCategories = Array.isArray(list) ? list : [];
+}
+
+export function allCategories() {
+  return liveCategories.length ? liveCategories : categories;
+}
+
 export const CATEGORY_ICONS = {
   Allowance: "wallet",
   Scholarships: "graduation-cap",
@@ -118,8 +133,20 @@ export const CATEGORY_COLORS = {
   c11: "#64748b",
 };
 
+// Both read the category row itself when one is known, so a category the seed
+// never had still gets its own colour and icon instead of falling back to grey.
+export function categoryColor(categoryId) {
+  const row = allCategories().find((c) => c.category_id === categoryId);
+  return row?.color ?? CATEGORY_COLORS[categoryId] ?? "#64748b";
+}
+
+export function categoryIcon(name) {
+  const row = allCategories().find((c) => c.name === name);
+  return row?.icon ?? CATEGORY_ICONS[name] ?? "ellipsis";
+}
+
 export function categoryLookup() {
-  return Object.fromEntries(categories.map((c) => [c.category_id, c]));
+  return Object.fromEntries(allCategories().map((c) => [c.category_id, c]));
 }
 
 export function computeTotals(list) {
@@ -147,7 +174,7 @@ export function expenseBreakdown(list) {
       name: lookup[categoryId]?.name ?? "Others",
       amount,
       percentage: totals.expense ? Math.round((amount / totals.expense) * 100) : 0,
-      color: CATEGORY_COLORS[categoryId] ?? "#64748b",
+      color: categoryColor(categoryId),
     }))
     .sort(
       (a, b) =>
