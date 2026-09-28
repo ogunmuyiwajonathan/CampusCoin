@@ -109,6 +109,10 @@ export const CATEGORY_ICONS = {
 };
 
 export const CATEGORY_COLORS = {
+  c1: "#10b981",
+  c2: "#3b82f6",
+  c3: "#f59e0b",
+  c4: "#8b5cf6",
   c5: "#10b981",
   c6: "#3b82f6",
   c7: "#f59e0b",
@@ -128,6 +132,7 @@ const COLOR_BY_NAME = Object.fromEntries(
     .map((c) => [c.name, CATEGORY_COLORS[c.category_id]]),
 );
 const COLOR_PALETTE = Object.values(CATEGORY_COLORS);
+const FALLBACK_COLORS = COLOR_PALETTE.filter((color) => color !== CATEGORY_COLORS.c11);
 
 let registry = categories;
 
@@ -154,8 +159,12 @@ export function categoryIcon(name) {
 export function categoryColor(id) {
   if (CATEGORY_COLORS[id]) return CATEGORY_COLORS[id];
   const match = registry.find((c) => c.category_id === id);
-  if (match && COLOR_BY_NAME[match.name]) return COLOR_BY_NAME[match.name];
-  return COLOR_PALETTE[0];
+  if (match) {
+    if (COLOR_BY_NAME[match.name]) return COLOR_BY_NAME[match.name];
+    const hash = [...match.name].reduce((total, char) => total + char.charCodeAt(0), 0);
+    return FALLBACK_COLORS[hash % FALLBACK_COLORS.length];
+  }
+  return FALLBACK_COLORS[0];
 }
 
 export function computeTotals(list) {
@@ -183,7 +192,7 @@ export function expenseBreakdown(list) {
       name: lookup[categoryId]?.name ?? "Others",
       amount,
       percentage: totals.expense ? Math.round((amount / totals.expense) * 100) : 0,
-      color: CATEGORY_COLORS[categoryId] ?? "#64748b",
+      color: categoryColor(categoryId),
     }))
     .sort(
       (a, b) =>

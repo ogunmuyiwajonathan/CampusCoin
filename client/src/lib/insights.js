@@ -1,6 +1,6 @@
 import {
-  CATEGORY_COLORS,
   CATEGORY_ICONS,
+  categoryColor,
   categoryLookup,
   computeTotals,
   expenseBreakdown,
@@ -94,7 +94,7 @@ export function buildInsights({ items, month, budgets = [], goal = 0 }) {
         spent,
         pct: item.limit_amount > 0 ? Math.round((spent / item.limit_amount) * 100) : 0,
         icon: CATEGORY_ICONS[name] ?? "ellipsis",
-        color: CATEGORY_COLORS[item.category_id] ?? "#64748b",
+        color: categoryColor(item.category_id),
       };
     })
     .sort((a, b) => b.pct - a.pct);
