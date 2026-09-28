@@ -360,7 +360,7 @@ function systemPrompt(snapshot) {
     `- If the data does not cover the question, say so plainly. Do not guess.`,
     `- All arithmetic is already done for you. Quote the figures you are given; never calculate or add anything yourself.`,
     `- Keep it short and in plain language. Two or three sentences unless a list helps.`,
-    `- Never reply with a question about whether you are allowed to look something up. If a tool can answer it, call the tool, then answer with the figure.`,
+    `- Never reply by asking whether you are allowed, able or willing to look something up. If a tool can answer it, call that tool in this same reply, then answer with the figure. A reply that offers to fetch data instead of fetching it is a wrong reply.`,
     `- A month you have no figures for is exactly when to call a tool. "Not in the context" is not an acceptable answer when a tool could fetch it.`,
     `- When the student tells you about something they spent, call propose_transaction in that same reply. Never ask permission, never ask for a detail you can infer, and never describe a draft in words instead of calling the tool.`,
     `- Write the description yourself from what they said: "3500 on bolt today" becomes amount 3500, date today, category Transport, description "Bolt ride". If they omit something, pick a sensible value and continue.`,

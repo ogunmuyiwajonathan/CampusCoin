@@ -189,7 +189,8 @@ async function runCleanup({ session, userId, created, injectionTxId }) {
 
   const remainingTx = await Transaction.countDocuments({ user_id: userId });
   const remainingConvs = await Conversation.countDocuments({ user_id: userId });
-  const remainingMsgs = await ChatMessage.countDocuments({});
+  const remainingMsgs = await ChatMessage.countDocuments({ conversation_id: { $in: ids } });
+  const foreignMsgs = await ChatMessage.countDocuments({ conversation_id: { $nin: ids } });
 
   console.log(`  conversations found ${convs.length}, deleted ${delConvs.deletedCount}`);
   console.log(`  chat messages found ${allMsgs}, deleted ${delMsgs.deletedCount}`);
@@ -197,6 +198,7 @@ async function runCleanup({ session, userId, created, injectionTxId }) {
   console.log(`  injection tx id ${injectionTxId ?? "none"} remaining: ${await Transaction.countDocuments({ _id: injectionTxId ?? "000000000000000000000000" })}`);
   console.log(`  alex transactions now: ${remainingTx} (expect 19)`);
   console.log(`  leftovers -> conversations=${remainingConvs} chat_messages=${remainingMsgs}`);
+  console.log(`  left alone -> ${foreignMsgs} chat message(s) owned by another account`);
 
   const clean =
     remainingTx === 19 &&
@@ -205,7 +207,7 @@ async function runCleanup({ session, userId, created, injectionTxId }) {
     delMsgs.deletedCount === allMsgs;
 
   report("CLEANUP. every conversation, message and transaction removed", clean,
-    `msgs=${delMsgs.deletedCount}/${allMsgs} convs=${delConvs.deletedCount} tx=${remainingTx}/19 chat_messages=${remainingMsgs}`);
+    `msgs=${delMsgs.deletedCount}/${allMsgs} left=${remainingMsgs} convs=${delConvs.deletedCount} tx=${remainingTx}/19`);
 }
 
 async function main() {
