@@ -11,7 +11,7 @@ if (missing.length > 0) {
 }
 
 const corsOrigins = process.env.CORS_ORIGIN.split(",")
-  .map((value) => value.trim())
+  .map((value) => value.trim().replace(/\/+$/, ""))
   .filter(Boolean);
 
 if (corsOrigins.length === 0) {

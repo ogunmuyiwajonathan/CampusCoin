@@ -2,6 +2,10 @@ import { env } from "../config/env.js";
 
 const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
 
+function normaliseOrigin(value) {
+  return String(value ?? "").trim().replace(/\/+$/, "");
+}
+
 function originHostname(origin) {
   try {
     const url = new URL(origin);
@@ -24,7 +28,7 @@ function hostHeaderHostname(host) {
 
 export function isTrustedOrigin(origin, host) {
   if (!origin) return true;
-  if (env.corsOrigins.includes(origin)) return true;
+  if (env.corsOrigins.includes(normaliseOrigin(origin))) return true;
   if (env.isProd) return false;
 
   const originHost = originHostname(origin);

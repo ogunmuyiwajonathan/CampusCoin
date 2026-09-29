@@ -21,7 +21,7 @@ export function sessionMiddleware() {
     rolling: true,
     cookie: {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: env.isProd ? "none" : "lax",
       secure: env.isProd,
       maxAge: SESSION_TTL_SECONDS * 1000,
     },
