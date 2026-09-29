@@ -22,6 +22,16 @@ const QUICK_ROWS = [
 
 const NOT_ADDED = "Not added";
 
+// Three steps of text size, applied to the root font size so every rem-based
+// size in the app grows together while the reader's own browser setting still
+// counts on top of it. The buttons differ in size as well as in state, so the
+// choice is readable without relying on colour alone.
+const TEXT_SIZES = [
+  { id: "normal", label: "A", scale: "text-xs", title: "Normal text size" },
+  { id: "large", label: "A", scale: "text-sm", title: "Large text size" },
+  { id: "xlarge", label: "A", scale: "text-base", title: "Extra large text size" },
+];
+
 function SoonPill() {
   return (
     <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-500">
@@ -36,7 +46,7 @@ export default function Settings() {
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const { user, updateProfile } = useAuth();
-  const { theme, toggle } = useTheme();
+  const { theme, toggle, fontSize, setFontSize } = useTheme();
 
   const notify = useCallback((next) => setToast({ ...next, id: Date.now() }), []);
 
@@ -207,6 +217,41 @@ export default function Settings() {
                       </button>
                     ),
                   )}
+                </div>
+                <div className="border-t border-slate-100 px-5 py-4">
+                  <div className="flex items-center gap-3.5">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                      <Icon name="file-text" size={17} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-ink-900">Text size</span>
+                      <span className="mt-0.5 block text-xs text-ink-500">
+                        Grow or shrink every screen at once
+                      </span>
+                    </span>
+                    <div
+                      role="group"
+                      aria-label="Text size"
+                      className="flex shrink-0 items-center gap-0.5 rounded-lg border border-slate-200 p-0.5"
+                    >
+                      {TEXT_SIZES.map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          aria-pressed={fontSize === option.id}
+                          aria-label={option.title}
+                          onClick={() => setFontSize(option.id)}
+                          className={`flex h-7 w-8 items-center justify-center rounded-md font-bold transition ${option.scale} ${
+                            fontSize === option.id
+                              ? "bg-brand-700 text-white"
+                              : "text-ink-500 hover:bg-slate-50"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </section>
             </div>

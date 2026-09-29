@@ -5,7 +5,21 @@ import { useAuth } from "../hooks/useAuth.js";
 export default function ProtectedRoute({ children, requireAdmin = false }) {
   const { user, status } = useAuth();
 
-  if (status === "loading") return null;
+  // The session is still being restored: show the page spinner instead of an
+  // empty screen, which is what this rendered while the first request of the
+  // visit was in flight.
+  if (status === "loading") {
+    return (
+      <div
+        className="flex min-h-svh items-center justify-center"
+        role="status"
+        aria-live="polite"
+      >
+        <span className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-brand-500" />
+        <span className="sr-only">Loading page</span>
+      </div>
+    );
+  }
 
   if (!user || (requireAdmin && user.role !== "admin")) {
     return (

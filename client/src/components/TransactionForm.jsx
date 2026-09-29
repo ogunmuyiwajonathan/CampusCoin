@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon.jsx";
 import { useCategories } from "../hooks/useCategories.js";
+import { useRecentlyViewed } from "../hooks/useRecentlyViewed.js";
 import { useSubmitLock } from "../hooks/useSubmitLock.js";
 import SubmitSpinner from "./SubmitSpinner.jsx";
-import { todayISO } from "../lib/formatMonth.js";
+import { listTransactions } from "../lib/apiClient.js";
+import { findDuplicateOf } from "../lib/duplicates.js";
+import { formatCurrency } from "../lib/formatCurrency.js";
+import { formatDate, monthKey, todayISO } from "../lib/formatMonth.js";
 
 const inputClass =
   "w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-4 pr-4 text-sm text-ink-900 placeholder:text-ink-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
@@ -28,6 +32,9 @@ export default function TransactionForm({ initial, onClose, onSave }) {
   const [recurring, setRecurring] = useState(initial?.is_recurring ?? false);
   const [errors, setErrors] = useState({});
   const [saveError, setSaveError] = useState("");
+  const [duplicate, setDuplicate] = useState(null);
+  const duplicatePayloadRef = useRef(null);
+  const { record } = useRecentlyViewed();
   const { locked, done, run, minWidth, measure } = useSubmitLock();
   const requestIdRef = useRef(null);
   if (requestIdRef.current === null) requestIdRef.current = newRequestId();
@@ -39,6 +46,23 @@ export default function TransactionForm({ initial, onClose, onSave }) {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  // Opening an entry to look at it is what puts it on the dashboard's
+  // recently-viewed list. The record runs again when the categories arrive so
+  // an entry without its own description can show its category name instead.
+  useEffect(() => {
+    if (!initial?.transaction_id) return;
+    const categoryName = categories.find(
+      (category) => category.category_id === initial.category_id,
+    )?.name;
+    record({
+      transaction_id: initial.transaction_id,
+      label: initial.description?.trim() || categoryName || "Transaction entry",
+      type: initial.type,
+      amount: initial.amount,
+      date: initial.date,
+    });
+  }, [initial, categories, record]);
 
   const typeCategories =
     status === "ready" ? categories.filter((category) => category.type === type) : [];
@@ -54,6 +78,21 @@ export default function TransactionForm({ initial, onClose, onSave }) {
         delete next.category;
         return next;
       });
+    }
+  };
+
+  // Detection is advisory: the twin is looked up in the month being saved,
+  // and a lookup that fails simply lets the save continue - a broken check
+  // must never stop the student from logging money.
+  const findExistingTwin = async (payload) => {
+    try {
+      const { transactions } = await listTransactions(monthKey(payload.date));
+      return findDuplicateOf(
+        { transaction_id: initial?.transaction_id ?? null, ...payload },
+        transactions,
+      );
+    } catch {
+      return null;
     }
   };
 
@@ -88,11 +127,34 @@ export default function TransactionForm({ initial, onClose, onSave }) {
       is_recurring: recurring,
     };
     if (!initial) payload.request_id = requestIdRef.current;
+    const twin = await findExistingTwin(payload);
+    if (twin) {
+      duplicatePayloadRef.current = payload;
+      setDuplicate(twin);
+      return;
+    }
     try {
       await run(() => onSave(payload), { oneShot: true });
     } catch (err) {
       setSaveError(err?.message ?? "Couldn't save that transaction.");
     }
+  };
+
+  const saveAnyway = async () => {
+    const payload = duplicatePayloadRef.current;
+    duplicatePayloadRef.current = null;
+    setDuplicate(null);
+    if (!payload) return;
+    try {
+      await run(() => onSave(payload), { oneShot: true });
+    } catch (err) {
+      setSaveError(err?.message ?? "Couldn't save that transaction.");
+    }
+  };
+
+  const dismissDuplicate = () => {
+    duplicatePayloadRef.current = null;
+    setDuplicate(null);
   };
 
   return (
@@ -128,6 +190,40 @@ export default function TransactionForm({ initial, onClose, onSave }) {
             <Icon name="x" size={18} />
           </button>
         </div>
+
+        {duplicate && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3.5" role="alert">
+            <div className="flex items-start gap-2.5">
+              <Icon name="triangle-alert" size={16} className="mt-0.5 shrink-0 text-amber-600" />
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-amber-700">This may already be saved</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-ink-900">
+                  A {formatCurrency(duplicate.amount)}{" "}
+                  {categories.find((c) => c.category_id === duplicate.category_id)?.name ??
+                    "matching"}{" "}
+                  entry on {formatDate(duplicate.date)} matches on amount, category and date.
+                  Save anyway if you really did spend twice.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={saveAnyway}
+                className="rounded-lg bg-brand-700 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-brand-800"
+              >
+                {initial ? "Save changes anyway" : "Save anyway"}
+              </button>
+              <button
+                type="button"
+                onClick={dismissDuplicate}
+                className="rounded-lg border border-amber-200 bg-surface px-3.5 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100"
+              >
+                Keep editing
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="mt-5 flex flex-col gap-4">
           <div>

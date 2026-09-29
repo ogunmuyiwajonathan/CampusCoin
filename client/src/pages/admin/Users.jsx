@@ -11,6 +11,7 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
+  const [actionError, setActionError] = useState("");
   const [resetModal, setResetModal] = useState(null);
   const actionLockRef = useRef(false);
   const searchLockRef = useRef(false);
@@ -70,18 +71,29 @@ export default function Users() {
 
   const toggleDisable = async (user) => {
     if (actionLockRef.current) return;
+    const disabling = user.is_active;
+    const question = disabling
+      ? `Disable ${user.name}? They will be signed out immediately.`
+      : `Enable ${user.name}? They will be able to sign in again.`;
+    if (!window.confirm(question)) return;
+
     actionLockRef.current = true;
     try {
       setActionLoading(user.user_id);
-      const endpoint = user.is_active ? 'disable' : 'enable';
-      const res = await fetch(`/api/admin/users/${user.user_id}/${endpoint}`, { method: 'PUT' });
+      setActionError("");
+      // Named rather than toggled: the button says which state it is about to
+      // set, and the endpoint does the same. A request that arrives twice puts
+      // the account in the state the admin asked for, not the opposite one.
+      const res = await fetch(`/api/admin/users/${user.user_id}/${disabling ? "disable" : "enable"}`, {
+        method: "PUT",
+      });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.message || "Action failed");
       }
       await fetchUsers(page, search);
     } catch (err) {
-      alert(err.message);
+      setActionError(err.message || "That did not work. Try again.");
     } finally {
       actionLockRef.current = false;
       setActionLoading(null);
@@ -93,7 +105,8 @@ export default function Users() {
     actionLockRef.current = true;
     try {
       setActionLoading(id);
-      const res = await fetch(`/api/admin/users/${id}/reset`, { method: 'PUT' });
+      setActionError("");
+      const res = await fetch(`/api/admin/users/${id}/reset`, { method: "PUT" });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.message || "Reset failed");
@@ -101,7 +114,7 @@ export default function Users() {
       const data = await res.json();
       setResetModal({ password: data.temporaryPassword });
     } catch (err) {
-      alert(err.message);
+      setActionError(err.message || "That did not work. Try again.");
     } finally {
       actionLockRef.current = false;
       setActionLoading(null);
@@ -138,6 +151,14 @@ export default function Users() {
 
   return (
     <div className="space-y-6 reveal is-visible">
+      {actionError && (
+        <p
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          role="alert"
+        >
+          {actionError}
+        </p>
+      )}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-ink-900">Users</h1>
@@ -159,8 +180,8 @@ export default function Users() {
         </form>
       </div>
 
-      <div className="overflow-hidden rounded-card bg-surface shadow-card">
-        <table className="w-full text-left text-sm">
+      <div className="overflow-x-auto rounded-card bg-surface shadow-card">
+        <table className="w-full min-w-[660px] text-left text-sm">
           <thead className="bg-mint-50 text-ink-500">
             <tr>
               <th className="px-6 py-4 font-medium">User</th>

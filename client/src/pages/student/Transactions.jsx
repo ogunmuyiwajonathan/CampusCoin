@@ -8,9 +8,11 @@ import Sidebar from "../../components/Sidebar.jsx";
 import StatCard from "../../components/StatCard.jsx";
 import TransactionForm from "../../components/TransactionForm.jsx";
 import CsvImportDialog from "../../components/CsvImportDialog.jsx";
+import DeletedTransactionsDialog from "../../components/DeletedTransactionsDialog.jsx";
 import SubmitSpinner from "../../components/SubmitSpinner.jsx";
 import { useTransactions } from "../../hooks/useTransactions.js";
 import { useSubmitLock } from "../../hooks/useSubmitLock.js";
+import { duplicateIds } from "../../lib/duplicates.js";
 import {
   categoryColor,
   categoryLookup,
@@ -109,6 +111,7 @@ export default function Transactions() {
   const [menuId, setMenuId] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [deletedOpen, setDeletedOpen] = useState(false);
 
   const { status, items, error, add, update, remove, refresh } = useTransactions();
 
@@ -146,6 +149,10 @@ export default function Transactions() {
   const rows = periodItems
     .filter((item) => typeFilter === ALL || item.type === typeFilter)
     .sort((a, b) => b.date.localeCompare(a.date));
+
+  // Flagged against what is on screen, so a row never carries the warning
+  // while its twin is hidden behind a filter.
+  const flagged = duplicateIds(rows);
 
   const totals = computeTotals(periodItems);
   const balance = totals.income - totals.expense;
@@ -350,6 +357,15 @@ export default function Transactions() {
                   <Icon name="upload" size={16} />
                   Import CSV
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDeletedOpen(true)}
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-ink-500 transition hover:bg-slate-50"
+                >
+                  <Icon name="history" size={16} />
+                  Deleted
+                </button>
               </div>
             </div>
 
@@ -444,6 +460,15 @@ export default function Transactions() {
                             <p className="mt-0.5 truncate text-xs text-ink-500 md:hidden">
                               {isIncome ? "Income" : "Expense"} · {name}
                             </p>
+                            {flagged.has(item.transaction_id) && (
+                              <span
+                                className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700"
+                                title="Same amount, category and date within three days of another entry"
+                              >
+                                <Icon name="triangle-alert" size={10} />
+                                Possible duplicate
+                              </span>
+                            )}
                           </td>
                           <td
                             className={`whitespace-nowrap px-2 py-3 text-right text-sm font-bold tabular-nums sm:px-3 ${
@@ -538,6 +563,13 @@ export default function Transactions() {
         <CsvImportDialog
           onClose={() => setImportOpen(false)}
           onImported={refresh}
+        />
+      )}
+
+      {deletedOpen && (
+        <DeletedTransactionsDialog
+          onClose={() => setDeletedOpen(false)}
+          onRestored={refresh}
         />
       )}
     </div>

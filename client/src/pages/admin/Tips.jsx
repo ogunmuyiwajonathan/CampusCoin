@@ -218,8 +218,8 @@ export default function Tips() {
           <p className="mt-1 text-sm text-ink-500">Add your first tip template to get started.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-card bg-surface shadow-card">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-card bg-surface shadow-card">
+          <table className="w-full min-w-[620px] text-left text-sm">
             <thead className="bg-mint-50 text-ink-500">
               <tr>
                 <th className="px-6 py-3 font-medium">Key</th>

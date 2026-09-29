@@ -232,8 +232,8 @@ export default function Categories() {
               No {label.toLowerCase()} categories yet.
             </p>
           ) : (
-            <div className="overflow-hidden rounded-card bg-surface shadow-card">
-              <table className="w-full text-left text-sm">
+            <div className="overflow-x-auto rounded-card bg-surface shadow-card">
+              <table className="w-full min-w-[540px] text-left text-sm">
                 <thead className="bg-mint-50 text-ink-500">
                   <tr>
                     <th className="px-6 py-3 font-medium">Name</th>
