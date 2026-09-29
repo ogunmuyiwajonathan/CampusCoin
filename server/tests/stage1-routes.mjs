@@ -22,6 +22,9 @@ const check = (name, condition, detail = "") => {
   }
 };
 
+const daysBetween = (from, to) =>
+  Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+
 const json = async (res) => {
   try {
     return await res.json();
@@ -144,7 +147,10 @@ try {
   check("import answers 201", imported.status === 201, `got ${imported.status}`);
   check("the summary counts the rows", importBody?.summary?.total === 3, JSON.stringify(importBody?.summary));
   check("two rows imported", importBody?.summary?.accepted === 2, JSON.stringify(importBody?.summary));
-  check("the bad row is rejected with a reason", importBody?.rows?.[2]?.status === "rejected" && Boolean(importBody?.rows?.[2]?.reason), JSON.stringify(importBody?.rows?.[2]));
+  // Row 2 is the first data line, so the unparseable "abc" amount on the second
+  // data line is row 3.
+  check("the bad row is rejected with a reason", importBody?.rows?.[1]?.status === "rejected" && Boolean(importBody?.rows?.[1]?.reason), JSON.stringify(importBody?.rows?.[1]));
+  check("the good rows around it are accepted", importBody?.rows?.[0]?.status === "accepted" && importBody?.rows?.[2]?.status === "accepted", JSON.stringify(importBody?.rows?.map((r) => r.status)));
   check("a batch id comes back for undo", typeof importBody?.batch_id === "string", JSON.stringify(importBody?.batch_id));
 
   const listed = await json(await api.get("/api/transactions?month=2026-07"));
@@ -205,8 +211,15 @@ try {
   await api.get("/api/transactions?month=2026-07");
   const july = await json(await api.get("/api/transactions?month=2026-07"));
   const generated = (july?.transactions ?? []).filter((row) => row.description === "Http recurring");
-  check("the next weekly occurrence was written", generated.length === 2, `found ${generated.length}`);
+  // The row was created dated 1 July, so by the time of this run it is three
+  // months stale and the catch-up pass writes every week it missed, not just the
+  // next one. July alone holds the 1st plus the 8th, 15th, 22nd and 29th.
+  check("every missed week was written", generated.length === 5, `found ${generated.length}: ${JSON.stringify(generated.map((r) => r.date))}`);
   check("one is dated 2026-07-08", generated.some((row) => row.date === "2026-07-08"), JSON.stringify(generated.map((r) => r.date)));
+  // The ledger is served newest first, so the dates are put back in order before
+  // the gaps between them mean anything.
+  const inOrder = [...generated].sort((a, b) => a.date.localeCompare(b.date));
+  check("the weeks are 7 days apart", inOrder.every((row, index) => index === 0 || daysBetween(inOrder[index - 1].date, row.date) === 7), JSON.stringify(inOrder.map((r) => r.date)));
 
   process.stdout.write("\n6. bad uploads are refused with a message, not a crash\n");
 
@@ -262,6 +275,11 @@ try {
   const doubleRows = await json(await api.get("/api/transactions?month=2026-07"));
   const doubleCount = (doubleRows?.transactions ?? []).filter((row) => row.description === "Http double click").length;
   check("only one row was written", doubleCount === 1, `found ${doubleCount}`);
+  check(
+    "the duplicate answer still carries a transaction_id",
+    typeof secondBody?.transaction?.transaction_id === "string",
+    JSON.stringify(secondBody?.transaction),
+  );
 
   const withId = await api.post("/api/transactions", {
     category_id: category._id,

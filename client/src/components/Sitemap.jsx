@@ -1,38 +1,41 @@
 import { Link } from "react-router-dom";
 
-// The whole sitemap in one place: every entry is a real <Route> in App.jsx, in
-// the order a visitor actually meets it. Add a route there, add it here — a
-// link that is not routed would send people straight to the 404 page.
+// One list for the whole sitemap: every entry is a real <Route> in App.jsx, in
+// the order a visitor actually meets it. Keep this array and App.jsx in
+// step — a link that is not routed would send people to the 404 page.
 const SITEMAP_GROUPS = [
   {
     id: "public",
     title: "Public",
     note: "Open to everyone",
-    hint: "Home → Sign up → Login → Forgot password → Reset password",
+    hint: "Home → Sign up → Login → Forgot password → Reset password → Admin login",
     links: [
       { label: "Home", to: "/" },
       { label: "Login", to: "/login" },
       { label: "Sign up", to: "/signup" },
       { label: "Forgot password", to: "/forgot-password" },
       { label: "Reset password", to: "/reset-password" },
+      { label: "Admin login", to: "/admin/login" },
     ],
   },
   {
     id: "student",
     title: "Student",
     note: "Sign in required",
-    hint: "Register → Login → Dashboard → Transactions → Budgets → Insights → Assistant → More → Settings",
+    hint: "Register → Login → Dashboard → Transactions → Budgets → Categories → Reports → Insights → Bookmarks → Assistant → Notifications → Settings",
     links: [
       { label: "Dashboard", to: "/dashboard" },
       { label: "Transactions", to: "/transactions" },
       { label: "Budgets", to: "/budgets" },
-      { label: "Insights", to: "/insights" },
-      { label: "Assistant", to: "/assistant" },
-      { label: "Settings", to: "/settings" },
+      // Personal categories are a section of the Budgets page, opened from its
+      // "Manage Categories" quick action, so the link lands on /budgets.
+      { label: "Categories", to: "/budgets" },
       { label: "Reports", to: "/reports" },
+      { label: "Insights", to: "/insights" },
       { label: "Bookmarks", to: "/bookmarks" },
+      { label: "Assistant", to: "/assistant" },
       { label: "Notifications", to: "/notifications" },
-      { label: "More", to: "/more" },
+      { label: "Settings", to: "/settings" },
     ],
   },
   {
@@ -41,7 +44,6 @@ const SITEMAP_GROUPS = [
     note: "Sign in required",
     hint: "Admin login → Dashboard → Users → Categories → Tips → Announcements",
     links: [
-      { label: "Admin login", to: "/admin/login" },
       { label: "Dashboard", to: "/admin" },
       { label: "Users", to: "/admin/users" },
       { label: "Categories", to: "/admin/categories" },
@@ -85,7 +87,7 @@ export default function Sitemap() {
             </div>
             <ul className="mt-3 flex-1 space-y-1">
               {group.links.map((link) => (
-                <li key={link.to}>
+                <li key={`${link.to}-${link.label}`}>
                   <Link
                     to={link.to}
                     className="block rounded-lg px-2 py-1.5 text-sm font-semibold text-ink-900 transition hover:bg-slate-50 hover:text-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"

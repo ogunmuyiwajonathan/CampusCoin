@@ -145,16 +145,17 @@ try {
     description: "Lunch I did not mean to log",
     date: "2026-09-21",
   });
-  await ledger.deleteTransaction(user._id, toDelete._id);
-  const gone = await Transaction.findById(toDelete._id).lean();
+  await ledger.deleteTransaction(user._id, toDelete.transaction_id);
+  const gone = await Transaction.findById(toDelete.transaction_id).lean();
   check("the live transaction is gone", gone === null);
+  check("createTransaction answers in the same shape the API does", typeof toDelete.transaction_id === "string" && toDelete._id === undefined, JSON.stringify(Object.keys(toDelete)));
   const history = await ledger.listTransactionHistory(user._id);
   check("it shows up in the history list", history.length >= 1, `history ${history.length}`);
   check("history carries the category name", history[0]?.category?.name === `S1 Food ${stamp}`, JSON.stringify(history[0]?.category));
   check("history carries the amount", history[0]?.transaction?.amount === 1250);
 
   const restored = await ledger.restoreTransaction(user._id, history[0].history_id);
-  check("restoring brings the row back", Boolean(await Transaction.findById(restored._id).lean()));
+  check("restoring brings the row back", Boolean(await Transaction.findById(restored.transaction_id).lean()));
   const afterRestore = await ledger.listTransactionHistory(user._id);
   check("a restored row leaves the history list", afterRestore.length === history.length - 1, `${history.length} -> ${afterRestore.length}`);
 
@@ -162,7 +163,7 @@ try {
     ledger.restoreTransaction(user._id, history[0].history_id),
   );
   await throwsWith("deleting a row that is not there is a 404", 404, () =>
-    ledger.deleteTransaction(user._id, toDelete._id),
+    ledger.deleteTransaction(user._id, toDelete.transaction_id),
   );
 
   process.stdout.write("\n3. CSV import validates every row and reports per row\n");

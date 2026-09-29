@@ -118,7 +118,10 @@ export async function createTransaction(userId, body) {
       user_id: userId,
       request_id: body.request_id,
     }).lean();
-    if (already) return already;
+    // Serialized, because this row goes back as the response body. A lean row
+    // still carries _id, so returning it raw would answer a duplicate submission
+    // with an object that has no transaction_id in it at all.
+    if (already) return serialize(already, "transaction_id");
   }
 
   let transaction;
@@ -133,13 +136,13 @@ export async function createTransaction(userId, body) {
         user_id: userId,
         request_id: body.request_id,
       }).lean();
-      if (already) return already;
+      if (already) return serialize(already, "transaction_id");
     }
     throw error;
   }
 
   await evaluateBudgets(userId, transaction);
-  return transaction;
+  return serialize(transaction.toObject(), "transaction_id");
 }
 
 export async function updateTransaction(userId, id, body) {
@@ -252,7 +255,7 @@ export async function restoreTransaction(userId, historyId) {
   );
 
   await evaluateBudgets(userId, restored);
-  return restored;
+  return serialize(restored.toObject(), "transaction_id");
 }
 
 // The next occurrence of every recurring row that is due. This is the step that

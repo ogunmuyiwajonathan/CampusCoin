@@ -1,5 +1,4 @@
-import { Link } from "react-router-dom";
-import Icon from "./Icon.jsx";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.js";
 
 export default function ProtectedRoute({ children, requireAdmin = false }) {
@@ -21,28 +20,13 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
     );
   }
 
-  if (!user || (requireAdmin && user.role !== "admin")) {
-    return (
-      <div className="flex min-h-svh items-center justify-center bg-slate-50 px-4">
-        <div className="w-full max-w-md rounded-card bg-surface p-8 text-center shadow-card">
-          <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-            <Icon name="lock" size={22} />
-          </span>
-          <h1 className="font-display text-lg font-bold text-ink-900">
-            Please log in to view this page
-          </h1>
-          <p className="mt-2 text-sm leading-relaxed text-ink-500">
-            This page is only available while you are signed in.
-          </p>
-          <Link
-            to="/login"
-            className="mt-5 inline-block rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800"
-          >
-            Go to log in
-          </Link>
-        </div>
-      </div>
-    );
+  // Signed-out visitors are sent straight to the login page, so a protected
+  // link (from the sitemap or a typed URL) can never show a blank or stalled
+  // screen. A signed-in non-admin who ends up here belongs on the admin login
+  // page instead.
+  if (!user) return <Navigate to="/login" replace />;
+  if (requireAdmin && user.role !== "admin") {
+    return <Navigate to="/admin/login" replace />;
   }
 
   return children;

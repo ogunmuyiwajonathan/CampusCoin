@@ -7,6 +7,7 @@ import { adminLoginLimiter } from "../middleware/rateLimiters.js";
 import {
   categoryBodySchema,
   tipTemplateBodySchema,
+  tipTemplatePatchSchema,
   announcementBodySchema,
 } from "../validators/admin.schema.js";
 
@@ -36,8 +37,15 @@ router.delete("/admin/categories/:id", adminCtrl.deleteDefaultCategory);
 
 // Tip Templates
 router.get("/admin/tips", adminCtrl.getTipTemplates);
+// Declared before /admin/tips/:id so "rules" is never read as an id. The engine's
+// own vocabulary, served from one place.
+router.get("/admin/tip-rules", adminCtrl.getTipRules);
 router.post("/admin/tips", validate({ body: tipTemplateBodySchema }), adminCtrl.createTipTemplate);
-router.put("/admin/tips/:id", validate({ body: tipTemplateBodySchema }), adminCtrl.updateTipTemplate);
+router.put(
+  "/admin/tips/:id",
+  validate({ body: tipTemplatePatchSchema }),
+  adminCtrl.updateTipTemplate,
+);
 router.delete("/admin/tips/:id", adminCtrl.deleteTipTemplate);
 
 // Announcements

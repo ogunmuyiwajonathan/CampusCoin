@@ -6,6 +6,7 @@ import { Transaction } from "../models/Transaction.js";
 import { Category } from "../models/Category.js";
 import { TipTemplate } from "../models/TipTemplate.js";
 import { Announcement } from "../models/Announcement.js";
+import { TIP_RULES } from "../validators/admin.schema.js";
 
 export const getStats = async (req, res) => {
   // Active users: students whose accounts are currently enabled and not disabled.
@@ -158,6 +159,12 @@ export const deleteDefaultCategory = async (req, res) => {
 
   await category.deleteOne();
   res.json({ message: "Category deleted" });
+};
+
+// The rules the engine can run, published so the admin form is built from the
+// engine's own vocabulary rather than from a copy that can drift.
+export const getTipRules = async (_req, res) => {
+  res.json({ rules: TIP_RULES });
 };
 
 export const getTipTemplates = async (req, res) => {
