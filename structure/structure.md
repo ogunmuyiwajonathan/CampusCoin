@@ -10,27 +10,36 @@ CampusCoin/
 │       │                          #   + PageHeader, ThemeToggle, NotificationBell, AssistantFab
 │       │                          #   + ErrorBoundary (app-wide crash fallback)
 │       │                          #   + Icon.jsx (single lucide-react registry)
-│       ├── pages/                 # LandingPage, LoginPage, Signup, AdminLogin, NotFound
+│       ├── pages/                 # LandingPage, LoginPage, Signup, AdminLogin,
+│       │   │                       #   ForgotPassword, ResetPassword, NotFound
 │       │   ├── student/           #   Dashboard, Transactions, Budgets, Insights,
-│       │   │                       #   Assistant, Settings
+│       │   │                       #   Assistant, Reports, Bookmarks,
+│       │   │                       #   Notifications, More, Settings
 │       │   └── admin/             #   AdminLayout, Dashboard, Users, Categories,
 │       │                           #   Tips, Announcements
-│       ├── hooks/                 # AuthProvider/useAuth, useBudgets, useTransactions, ThemeProvider/useTheme
-│       ├── data/                  # mockData.js — seed data, category constants, derived totals
-│       ├── lib/                   # formatCurrency, formatMonth, formatName, insights, apiClient, aiAssistant
+│       ├── hooks/                 # AuthProvider/useAuth, useBudgets, useTransactions,
+│       │                           #   useCategories, useTips, useBookmarks,
+│       │                           #   useRecentlyViewed, ThemeProvider/useTheme
+│       ├── data/                  # mockData.js — category constants, derived totals
+│       ├── lib/                   # formatCurrency, formatMonth, formatName, insights,
+│       │                           #   apiClient (the only HTTP seam), aiAssistant
 │       ├── assets/                # aibot.png + WebP art (campusboy, bush-side, laptop, student, about)
 │       └── App.jsx · main.jsx · index.css
-├── server/                        # NOT CREATED YET — Node + Express + Mongoose
+├── server/                        # Node + Express + Mongoose
 │   ├── src/
-│   │   ├── controllers/           # HTTP in/out, validation      ← Controller
-│   │   ├── services/              # budget alerts, insights,     ← Service
-│   │   │                          #   tips engine, AI categorize
-│   │   ├── models/                # Mongoose schemas             ← Repository layer
-│   │   ├── routes/                # /auth /categories /transactions
-│   │   │                          #   /budgets /insights /admin (kebab-case)
-│   │   ├── middleware/            # session auth, role guard, error handler
-│   │   └── index.js
-│   ├── seed/                      # default categories + demo user + sample data
+│   │   ├── controllers/           # HTTP in/out only          ← Controller
+│   │   ├── services/              # ledger, reports, insights ← Service
+│   │   │                           #   tips, categorise, bookmarks, auth
+│   │   ├── models/                # Mongoose schemas         ← Repository layer
+│   │   ├── routes/                # /auth /ai /admin /ledger
+│   │   │                           #   /reports /bookmarks /insights
+│   │   ├── middleware/            # session auth, role guard, rate limits, error handler
+│   │   ├── validators/            # zod schemas, one per domain
+│   │   ├── utils/                 # ApiError, idOptions, dateMath, sanitizeSvg
+│   │   ├── config/                # env, db, session
+│   │   ├── app.js · index.js
+│   ├── scripts/seed.js            # default categories, tip templates, demo users + data
+│   ├── tests/                     # security baseline, auth, and per-feature suites
 │   └── .env / .env.example
 ├── structure/                     # SRS + competition study docs (this folder)
 ├── instructions/                  # study reference — gitignored, never committed
@@ -63,74 +72,83 @@ Secrets: real `.env` gitignored, commit only `.env.example`. Linters (oxlint) to
 ## DB documents (MongoDB + Mongoose)
 - **User:** name, email (unique), password_hash (bcrypt), academic year, monthly_savings_goal, allowance_baseline
 - **Category:** name, type `income|expense`, `is_default` (separates system defaults from personal — jury one-liner)
-- **Transaction:** refs User + Category, amount, type, description, `ai_suggested_category`, date
+- **Transaction:** refs User + Category, amount, type, description, `ai_suggested_category`, date, `is_recurring` + `frequency` + `next_run_at`, `recurring_root` (the series a generated row belongs to), `import_batch_id` (one CSV upload, so the whole batch can be undone)
 - **Budget:** refs User + Category, month, limit_amount
-- **Insight:** refs User, month, summary_text, tip_text, generated_at, history[]
-- **Notification:** refs User, title, body, read_at, link — the bell is seeded from `mockData.js` today
-- **Tip:** template text, savings_impact rank, pin/dismiss per user (SRS module 10, not built)
+- **Insight:** refs User, month, summary_text, tip_text, generated_at — one row per student per month, so history is a query over past months rather than an array that grows forever and approaches the 16 MB document limit
+- **Notification:** refs User, title, body, read_at, link, `dedupe_key` — so ten identical budget alerts collapse into one
+- **TipTemplate:** the admin-authored wording behind the tips engine — key, text with `{placeholders}`, a `rule` name, a threshold, `savings_impact`, `is_active`. Data, never code: a rule the engine does not recognise is skipped rather than guessed at
+- **Tip:** refs User, month, `template_key` (which template produced it), text, savings_impact, pin/dismiss per user
+- **CategorySuggestion:** refs User, `description_key`, category_id, `hit_count` — this is "learns from corrections", per student, so one person's habits never leak into another's
+- **TransactionHistory:** refs User, a snapshot of a deleted transaction, deleted_at, restored_at — delete is recoverable rather than permanent
 - **Bookmark:** refs User + Insight/Tip, month, optional note — saved from the Insights page, listed at `/bookmarks`
+- **Conversation / ChatMessage:** Rix's per-student chat history
 - **ResetToken:** refs User, hashed token, expires_at — for email password reset
 - User also needs `role` (`student|admin`), `is_active` (admin disable), `profile_image_url`, `created_at`
 
-Relations: User 1—M Transactions/Budgets/Insights, Category 1—M Transactions.
+Relations: User 1—M Transactions/Budgets/Insights/Tips/Notifications, Category 1—M Transactions.
 
-## Implementation status (honest snapshot — frontend only, no `server/` yet)
+## Index notes (why these and not obvious ones)
+- `Transaction (user_id, date desc)` serves the monthly ledger read: one user, newest first.
+- `Transaction (user_id, request_id)` unique + **partial** on `request_id` existing — this is the double-click guard. It must be partial, not sparse: a sparse index on a compound key still indexes a document when *any* of its fields are present, so with `user_id` always set, every row written without a request_id (the seeder, a CSV import, a generated recurring row) would write a null entry and the second one would be rejected as a duplicate.
+- `Transaction (user_id, recurring_root, date)` unique + partial — the same reason. This is what makes the recurring catch-up idempotent: a second pass writes nothing.
+- `Tip (user_id, month, template_key)` unique — one tip per template per month, so a regeneration updates the same row and a pin the student set survives.
 
-**Working in the browser today**
+## Implementation status (verified against the running code, September 2026)
+
+**Built and tested** — the suite in `server/tests/` exercises each row against the real Atlas `campuscoin_test` database, not mocks.
+
 | Area | Where | Notes |
 |---|---|---|
-| Landing page | `pages/LandingPage.jsx` | Marketing page at `/`, redirects to `/dashboard` when signed in |
-| Auth (demo) | `hooks/AuthProvider.jsx` | localStorage session, no server, no password reset |
-| Profile + avatar | `components/ProfileEditor.jsx`, `AvatarPicker.jsx` | Avatar is a 192px data URL in the session, not object storage |
-| Transactions | `pages/student/Transactions.jsx`, `hooks/useTransactions.js` | CRUD, filters, month picker, `is_recurring` flag only — nothing generates future entries |
-| Categories | `data/mockData.js` | 11 seeded defaults, read-only; personal CRUD not built |
-| Dashboard | `pages/student/Dashboard.jsx` | Balance, top category, recent activity, budget-vs-actual |
-| Budgets + alerts | `pages/student/Budgets.jsx`, `hooks/useBudgets.js` | Limits, progress bars, near/exceed bands (95% / 100%) |
-| Insights | `pages/student/Insights.jsx`, `lib/insights.js` | Narrative, growth flags, 6-month chart with month stepping, donut, bookmark this month |
-| Reports | `pages/student/Reports.jsx`, `services/reports.service.js` | Date/category filters, day-week-month re-bucketing, 6-month income-vs-expense, category table, PDF + image export |
-| Bookmarks | `pages/student/Bookmarks.jsx`, `hooks/useBookmarks.js` | Save a month with a note, grouped by month, edit and delete |
-| AI assistant | `pages/student/Assistant.jsx`, `lib/aiAssistant.js` | Posts to `/api/ai/chat` so the provider key stays server-side, with a local rules fallback while the server is unbuilt |
-| Dark mode + responsive | `ThemeProvider`, Tailwind breakpoints | Light/dark, phone/tablet/desktop, bottom tab bar + FAB |
+| Auth + profile | `services/auth.service.js`, `routes/auth.routes.js` | bcrypt, HTTP-only cookie sessions, 6-digit emailed reset code, username and password change (which signs out other devices), avatar upload |
+| Transactions | `services/ledger.service.js` | Add/edit/delete, filters, month selector |
+| CSV import | `services/import.service.js`, `components/CsvImportDialog.jsx` | Multipart upload, RFC-4180 parser, per-row validation, per-row accepted/rejected report, unknown categories fall back instead of dropping the row, whole-batch undo |
+| Recurring entries | `materialiseRecurring()` in `services/ledger.service.js` | The flag now produces real transactions. Runs on the ledger read rather than a timer, so no second process is needed; catch-up is bounded and idempotent |
+| Delete with history | `models/TransactionHistory.js`, `components/DeletedTransactionsDialog.jsx` | A deleted row is kept and restorable |
+| Categories | `services/ledger.service.js`, `CategoryManagerDialog.jsx` | Full personal CRUD. Defaults are `user_id: null`, so an edit or delete against one matches no row and answers 404 rather than corrupting shared data |
+| Dashboard | `pages/student/Dashboard.jsx` | Greeting, month balance, top category, budget-vs-actual, top tips — all from the database, no mock figures |
+| Budgets + alerts | `services/ledger.service.js` | Limits, progress, near (95%) and over (100%), notifications deduped by key |
+| Insights | `services/insights.service.js` | One stored `Insight` per month, generated on demand, browsable by month. A month already read is left alone; `regenerateInsight` is the forced path |
+| Tips engine | `services/tips.service.js`, `hooks/useTips.js` | Reads `TipTemplate`, renders placeholders against the student's own numbers, ranks by savings impact, pin/dismiss per user. An admin edit or deactivation reaches the student on the next read |
+| AI categorisation | `services/categorise.service.js` | Four tiers, cheapest first: what the student taught it, then keyword rules, then the model, then a category-name match, then a fallback. Never returns nothing |
+| Reports | `services/reports.service.js`, `pages/student/Reports.jsx` | Filters, day/week/month buckets, 6-month trend, PDF (jsPDF) and image (html2canvas-pro) export, email share |
+| Bookmarks | `services/bookmarks.service.js` | Save a month with a note, edit, delete |
+| Advanced UX | `hooks/useRecentlyViewed.js` | Recently viewed, month-end forecast, duplicate detection flagged rather than blocked |
+| Admin panel | `controllers/admin.controller.js` | Direct login, default categories, tip templates, view/disable/reset users, usage stats, announcements |
+| Accessibility | `ThemeProvider`, `Breadcrumbs.jsx`, `index.css` | Dark mode, font-size control, breadcrumbs, loading states on every page |
 
-**Not built (SRS-scored)**
-- Server, database, sessions, bcrypt, email/token password reset
-- Personal category add/edit/delete
-- Recurring entry generation and transaction change history
-- AI suggest-as-you-type, learning from corrections, CSV import + batch suggestions
-- Persisted insight history (`history[]`)
-- Tips engine with pin/dismiss
-- Recently viewed, forecast, duplicate/unusually-large detection
-- Font-size control, breadcrumbs, sitemap on home
-- Live hosted URL, install docs with credentials for every role, demo video
+**Still open**
+- Live hosted URL, install docs with credentials for every role, demo video — submission paperwork, not code.
+- The OAuth row in the endpoint table below: deliberately deferred, both secrets left blank.
 
-## Backend reminders (agreed during frontend phase)
-- **User avatar:** `users.profile_image_url TEXT NULL` + `updated_at`. Avatar rule everywhere (header, Settings): use `profile_image_url` if set, else first letter of `name` in a forest-700 circle. Real upload is `POST /api/users/me/avatar` (multipart) — `AvatarPicker` posts nothing today.
-- **Phone:** intentionally not collected anywhere (SRS password reset = email token). Add `users.phone TEXT NULL` only if SMS/OTP ever lands.
-- **Academic year + savings goal:** `users.academic_year TEXT NULL`, `users.monthly_savings_goal INT NULL` — set via profile update (`PATCH /api/users/me`), never at signup. Settings shows "Not added" until set.
-- **Joined date:** the profile line comes from `AuthProvider.joinDate()` today; it maps to `users.created_at` formatted "Mon YYYY".
-- **Name capitalisation:** `lib/formatName.js` title-cases on read and write, so the server should normalise on save too rather than trusting the client's copy.
-- **Transactions (live in `hooks/useTransactions.js`):** `GET /api/transactions?month=YYYY-MM&type=` (sorted `date` desc), `POST /api/transactions`, `PATCH /api/transactions/:id`, `DELETE /api/transactions/:id`. Fields per SRS: `amount`, `type`, `description`, `date`, `is_recurring`, plus `ai_suggested_category`. Swapping `readStore`/`commit` for fetch is the whole change — start `status` at `"loading"` and the table skeleton + error alert render themselves.
-- **Budgets (live in `hooks/useBudgets.js`):** `GET /api/budgets?month=YYYY-MM`, `POST /api/budgets`, `PATCH /api/budgets/:id`, `DELETE /api/budgets/:id`. Spent is derived client-side from the transactions store; the backend can serve a computed `spent` instead. Alert thresholds live in `Budgets.jsx`: `>=95%` = near limit, `>=100%` = over limit.
-- **Insights (built by `buildInsights()` in `lib/insights.js`):** SRS module 9 maps to `GET /api/insights?month=YYYY-MM` returning the Insight document above. Rules worth keeping server-side: `delta = null` when the previous month has no spend for that category (never "infinite" percentages), budget wording flips at `>=100%`, and an empty store shows an empty state rather than zeroes everywhere.
-- **AI key exposure (fixed in S0):** `lib/aiAssistant.js` used to read `VITE_AI_API_KEY` and call OpenAI straight from the browser. Vite inlines every `VITE_*` value into the shipped JavaScript, so the key was public. The call now goes through `POST /api/ai/chat` and the provider key lives only in the server's `.env`.
-- **Auth enforcement:** `components/ProtectedRoute.jsx` exists but no route uses it, so a signed-out visitor can open any page. Wrap the app routes once the server session exists.
+## Design decisions worth defending
+- **Phone:** intentionally not collected anywhere (SRS password reset is an emailed code). A stated assumption, not an oversight.
+- **Academic year + savings goal:** set via profile update, never at signup. Settings shows "Not added" until set, which is why `ProfileSetupOverlay` exists.
+- **Joined date:** the profile line maps to `created_at`, formatted "Mon YYYY".
+- **AI key exposure (fixed in S0):** `lib/aiAssistant.js` used to read `VITE_AI_API_KEY` and call OpenAI straight from the browser. Vite inlines every `VITE_*` value into the shipped JavaScript, so the key was public. Every provider call now goes through the server and the key lives only in `server/.env`.
+- **A transaction's type is never trusted from the client.** It is always taken from the category the row points at, so an expense cannot be filed as income by posting a different `type` alongside it.
+- **A recurring row is not a cron job.** Generation is triggered by the ledger read — the moment a student is actually looking at their money — and needs no second process.
+- **Auth security:** every guessable route carries its own limiter (login, register, password reset, admin login, AI), the session cookie is HTTP-only with a trusted-origin check on every state-changing request, and a password change destroys that account's other sessions.
 
-## Endpoint inventory (to build)
+## Endpoint inventory (all mounted; session-guarded except the public auth routes)
 
 | Area | Endpoints |
 |---|---|
-| Auth | `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/users/me`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password` |
-| OAuth | `GET /api/auth/google` (redirect) + `GET /api/auth/google/callback` |
-| Profile | `PATCH /api/users/me`, `POST /api/users/me/avatar` |
-| Categories | `GET /api/categories`, `POST /api/categories`, `PATCH /api/categories/:id`, `DELETE /api/categories/:id` |
-| Transactions | `GET/POST /api/transactions`, `PATCH/DELETE /api/transactions/:id`, `POST /api/transactions/import` (CSV) |
+| Auth | `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET/PATCH /api/auth/me`, `PATCH /api/auth/me/password`, `POST /api/auth/me/avatar`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password` |
+| Profile | covered by `/api/auth/me` — name, academic year, allowance, savings goal |
+| Categories | `GET/POST /api/categories`, `PATCH/DELETE /api/categories/:id` |
+| Transactions | `GET/POST /api/transactions`, `PATCH/DELETE /api/transactions/:id` |
+| CSV import | `POST /api/transactions/import` (multipart), `DELETE /api/transactions/import/:batchId` (undo) |
+| Delete history | `GET /api/transactions/history`, `POST /api/transactions/history/:id/restore` |
 | Budgets | `GET/POST /api/budgets`, `PATCH/DELETE /api/budgets/:id` |
-| Insights | `GET /api/insights?month=`, `GET /api/insights/:month/history` |
+| Notifications | `GET /api/notifications`, `PATCH /api/notifications/:id/read`, `PATCH /api/notifications/read-all` |
+| Insights | `GET /api/insights` (history), `GET /api/insights/month?month=`, `POST /api/insights/month?month=` (regenerate) |
+| Tips | `GET /api/tips?month=`, `GET /api/tips/dismissed?month=`, `POST /api/tips/:id/pin`, `/unpin`, `/dismiss`, `/restore` |
+| AI | `POST /api/ai/chat`, conversation CRUD, `GET /api/ai/categorise/suggest?q=`, `POST /api/ai/categorise/confirm`, `POST /api/ai/categorise/batch` |
 | Reports | `GET /api/reports?from=&to=&category=&granularity=`, `GET /api/reports/categories`, `POST /api/reports/share` (email) |
 | Bookmarks | `GET/POST /api/bookmarks`, `PATCH/DELETE /api/bookmarks/:id` |
-| Notifications | `GET /api/notifications`, `PATCH /api/notifications/:id/read` |
-| AI | `POST /api/ai/chat`, `POST /api/ai/suggest-category` |
-| Admin | `POST /api/admin/auth/login` (password + `rememberMe`), `GET /api/admin/users`, `PATCH /api/admin/users/:id` (disable/reset), `GET/PATCH /api/admin/categories`, `GET/PATCH /api/admin/tips`, `GET /api/admin/stats` |
+| Admin | `POST /api/admin/auth/login` (name + password + remember me), `GET /api/admin/users`, `PUT /api/admin/users/:id/disable`, `PUT /api/admin/users/:id/reset`, `GET/PATCH /api/admin/categories`, `GET/PATCH /api/admin/tips`, `GET /api/admin/stats`, announcement CRUD |
+| Announcements | `GET /api/announcements` (student-facing) |
+| OAuth | **not built** — deferred rather than cancelled; both secrets left blank in `.env.example` |
 
 ## Secrets the server will need
 `MONGODB_URI` · `SESSION_SECRET` · `POOLSIDE_API_KEY` (server-only, never rotated by tooling) · `RESEND_API_KEY` (sender `onboarding@resend.dev` until a domain is verified) · `CORS_ORIGIN` · `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` left blank — OAuth is deferred, not cancelled. All live in `server/.env` (gitignored); only `.env.example` is committed. Nothing secret is ever a `VITE_` variable, because Vite inlines those into the client bundle.

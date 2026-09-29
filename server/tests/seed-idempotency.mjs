@@ -1,8 +1,3 @@
-// Proves the seed is idempotent, against the real Atlas cluster in the
-// campuscoin_test database so the demo data in campuscoin is never at risk.
-//
-// Both runs have to hit the SAME database, which is why all three happen inside
-// this one process rather than as three `npm run seed` invocations.
 import "dotenv/config";
 import { closeTestDb, connectTestDb, resetTestDb } from "./helpers/testDb.js";
 import { runSeed } from "../scripts/seed.js";
@@ -77,11 +72,6 @@ const recurring = await Transaction.countDocuments({ is_recurring: true });
 check("3 transactions are recurring", recurring === 3, `got ${recurring}`);
 
 console.log("\n5. ids are exposed under the snake_case names the client already uses");
-// This is the assertion whose absence let a real bug through. Mongoose's `id`
-// schema option ignores the string it is given and always names the virtual
-// "id", so every model was silently serialising as id rather than user_id and
-// transaction_id. Nothing caught it because the other assertions only counted
-// rows. If a model ever loses its virtual again, this fails.
 const idContract = [
   [User, "user_id"],
   [Category, "category_id"],

@@ -1,8 +1,5 @@
 import ApiError from "../utils/ApiError.js";
 
-// Pass the zod schemas for the request parts a route cares about:
-//   validate({ body: schema, query: schema, params: schema })
-// The parsed value replaces the raw input, so handlers never see unvalidated data.
 export default function validate(schemas) {
   return (req, res, next) => {
     for (const part of ["params", "query", "body"]) {
@@ -19,7 +16,6 @@ export default function validate(schemas) {
         return next(ApiError.badRequest("Some fields need attention.", details));
       }
 
-      // Express 5 makes req.query a getter, so it cannot be reassigned.
       if (part === "query") req.validatedQuery = result.data;
       else req[part] = result.data;
     }

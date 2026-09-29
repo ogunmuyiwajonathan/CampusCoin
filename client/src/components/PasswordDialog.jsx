@@ -4,8 +4,6 @@ import SubmitSpinner from "./SubmitSpinner.jsx";
 import { useSubmitLock } from "../hooks/useSubmitLock.js";
 import { changePassword } from "../lib/apiClient.js";
 
-// The same rule the server enforces, so the student is told what is wrong
-// before a round trip. The server still has the final say.
 function describeWeakness(value) {
   if (value.length < 8) return "Use at least 8 characters.";
   if (!/[a-z]/.test(value)) return "Add a lowercase letter.";

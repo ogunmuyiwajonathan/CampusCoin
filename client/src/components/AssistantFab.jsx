@@ -6,9 +6,6 @@ import BotAvatar from "./BotAvatar.jsx";
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-// The floating button exists only below the lg breakpoint, and the inline AI
-// cards exist only at it and above. Sharing one exported pair keeps the two in
-// step: a screen shows the button OR the inline card, never both.
 export const FAB_BREAKPOINT_CLASS = "lg:hidden";
 export const INLINE_AI_VISIBLE_CLASS = "hidden lg:block";
 

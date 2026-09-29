@@ -45,9 +45,6 @@ const user = await User.create({
   monthly_savings_goal: 20000,
 });
 
-// Upserted rather than created, because a previous run of this suite leaves the
-// shared defaults behind and the unique index on (user_id, name, type) is right
-// to refuse a second one.
 const defaultCategory = (name, type) =>
   Category.findOneAndUpdate(
     { user_id: null, name, type },
@@ -339,9 +336,6 @@ try {
   check("another student sees no tips of mine", !otherTips.some((tip) => tip.user_id && String(tip.user_id) === String(user._id)), JSON.stringify(otherTips.map((t) => t.template_key)));
   const otherInsights = await insights.listInsights(other._id);
   check("another student sees no insights of mine", otherInsights.length === 0, `got ${otherInsights.length}`);
-  // Pinned here rather than reusing a tip from an earlier step, because a rule
-  // that stops applying has its row removed, and that is the intended behaviour
-  // rather than something to assert around.
   const mineNow = await tips.listTips(user._id, MONTH);
   const pinnedNow = mineNow.find((tip) => tip.template_key === "budget_near_limit");
   await tips.setTipPinned(user._id, pinnedNow.tip_id, true);
@@ -351,7 +345,6 @@ try {
   const crossDismiss = await tips.dismissTip(other._id, pinnedNow.tip_id);
   check("dismissing my tip as them changes nothing", crossDismiss === null);
 
-  // Their read regenerates only their own month.
   await tips.listTips(other._id, MONTH);
   const stillMine = await Tip.findOne({ _id: pinnedNow.tip_id }).lean();
   check("my tip is still pinned", stillMine?.is_pinned === true, JSON.stringify(stillMine?.is_pinned));
@@ -373,8 +366,6 @@ try {
   await Category.deleteMany({ user_id: user._id });
   await User.deleteOne({ _id: user._id });
   await TipTemplate.deleteMany({ key: { $in: ["top_category_share", "budget_near_limit", "no_logging"] } });
-  // The shared defaults were upserted, so a repeat run can use them again. They
-  // are removed last because everything above depends on them.
   await disconnectDb();
 }
 

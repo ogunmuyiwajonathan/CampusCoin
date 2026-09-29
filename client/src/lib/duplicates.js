@@ -1,8 +1,3 @@
-// A duplicate here is a near-match, never a reason to block a save: same type,
-// same amount, same category, and dates within three days of each other. The
-// flag stays advisory because a genuinely repeated charge - two bus fares in a
-// week, the same coffee twice - looks exactly like a double entry, and only the
-// student knows which one they just made.
 const WINDOW_DAYS = 3;
 
 function dayNumber(isoDate) {
@@ -21,8 +16,6 @@ export function isNearDuplicate(a, b) {
   return Math.abs(dayA - dayB) <= WINDOW_DAYS;
 }
 
-// One pass over every pair: an entry is flagged when it matched at least one
-// other entry, so both sides of a pair light up in the list.
 export function duplicateIds(items) {
   const flagged = new Set();
   for (let i = 0; i < items.length; i += 1) {

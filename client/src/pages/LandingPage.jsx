@@ -136,9 +136,6 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
 
-  // Get Started goes straight to the dashboard in development, by signing in
-  // as the seeded demo student. The session is real, so every data endpoint keeps
-  // working, and /login and /signup are untouched.
   const start = async () => {
     if (busy) return;
     setBusy(true);
@@ -526,7 +523,6 @@ export default function LandingPage() {
             </div>
           </Reveal>
         </section>
-
 
         <section className="mx-auto max-w-7xl px-4">
           <Reveal className="grid items-center gap-6 rounded-card bg-purple-50 p-6 md:grid-cols-[auto_1fr_auto] md:p-8">

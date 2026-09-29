@@ -16,7 +16,6 @@ async function start() {
       console.log("Closed cleanly.");
       process.exit(0);
     });
-    // Do not hang forever on a stuck connection.
     setTimeout(() => process.exit(1), 10000).unref();
   };
 

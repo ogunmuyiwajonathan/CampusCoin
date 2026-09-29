@@ -14,9 +14,6 @@ const LABELS = {
   "/transactions": "Transactions",
 };
 
-// Home first, the current page last - the same shape the admin bar uses, so
-// both halves of the app read the same way. An unknown path shows Home alone
-// rather than inventing a label for itself.
 export default function Breadcrumbs({ className = "" }) {
   const { pathname } = useLocation();
   const label = LABELS[pathname];

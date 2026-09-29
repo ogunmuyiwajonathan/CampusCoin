@@ -1,20 +1,9 @@
-// Proves the S1 security baseline. Run with: npm test
-//
-// It boots the real Express app against the real Atlas cluster, in the
-// campuscoin_test database. It used to run with no database at all, but the auth
-// routes now exist and touch Mongo, so without one every login request would sit
-// in Mongoose's 10s buffer timeout and return 500 - the rate limiter would be
-// tested against errors rather than against failed logins.
 import "dotenv/config";
 import fsSync from "node:fs";
 import { z } from "zod";
 import { useTestDatabaseEnv } from "./helpers/testDb.js";
 
 useTestDatabaseEnv();
-// Deliberately NOT "test": the auth rate limit is raised in the test
-// environment so the auth suite's own bad-credential attempts do not throttle
-// each other. This suite exists to prove the real limit of 5, so it runs under
-// the development configuration where the real limit applies.
 process.env.NODE_ENV = "development";
 process.env.CORS_ORIGIN = "http://localhost:5173";
 
@@ -162,7 +151,6 @@ const path = await import("node:path");
 const os = await import("node:os");
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(here, "..");
-// Run from a scratch dir so dotenv cannot find the real .env and supply the value.
 const scratch = fsSync.mkdtempSync(path.join(os.tmpdir(), "cc-env-"));
 const envModule = `file:///${path.join(root, "src/config/env.js").replace(/\\/g, "/")}`;
 
@@ -179,10 +167,6 @@ const runEnvChild = (childEnv) => {
   }
 };
 
-// A blank MONGODB_URI is legal in development, where it selects an in-memory
-// database, and fatal in production, where an ephemeral database would silently
-// discard every write. The production rule is the stricter of the two: a deploy
-// must never come up healthy against a database that forgets everything on exit.
 const noMongoProd = runEnvChild({ NODE_ENV: "production", PORT: "5000", CORS_ORIGIN: "http://x" });
 check("blank MONGODB_URI stops a production boot", noMongoProd.code !== 0, `exit ${noMongoProd.code}`);
 check("the production error names the variable", /MONGODB_URI/.test(noMongoProd.output), noMongoProd.output.slice(0, 150));

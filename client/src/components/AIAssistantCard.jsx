@@ -5,9 +5,6 @@ import { sendMessage, friendlyAiError } from "../lib/aiAssistant.js";
 import { useSubmitLock } from "../hooks/useSubmitLock.js";
 import SubmitSpinner from "./SubmitSpinner.jsx";
 
-// No breakdown guard here. Rix answers from the server's ledger, not from a
-// prop, so a student who has logged nothing yet still gets the card and its
-// idle prompt. Dashboard keeps passing breakdown; the extra prop is ignored.
 export default function AIAssistantCard() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");

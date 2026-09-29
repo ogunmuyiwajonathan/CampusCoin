@@ -152,9 +152,6 @@ export function applyCategories(list) {
   if (Array.isArray(list) && list.length) registry = list;
 }
 
-// Puts the built-in seed back. Called when the signed-in user goes away, so the
-// previous account's own categories cannot stay in the registry and turn up in
-// a dropdown on a public page or under the next login.
 export function resetCategories() {
   registry = categories;
   return registry;

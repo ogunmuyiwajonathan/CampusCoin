@@ -22,10 +22,6 @@ const QUICK_ROWS = [
 
 const NOT_ADDED = "Not added";
 
-// Three steps of text size, applied to the root font size so every rem-based
-// size in the app grows together while the reader's own browser setting still
-// counts on top of it. The buttons differ in size as well as in state, so the
-// choice is readable without relying on colour alone.
 const TEXT_SIZES = [
   { id: "normal", label: "A", scale: "text-xs", title: "Normal text size" },
   { id: "large", label: "A", scale: "text-sm", title: "Large text size" },

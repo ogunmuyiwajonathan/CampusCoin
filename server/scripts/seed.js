@@ -1,13 +1,3 @@
-// Seeds the demo dataset. Mirrors client/src/data/mockData.js so the app looks
-// identical before and after the client is swapped onto the API.
-//
-// Idempotent by construction:
-//   - users and categories upsert on their natural unique keys
-//   - transactions, budgets and notifications are only inserted when that
-//     student has none, so re-running never duplicates and never deletes
-//     anything a student has since added by hand
-//
-// Run it twice: the second run must report the same counts as the first.
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import bcrypt from "bcryptjs";
@@ -32,10 +22,6 @@ const DEMO_STUDENT = {
   profileOnboarded: true,
 };
 
-// Two named admin accounts. The admin login form asks for a name rather than
-// an email, so `name` is the identifier an admin types. Each still needs a
-// unique email to satisfy the schema, and that email is never shown to anyone
-// signing in.
 const DEMO_ADMINS = [
   { name: "jonathan", email: "jonathan@campuscoin.test", role: "admin", profileOnboarded: true },
   { name: "senod", email: "senod@campuscoin.test", role: "admin", profileOnboarded: true },
@@ -43,9 +29,6 @@ const DEMO_ADMINS = [
 
 const DEMO_PASSWORD = "CampusCoin2026!";
 
-// In development this is the password the demo accounts use. In production the
-// operator's ADMIN_SEED_PASSWORD wins, and main() already refuses to seed a
-// weak or guessable one, so a real deploy never ends up with these.
 function adminLoginPassword() {
   return env.isProd ? env.adminSeedPassword || "" : "123456789";
 }
@@ -62,10 +45,6 @@ const DEMO_LOGIN = {
 
 const DEMO_LOGIN_PASSWORD = "12345678";
 
-// name, type, is_default, color, icon, icon_key - colours and icons are lifted
-// from CATEGORY_COLORS / CATEGORY_ICONS in mockData.js. icon_key is the
-// registry key the shared CategoryIcon component renders; "tv" and "ellipsis"
-// are not in the curated set, so those two rows get the nearest equivalent.
 const CATEGORIES = [
   { name: "Allowance", type: "income", is_default: true, color: null, icon: "wallet", icon_key: "wallet" },
   { name: "Scholarships", type: "income", is_default: true, color: null, icon: "graduation-cap", icon_key: "graduation-cap" },
@@ -80,7 +59,6 @@ const CATEGORIES = [
   { name: "Others", type: "expense", is_default: true, color: "#64748b", icon: "ellipsis", icon_key: "more-horizontal" },
 ];
 
-// category name, type, amount, description, date, is_recurring
 const TRANSACTIONS = [
   ["Allowance", "income", 20000, "Allowance", "2026-09-20", true],
   ["Gigs", "income", 30000, "Part-time Gig", "2026-09-15", false],
@@ -103,7 +81,6 @@ const TRANSACTIONS = [
   ["Others", "expense", 1000, "Misc", "2026-09-16", false],
 ];
 
-// category name -> month -> limit
 const BUDGETS = {
   Food: { "2026-09": 12000, "2026-10": 12000 },
   Transport: { "2026-09": 4000, "2026-10": 4000 },
@@ -296,8 +273,6 @@ async function main() {
   await disconnectDb();
 }
 
-// Only seed when run directly, so the idempotency test can import runSeed()
-// without this firing underneath it.
 const invokedDirectly =
   process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
 

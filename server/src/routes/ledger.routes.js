@@ -17,9 +17,6 @@ import {
 
 const router = Router();
 
-// requireAuth is applied per route rather than as a blanket router.use. This
-// router is mounted at /api, so a router-wide guard would also catch any path
-// that does not exist and answer 401 instead of letting notFound answer 404.
 const auth = [requireAuth];
 
 router.get("/categories", ...auth, ledger.listCategories);

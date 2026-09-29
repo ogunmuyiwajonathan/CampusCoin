@@ -4,9 +4,6 @@ import { ThemeContext } from "./themeContext.js";
 const STORAGE_KEY = "campuscoin.theme";
 const FONT_SIZE_KEY = "campuscoin.fontSize";
 
-// Root font sizes as percentages of the browser default, so every rem-based
-// size in the app scales together and the reader's own browser setting still
-// counts on top of it.
 const FONT_SIZES = {
   normal: "100%",
   large: "112.5%",

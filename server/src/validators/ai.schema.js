@@ -21,9 +21,6 @@ export const renameConversationSchema = z.object({
 
 export const conversationParamsSchema = z.object({ id: ID });
 
-// The description the student is typing, read as they type. Short and required,
-// because an empty string has nothing to categorise and a very long one is not
-// what the field accepts anyway.
 export const suggestSchema = z.object({
   q: z
     .string()
@@ -37,9 +34,6 @@ export const confirmSuggestionSchema = z.object({
   category_id: z.string().trim().min(1, "Choose a category."),
 });
 
-// One suggestion per imported CSV row, so the whole batch is reviewed before
-// anything is saved. Capped so the request cannot ask for work the model would
-// never finish.
 export const batchSuggestSchema = z.object({
   rows: z
     .array(

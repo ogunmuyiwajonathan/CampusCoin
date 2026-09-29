@@ -70,9 +70,6 @@ const client = (appInstance) => {
     post: (url, body, options) => call("POST", url, body, options),
     patch: (url, body, options) => call("PATCH", url, body, options),
     delete: (url, options) => call("DELETE", url, undefined, options),
-    // closeAllConnections() matters here. fetch keeps a connection alive after a
-    // response, so a plain close() waits for the client to go away and the run
-    // never finishes.
     close: () =>
       new Promise((resolve) => {
         server.closeAllConnections();
@@ -102,8 +99,6 @@ try {
   const noSessionImport = await api.post("/api/transactions/import", new FormData());
   check("import needs a session", noSessionImport.status === 401, `got ${noSessionImport.status}`);
 
-  // Registering through the real endpoint gives a real password hash, so the
-  // session below is a genuine signed-in one rather than a forged cookie.
   const registered = await api.post("/api/auth/register", {
     name: `Stage1 Http ${stamp}`,
     email,
@@ -147,8 +142,6 @@ try {
   check("import answers 201", imported.status === 201, `got ${imported.status}`);
   check("the summary counts the rows", importBody?.summary?.total === 3, JSON.stringify(importBody?.summary));
   check("two rows imported", importBody?.summary?.accepted === 2, JSON.stringify(importBody?.summary));
-  // Row 2 is the first data line, so the unparseable "abc" amount on the second
-  // data line is row 3.
   check("the bad row is rejected with a reason", importBody?.rows?.[1]?.status === "rejected" && Boolean(importBody?.rows?.[1]?.reason), JSON.stringify(importBody?.rows?.[1]));
   check("the good rows around it are accepted", importBody?.rows?.[0]?.status === "accepted" && importBody?.rows?.[2]?.status === "accepted", JSON.stringify(importBody?.rows?.map((r) => r.status)));
   check("a batch id comes back for undo", typeof importBody?.batch_id === "string", JSON.stringify(importBody?.batch_id));
@@ -211,13 +204,8 @@ try {
   await api.get("/api/transactions?month=2026-07");
   const july = await json(await api.get("/api/transactions?month=2026-07"));
   const generated = (july?.transactions ?? []).filter((row) => row.description === "Http recurring");
-  // The row was created dated 1 July, so by the time of this run it is three
-  // months stale and the catch-up pass writes every week it missed, not just the
-  // next one. July alone holds the 1st plus the 8th, 15th, 22nd and 29th.
   check("every missed week was written", generated.length === 5, `found ${generated.length}: ${JSON.stringify(generated.map((r) => r.date))}`);
   check("one is dated 2026-07-08", generated.some((row) => row.date === "2026-07-08"), JSON.stringify(generated.map((r) => r.date)));
-  // The ledger is served newest first, so the dates are put back in order before
-  // the gaps between them mean anything.
   const inOrder = [...generated].sort((a, b) => a.date.localeCompare(b.date));
   check("the weeks are 7 days apart", inOrder.every((row, index) => index === 0 || daysBetween(inOrder[index - 1].date, row.date) === 7), JSON.stringify(inOrder.map((r) => r.date)));
 
@@ -247,18 +235,11 @@ try {
   const wrongTypeRes = await json(await api.post("/api/transactions/import", wrongType));
   check("a non-CSV upload is refused", typeof wrongTypeRes?.error?.message === "string", JSON.stringify(wrongTypeRes));
 
-  // The 2 MB ceiling is asserted on the multer configuration rather than by
-  // uploading 3 MB over HTTP. Multer aborts the request the moment the limit is
-  // passed, which leaves the client writing into a socket the server has already
-  // closed, so the oversized case cannot be observed as a clean response from the
-  // outside. What matters is that the limit is declared where it is enforced.
   const { CSV_MAX_BYTES } = await import("../src/services/import.service.js");
   check("the import limit is 2 MB", CSV_MAX_BYTES === 2 * 1024 * 1024, `got ${CSV_MAX_BYTES}`);
 
   process.stdout.write("\n8. the request_id double-submit guard still works\n");
 
-  // The index behind this is the one whose definition changed, so it is checked
-  // here rather than assumed.
   const payload = {
     category_id: category._id,
     amount: 1750,

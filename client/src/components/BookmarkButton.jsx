@@ -3,8 +3,6 @@ import Icon from "./Icon.jsx";
 import SubmitSpinner from "./SubmitSpinner.jsx";
 import { useBookmarks } from "../hooks/useBookmarks.js";
 
-// One control, one saved month. The note is asked for only when saving, so
-// removing stays a single click.
 export default function BookmarkButton({ month, suggestedNote = "", onError, className = "" }) {
   const { findForMonth, toggle } = useBookmarks();
   const [open, setOpen] = useState(false);
@@ -13,8 +11,6 @@ export default function BookmarkButton({ month, suggestedNote = "", onError, cla
 
   const saved = findForMonth(month);
 
-  // Escape closes the popover, the same as the Cancel button, so the card can be
-  // dismissed without reaching for the mouse.
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (event) => {

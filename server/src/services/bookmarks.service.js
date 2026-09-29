@@ -1,14 +1,9 @@
 import { Bookmark, Insight, Tip } from "../models/index.js";
 import { serializeAll } from "../utils/idOptions.js";
 
-// A student saves a month, an insight or a tip with an optional note. Exactly
-// one target is set, which the route validates, and every read is scoped to the
-// session's user so one student can never see another's saved notes.
 export async function listBookmarks(userId) {
   const rows = await Bookmark.find({ user_id: userId }).sort({ createdAt: -1 }).lean();
 
-  // The saved insight and tip text is resolved up front so the list renders in
-  // one pass rather than asking for each card as it scrolls into view.
   const insightIds = rows.map((r) => r.insight_id).filter(Boolean);
   const tipIds = rows.map((r) => r.tip_id).filter(Boolean);
   const [insights, tips] = await Promise.all([
@@ -29,16 +24,11 @@ export async function listBookmarks(userId) {
 }
 
 export async function createBookmark(userId, body) {
-  // One save per month per student: the bookmark button is a toggle, and a
-  // double click must not leave two rows behind.
   const existing = body.month
     ? await Bookmark.findOne({ user_id: userId, month: body.month })
     : null;
 
   if (existing) {
-    // Returned as a document rather than through serialize(): a document keeps
-    // its fields in _doc and only its toJSON exposes them. serialize() is for
-    // lean rows.
     const updated = await Bookmark.findByIdAndUpdate(
       existing._id,
       { $set: { note: body.note ?? existing.note } },

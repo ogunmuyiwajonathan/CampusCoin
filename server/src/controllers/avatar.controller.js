@@ -16,10 +16,6 @@ const ALLOWED = new Map([
   ["image/webp", ".webp"],
 ]);
 
-// Filenames are generated rather than derived from the upload. A student-supplied
-// name is untrusted input, and using it as a path is how a write ends up outside
-// the upload directory. The extension is the one we chose from the MIME type we
-// verified, not one read off the file.
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     fs.mkdir(UPLOAD_DIR, { recursive: true })
@@ -45,8 +41,6 @@ const upload = multer({
 });
 
 export const uploadAvatar = asyncHandler(async (req, res) => {
-  // multer has already written the file by the time we get here, so any failure
-  // from this point on has to remove it or the upload directory grows forever.
   let savedPath = req.file?.path;
 
   try {
@@ -62,8 +56,6 @@ export const uploadAvatar = asyncHandler(async (req, res) => {
     );
     if (!user) throw ApiError.notFound("Account not found.");
 
-    // Only remove the old file once the new path is safely stored, so a failed
-    // update never leaves the student with no picture at all.
     if (previous?.startsWith("/uploads/")) {
       const oldName = path.basename(previous);
       await fs.unlink(path.join(UPLOAD_DIR, oldName)).catch(() => {});

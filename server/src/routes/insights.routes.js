@@ -6,8 +6,6 @@ import { monthSchema, objectIdParamSchema } from "../validators/ledger.schema.js
 
 const router = Router();
 
-// Per route rather than router.use, so an unknown path still answers 404 instead
-// of being swallowed by a blanket auth check.
 const auth = [requireAuth];
 
 router.get("/insights", ...auth, controller.listInsights);
@@ -19,8 +17,6 @@ router.post(
   controller.regenerateInsight,
 );
 
-// Declared before /tips/:id/... on purpose: an id route would otherwise match
-// the word "dismissed" and try to look up a tip by that name.
 router.get("/tips", ...auth, validate({ query: monthSchema }), controller.listTips);
 router.get(
   "/tips/dismissed",

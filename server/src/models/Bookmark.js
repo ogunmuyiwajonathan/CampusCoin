@@ -1,10 +1,6 @@
 import mongoose from "mongoose";
 import { defineSchema } from "../utils/idOptions.js";
 
-// A student bookmarks an insight or a tip, optionally with their own note.
-// Exactly one of insight_id / tip_id is set, which the route validates; both
-// columns exist so a bookmark keeps pointing at the same thing even if the other
-// kind is generated later.
 const bookmarkSchema = defineSchema(
     "bookmark_id",
     {

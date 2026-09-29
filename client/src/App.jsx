@@ -83,12 +83,6 @@ function AdminSuspenseHost() {
   );
 }
 
-// The route tree lives in its own component so the categories fetch can sit
-// inside AuthProvider and read the signed-in user before it asks the server for
-// anything. A signed-out visit never triggers a request the server would only
-// refuse. Pages read categories through the registry helpers rather than
-// through context, and they pick up the result because this component
-// re-creates the tree below it when the status changes.
 function AppRoutes() {
   useCategories();
 

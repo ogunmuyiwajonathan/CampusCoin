@@ -2,18 +2,12 @@ import mongoose from "mongoose";
 import { Category, Transaction } from "../models/index.js";
 import { visibleCategories } from "./ledger.service.js";
 
-// `user_id` on every model is a virtual that stringifies _id, which is what the
-// session and the JSON responses carry. find() casts that string back to an
-// ObjectId for you; aggregate() does NOT cast anything, so a raw string in a
-// $match silently matches zero rows. Every pipeline below goes through here.
 function ownerId(userId) {
   return mongoose.Types.ObjectId.isValid(userId)
     ? new mongoose.Types.ObjectId(String(userId))
     : userId;
 }
 
-// date is stored as a YYYY-MM-DD string, so a range filter is a plain string
-// range: no date maths, no timezone, and it uses the user_id + date index.
 function dateRange(from, to) {
   if (from && to) return { $gte: from, $lte: to };
   if (from) return { $gte: from };
@@ -21,18 +15,12 @@ function dateRange(from, to) {
   return null;
 }
 
-// One bucket key per granularity. %G-%V is the ISO week-year and week, which is
-// what "weekly" means to a student, and it lines up with the Monday-start
-// calendar they keep their budgets on.
 const BUCKET_FORMAT = {
   day: "%Y-%m-%d",
   week: "%G-W%V",
   month: "%Y-%m",
 };
 
-// The stored string is turned back into a real date only so Mongo can bucket
-// it. Every figure below still comes from one $group, never from summing rows
-// the client already has.
 function toDate() {
   return { $dateFromString: { dateString: "$date", onError: null, onNull: null } };
 }
@@ -81,7 +69,6 @@ export async function getReportByCategory(userId, { from, to, categoryId }) {
     { $sort: { total: -1 } },
   ]);
 
-  // Names are resolved in one read rather than a lookup per row.
   const ids = [...new Set(rows.map((r) => r._id.category_id).filter(Boolean))];
   const categories = await Category.find({ _id: { $in: ids } })
     .select("name type color icon_key")
@@ -126,8 +113,6 @@ export async function getReportBuckets(userId, { from, to, categoryId, granulari
   return [...buckets.values()].map((b) => ({ ...b, net: b.income - b.expense }));
 }
 
-// The trend chart always shows six months ending at the range the student is
-// looking at, so the chart and the table can never disagree about "now".
 export async function getReportTrend(userId, { to }) {
   const end = to ?? new Date().toISOString().slice(0, 10);
   const [year, month] = end.split("-").map(Number);
@@ -166,7 +151,6 @@ export async function buildReport(userId, query) {
   return { ...query, totals, byCategory, buckets, trend };
 }
 
-// Names for the category filter, scoped the same way as every other read.
 export async function listReportCategories(userId) {
   return Category.find(visibleCategories(userId)).select("name type").sort({ name: 1 }).lean();
 }

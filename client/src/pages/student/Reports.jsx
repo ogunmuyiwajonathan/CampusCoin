@@ -42,17 +42,11 @@ function monthStart(offset = 0) {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-// The real cause belongs in the message. A failed export that only says "try
-// again" is indistinguishable from a button that was never wired up.
 function reason(err) {
   const text = err?.message || String(err || "unknown error");
   return text.length > 90 ? `${text.slice(0, 90)}...` : text;
 }
 
-// The server reports why a send did not happen, and each reason needs a
-// different sentence. Telling a student mail is "not configured" when the truth
-// is that the provider refused the address is a false explanation of a real
-// failure.
 function mailOutcome(reason) {
   const sent = "Nothing was actually sent. The report is on screen either way.";
   if (reason === "no_api_key") return `This server has no mail service set up. ${sent}`;
@@ -138,15 +132,9 @@ export default function Reports() {
   const [shareNote, setShareNote] = useState("");
   const [shareResult, setShareResult] = useState(null);
   const [shareError, setShareError] = useState("");
-  // Its own state, kept apart from the load error: the load error only renders
-  // when the report itself failed to arrive, so an export that failed on a
-  // perfectly good report had nowhere to show up.
   const [exportError, setExportError] = useState("");
   const exportRef = useRef(null);
 
-  // Same request-tagging as the other ledger hooks: the answer carries the
-  // filter it answers, and anything else still counts as loading. That is what
-  // stops a slow response for an old filter from overwriting a newer one.
   const requestKey = `${JSON.stringify(filters)}:${nonce}`;
 
   useEffect(() => {
@@ -190,8 +178,6 @@ export default function Reports() {
   const report = result.data;
   const refresh = useCallback(() => setNonce((value) => value + 1), []);
 
-  // Changing a filter needs no pending flag: the key changes, so the page reads
-  // as loading again until the matching answer arrives.
   const setFilter = (field, value) => setFilters((f) => ({ ...f, [field]: value }));
 
   const trend = useMemo(
@@ -208,19 +194,12 @@ export default function Reports() {
     [report.buckets],
   );
 
-  // Both exports capture the same node the student is looking at, in light
-  // mode: a dark screenshot pasted into a PDF is unreadable, so the theme class
-  // is taken off for the capture and put straight back.
   const capture = async () => {
     const node = exportRef.current;
     if (!node) return null;
     const root = document.documentElement;
     const wasDark = root.classList.contains("dark");
     if (wasDark) root.classList.remove("dark");
-    // The class change needs a paint before the capture, but requestAnimationFrame
-    // does not fire in a hidden tab. Waiting on it alone left the button spinning
-    // forever for anyone who switched tabs mid-export, so the timer is the floor
-    // rather than the fallback.
     await new Promise((resolve) => {
       let settled = false;
       const done = () => {
@@ -232,9 +211,6 @@ export default function Reports() {
       setTimeout(done, 200);
     });
     try {
-      // html2canvas-pro, not html2canvas: the design system is built on Tailwind
-      // v4, whose theme colours are oklch(), and the original library throws
-      // "unsupported color function" on every single capture.
       const { default: html2canvas } = await import("html2canvas-pro");
       return await html2canvas(node, { backgroundColor: "#ffffff", scale: 2, logging: false });
     } finally {
@@ -267,7 +243,6 @@ export default function Reports() {
       if (!canvas) throw new Error("the report was not on the page");
       const { jsPDF } = await import("jspdf");
       const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-      // A4 landscape minus a 24pt margin on every side.
       const pageWidth = pdf.internal.pageSize.getWidth() - 48;
       const pageHeight = pdf.internal.pageSize.getHeight() - 48;
       const ratio = canvas.height / canvas.width;

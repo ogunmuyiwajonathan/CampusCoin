@@ -1,11 +1,3 @@
-// End-to-end auth tests against the real app and the real Atlas cluster, in the
-// campuscoin_test database. Cookie handling is done by hand rather than with a
-// cookie jar, because the session cookie itself is one of the things under test.
-//
-// The whole app is booted here, so MONGODB_URI has to be repointed at the test
-// database before anything imports it: config/env.js reads process.env once at
-// module load, and the session store would otherwise open connections against
-// the demo database.
 import "dotenv/config";
 import { resetTestDb, useTestDatabaseEnv } from "./helpers/testDb.js";
 
@@ -23,15 +15,12 @@ function check(label, passed, detail = "") {
 }
 
 await connectDb();
-// Every run starts from empty, otherwise a second run trips over the accounts
-// the first one created.
 await resetTestDb();
 
 const server = app.listen(0);
 await new Promise((resolve) => server.once("listening", resolve));
 const base = `http://127.0.0.1:${server.address().port}`;
 
-// fetch does not keep cookies, so each caller carries its own.
 function client() {
   let cookie = "";
   const call = async function (path, { method = "GET", body, headers = {} } = {}) {
@@ -40,8 +29,6 @@ function client() {
       headers: { ...(cookie ? { Cookie: cookie } : {}), ...headers },
       redirect: "manual",
     };
-    // Added rather than set to undefined, because a GET carrying an explicit
-    // body key is rejected by fetch and the lint rule is right to flag it.
     if (method !== "GET" && body !== undefined) {
       request.headers["Content-Type"] = "application/json";
       request.body = JSON.stringify(body);
@@ -137,9 +124,6 @@ const firstCookie = preLogin.cookie();
 check("login succeeds with the right password", firstLogin.status === 200, `status ${firstLogin.status}`);
 check("a session cookie is issued", firstCookie.length > 0);
 
-// Log out and back in. If the id did not rotate, a cookie captured before the
-// second login would still be the one in force afterwards, which is exactly
-// the session-fixation case rotation exists to prevent.
 await preLogin("/api/auth/logout", { method: "POST" });
 const secondLogin = await preLogin("/api/auth/login", {
   method: "POST",
@@ -160,8 +144,6 @@ const meAnon = await client()("/api/auth/me");
 check("me returns null when signed out", meAnon.status === 200 && meAnon.data?.user === null, JSON.stringify(meAnon.data));
 
 console.log("\n8. a cookie alone is not enough to reach a protected route");
-// There is no protected resource yet, so this checks the guard itself: a
-// request with a session for a user who has since been deactivated is refused.
 const jimmy = await User.findOne({ email: "jamie@test.com" });
 await User.updateOne({ _id: jimmy._id }, { $set: { is_active: false } });
 const afterDisable = await preLogin("/api/auth/me");
@@ -192,9 +174,6 @@ check(
   `${JSON.stringify(forgot.data)} vs ${JSON.stringify(forgotGhost.data)}`,
 );
 
-// The mailer logs the link to the console when RESEND_API_KEY is absent, so the
-// token is read straight out of the ResetToken collection the same way an
-// emailed link would carry it. Only the hash is stored, never the raw value.
 const stored = await ResetToken.findOne({ user_id: jimmy._id }).sort({ createdAt: -1 });
 check("a reset token row was created", Boolean(stored));
 check("only a hash is stored, not the token", stored.token_hash.length === 64 && !/[^a-f0-9]/.test(stored.token_hash));

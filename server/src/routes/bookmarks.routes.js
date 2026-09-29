@@ -10,7 +10,6 @@ import {
 
 const router = Router();
 
-// Per route rather than router.use, so an unknown path still answers 404.
 const auth = [requireAuth];
 
 router.get("/bookmarks", ...auth, bookmarks.getBookmarks);

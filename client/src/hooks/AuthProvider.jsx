@@ -12,8 +12,6 @@ import { formatName } from "../lib/formatName.js";
 
 const DATE_LOCALE = "en-GB";
 
-// The server sends created_at; the profile screen has always shown a "Joined
-// Mon YYYY" line, so it is derived here rather than changing that screen.
 function joinedFrom(createdAt) {
   if (!createdAt) return null;
   const date = new Date(createdAt);
@@ -21,9 +19,6 @@ function joinedFrom(createdAt) {
   return date.toLocaleDateString(DATE_LOCALE, { month: "short", year: "numeric" });
 }
 
-// The server already title-cases on save. Doing it again on the way in keeps the
-// header and the profile screen in step in the same tick, rather than showing
-// the raw form value until the next refetch.
 function decorate(user) {
   if (!user) return null;
   return {
@@ -35,9 +30,6 @@ function decorate(user) {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  // Starts as "loading" so ProtectedRoute holds the app until the server has
-  // said who this is. Without it every protected page would flash its own
-  // content at a signed-out visitor before the redirect landed.
   const [status, setStatus] = useState("loading");
 
   useEffect(() => {
@@ -49,8 +41,6 @@ export function AuthProvider({ children }) {
       })
       .catch(() => {
         if (cancelled) return;
-        // A server that cannot be reached leaves the app signed out rather than
-        // blocking on an error page.
         setUser(null);
       })
       .finally(() => {
@@ -77,9 +67,6 @@ export function AuthProvider({ children }) {
     try {
       await logoutAccount();
     } finally {
-      // The local session is dropped even if the call failed: the student asked
-      // to sign out, and leaving them apparently signed in is worse than a
-      // cookie the server still honours until it expires.
       setUser(null);
     }
   }, []);

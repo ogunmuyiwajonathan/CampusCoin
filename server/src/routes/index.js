@@ -17,7 +17,6 @@ router.get("/", (req, res) => {
 router.use("/health", healthRoutes);
 router.use("/auth", authRoutes);
 router.use("/ai", aiRoutes);
-// Admin routes (which includes /announcements for students too)
 router.use("/", adminRoutes);
 router.use("/", ledgerRoutes);
 router.use("/", reportsRoutes);

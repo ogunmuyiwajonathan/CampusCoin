@@ -29,9 +29,6 @@ const aiLimiter = rateLimit({
   },
 });
 
-// Typing hints are frequent and cheap, so they carry their own generous budget
-// rather than the hourly AI one: being throttled mid-sentence is a worse outcome
-// than the provider call ever was.
 const suggestLimiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 60,

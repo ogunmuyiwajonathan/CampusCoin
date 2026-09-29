@@ -1,8 +1,5 @@
 import { Link } from "react-router-dom";
 
-// One list for the whole sitemap: every entry is a real <Route> in App.jsx, in
-// the order a visitor actually meets it. Keep this array and App.jsx in
-// step — a link that is not routed would send people to the 404 page.
 const SITEMAP_GROUPS = [
   {
     id: "public",
@@ -27,8 +24,6 @@ const SITEMAP_GROUPS = [
       { label: "Dashboard", to: "/dashboard" },
       { label: "Transactions", to: "/transactions" },
       { label: "Budgets", to: "/budgets" },
-      // Personal categories are a section of the Budgets page, opened from its
-      // "Manage Categories" quick action, so the link lands on /budgets.
       { label: "Categories", to: "/budgets" },
       { label: "Reports", to: "/reports" },
       { label: "Insights", to: "/insights" },

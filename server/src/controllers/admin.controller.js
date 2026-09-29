@@ -9,7 +9,6 @@ import { Announcement } from "../models/Announcement.js";
 import { TIP_RULES } from "../validators/admin.schema.js";
 
 export const getStats = async (req, res) => {
-  // Active users: students whose accounts are currently enabled and not disabled.
   const activeUsers = await User.countDocuments({ is_active: true, role: 'student' });
   const totalUsers = await User.countDocuments({ role: 'student' });
   const totalTransactions = await Transaction.countDocuments();
@@ -66,10 +65,6 @@ export const getUsers = async (req, res) => {
   res.json({ users, total, page, totalPages: Math.ceil(total / limit) });
 };
 
-// Sets the flag to an explicit value rather than flipping it. The two are not the
-// same thing: a toggle cannot be called twice without the second call undoing the
-// first, so a retry after a dropped response, or a second admin pressing the
-// button at the same moment, would re-enable a student the first one disabled.
 async function setUserActive(req, res, isActive) {
   const user = await User.findById(req.params.id);
   if (!user) return res.status(404).json({ message: "User not found" });
@@ -81,12 +76,7 @@ async function setUserActive(req, res, isActive) {
   user.is_active = isActive;
   await user.save();
 
-  // Signing a student out is the point of disabling, so a disabled account
-  // cannot keep reading the API with the session cookie it already has.
   if (!isActive && !already) {
-    // The session document is a serialised string, so the user id is matched as
-    // text. Escaped because it is hex and therefore safe either way, but a
-    // pattern built from an unescaped id is a habit worth not having.
     await mongoose.connection.collection("sessions").deleteMany({
       session: { $regex: `"userId":"${user._id.toString()}"` },
     });
@@ -112,7 +102,6 @@ export const resetUser = async (req, res) => {
   user.password_hash = await bcrypt.hash(tempPassword, 10);
   await user.save();
 
-  // Destroy sessions so they must log in with the new password
   await mongoose.connection.collection("sessions").deleteMany({
     session: { $regex: `"userId":"${user._id.toString()}"` }
   });
@@ -161,8 +150,6 @@ export const deleteDefaultCategory = async (req, res) => {
   res.json({ message: "Category deleted" });
 };
 
-// The rules the engine can run, published so the admin form is built from the
-// engine's own vocabulary rather than from a copy that can drift.
 export const getTipRules = async (_req, res) => {
   res.json({ rules: TIP_RULES });
 };
@@ -220,7 +207,6 @@ export const deleteAnnouncement = async (req, res) => {
   res.json({ message: "Announcement deleted" });
 };
 
-// Student endpoint
 export const getActiveAnnouncements = async (req, res) => {
   const announcements = await Announcement.find({ active: true })
     .sort({ createdAt: -1 })

@@ -107,8 +107,6 @@ try {
   });
   const unknownBody = await json(unknown);
   check("an unknown rule is rejected", unknown.status === 400, `got ${unknown.status}`);
-  // The generic headline is the app-wide contract; the field message sits in
-  // details, which is what every form on the client actually reads.
   check(
     "the field message names the rules that do work",
     /category is too big a share/i.test(unknownBody?.error?.details?.rule ?? ""),

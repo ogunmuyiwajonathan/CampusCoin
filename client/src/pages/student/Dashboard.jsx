@@ -53,8 +53,6 @@ const RetryButton = ({ onClick }) => (
   </button>
 );
 
-// The whole data half of the page collapses to this while the month loads, so
-// the screen never shows a column of zeros that looks like a real answer.
 function DashboardSkeleton() {
   return (
     <div className="space-y-4" role="status" aria-live="polite" aria-busy="true">
@@ -108,9 +106,6 @@ export default function Dashboard() {
   const topCategory = breakdown[0] ?? null;
   const thisMonth = monthLabel(currentMonthKey());
 
-  // Budget versus actual: the limits come from the budgets hook and the actual
-  // spend is the same expense total the table shows, split per category so only
-  // budgeted categories are counted against their own limit.
   const spentByCategory = items.reduce((acc, item) => {
     if (item.type === "expense") {
       acc[item.category_id] = (acc[item.category_id] ?? 0) + item.amount;
@@ -128,10 +123,6 @@ export default function Dashboard() {
   const isOver = totalLimit > 0 && ratio >= 1;
   const isNear = !isOver && ratio >= 0.95;
 
-  // Month-end pace: what has actually been spent divided into the days that
-  // have gone by, then stretched over the whole month. The comparison target
-  // is the budget when one exists and the allowance baseline when one does
-  // not, so the line still means something on a month without budgets.
   const [yearPart, monthPart] = currentMonthKey().split("-");
   const monthDays = new Date(Number(yearPart), Number(monthPart), 0).getDate();
   const daysElapsed = new Date().getDate();
@@ -145,10 +136,6 @@ export default function Dashboard() {
         : null;
   const forecastOver = forecastTarget != null && projectedSpend > forecastTarget.amount;
 
-  // The first-login profile card. ProtectedRoute holds the page until the user
-  // has loaded, so the flag is already known on the first render. It is closed
-  // only by the card itself, which is what lets the "you can update this
-  // anytime" confirmation be read before the card goes away.
   const [setupOpen, setSetupOpen] = useState(user?.profileOnboarded === false);
 
   const lookup = categoryLookup();

@@ -1,13 +1,6 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import * as ledger from "../services/ledger.service.js";
 
-// The only thing these do is turn a service call into a response.
-//
-// It passes req.user._id, the ObjectId, rather than req.user.user_id, which is
-// the snake_case string virtual used for output. find() and findOneAndUpdate()
-// cast a string to ObjectId for you; an aggregation pipeline does not, so a
-// $match on user_id: "<hex string>" silently matches nothing and every
-// per-category total comes back as zero.
 const me = (req) => req.user._id;
 
 export const listCategories = asyncHandler(async (req, res) => {

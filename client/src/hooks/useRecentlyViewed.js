@@ -3,9 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 const STORAGE_KEY = "campuscoin.recentlyViewed";
 const LIMIT = 5;
 
-// The list lives in one module-level store so the page that records an entry
-// (the transaction form) and the page that reads them back (the dashboard) see
-// the same list without a context provider sitting above the router.
 let cached = null;
 const listeners = new Set();
 
@@ -29,7 +26,6 @@ function commit(next) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   } catch {
-    // A full or blocked storage only costs the memory copy for this visit.
   }
   listeners.forEach((listener) => listener(next));
 }
@@ -42,8 +38,6 @@ export function useRecentlyViewed() {
     return () => listeners.delete(setItems);
   }, []);
 
-  // Re-opening the same entry moves it to the front instead of listing it
-  // twice, and the list never grows past the last five.
   const record = useCallback((entry) => {
     if (!entry?.transaction_id) return;
     const next = [

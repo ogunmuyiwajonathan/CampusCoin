@@ -31,6 +31,9 @@ const stamp = Date.now();
 const month = "2026-07";
 const prev = "2026-06";
 
+await TipTemplate.deleteMany({ key: { $regex: "^(s2_|s3_|probe_|stage)" } });
+await Tip.deleteMany({ template_key: { $regex: "^(s2_|s3_|probe_|stage)" } });
+
 const user = await User.create({
   name: `Stage2 ${stamp}`,
   email: `stage2-${stamp}@campuscoin.test`,
@@ -108,11 +111,14 @@ try {
 
   const stored = await Insight.findOne({ user_id: user._id, month });
   check("the row really is in the database", Boolean(stored));
+  check("it greets the student by name", stored.summary_text.startsWith("Stage2,"), stored.summary_text);
   check("the summary names a real category", stored.summary_text.includes(food.name), stored.summary_text);
   check("the summary uses a naira amount", /N[\d,]+/.test(stored.summary_text), stored.summary_text);
-  check("the summary reports real spending", /3,500/.test(stored.summary_text), stored.summary_text);
-  check("it says money was saved", /saved/i.test(stored.summary_text), stored.summary_text);
-  check("it mentions the savings goal", /20,000/.test(stored.summary_text), stored.summary_text);
+  check("it counts the transactions it read", /3 transactions/.test(stored.summary_text), stored.summary_text);
+  check("it reports the money left over", /N36,500 left over/.test(stored.summary_text), stored.summary_text);
+  check("it gives the top category's share", /86% of what you spent/.test(stored.summary_text), stored.summary_text);
+  check("the tip text is where the goal is mentioned", /20,000/.test(stored.tip_text), stored.tip_text);
+  check("the tip text quotes real figures", /N[\d,]+/.test(stored.tip_text), stored.tip_text);
 
   process.stdout.write("\n2. the same month is regenerated, not duplicated\n");
 
@@ -133,7 +139,8 @@ try {
   const refreshed = await insights.regenerateInsight(user._id, month);
   check("regenerating rewrites the summary in place", refreshed.insight_id === generated.insight_id, `${refreshed.insight_id} vs ${generated.insight_id}`);
   check("the new numbers reach the summary", refreshed.summary_text !== stored.summary_text, "summary did not change");
-  check("the new total is quoted", /4,200/.test(refreshed.summary_text), refreshed.summary_text);
+  check("the top category total is updated", /N3,700/.test(refreshed.summary_text), refreshed.summary_text);
+  check("the new leftover is reported", /N35,800 left over/.test(refreshed.summary_text), refreshed.summary_text);
   check("still one row after regenerating", (await Insight.countDocuments({ user_id: user._id, month })) === 1);
 
   process.stdout.write("\n3. month-over-month comparison is real\n");
@@ -188,7 +195,7 @@ try {
   const budgetTip = withBudget.find((tip) => tip.template_key === `s2_budget_${stamp}`);
   check("the budget template fired", Boolean(budgetTip), JSON.stringify(withBudget.map((t) => t.template_key)));
   check("it names the budgeted category", budgetTip?.text.includes(food.name), budgetTip?.text);
-  check("it quotes the real percentage", /9[0-9]%|100%/.test(budgetTip?.text ?? ""), budgetTip?.text);
+  check("it quotes the real percentage", /\b1[0-9]{1,2}%/.test(budgetTip?.text ?? ""), budgetTip?.text);
   check("the remaining figure is filled in", !budgetTip?.text.includes("{remaining}"), budgetTip?.text);
 
   process.stdout.write("\n7. pin and dismiss are real per-user state\n");
@@ -230,6 +237,8 @@ try {
   check("a deactivated template stops producing tips", !afterOff.some((tip) => tip.template_key === topKey), JSON.stringify(afterOff.map((t) => t.template_key)));
 
   process.stdout.write("\n9. one student's tips and insights are private\n");
+
+  await TipTemplate.updateOne({ key: topKey }, { $set: { is_active: true } });
 
   const other = await User.create({
     name: `Stage2 Other ${stamp}`,

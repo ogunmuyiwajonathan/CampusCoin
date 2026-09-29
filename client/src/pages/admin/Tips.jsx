@@ -30,9 +30,6 @@ const FALLBACK_RULES = [
   },
 ];
 
-// What each placeholder looks like once the engine has filled it in, so an admin
-// can see the finished sentence without having to log a student's spending to
-// find out.
 const SAMPLE_VALUES = {
   category: "Food",
   percentage: "42",
@@ -81,8 +78,6 @@ function TipModal({ tip, rules, onClose, onSaved }) {
     () => rules.find((entry) => entry.rule === rule) ?? rules[0],
     [rule, rules],
   );
-  // Module level so a rule with no placeholders always hands back the same array.
-  // A fresh [] each render would make every memo below recompute per keystroke.
   const placeholders = active?.placeholders ?? NO_PLACEHOLDERS;
   const stray = useMemo(() => unusedPlaceholders(text, placeholders), [text, placeholders]);
   const needsThreshold =
@@ -342,8 +337,6 @@ export default function Tips() {
   const [notice, setNotice] = useState("");
   const loadLock = useRef(false);
 
-  // A plain refetch for use after a write. The first load happens in the effect
-  // below, so this never has to decide what state to enter.
   const load = useCallback(async () => {
     if (loadLock.current) return;
     loadLock.current = true;

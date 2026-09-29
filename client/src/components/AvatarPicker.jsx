@@ -11,8 +11,6 @@ export default function AvatarPicker({ name, onNotify }) {
   const [busy, setBusy] = useState(false);
   const displayName = name ?? user?.name;
 
-  // The preview is an object URL, so it has to be revoked or the blob stays in
-  // memory for as long as the tab is open.
   useEffect(() => {
     if (!pending) return undefined;
     const onKey = (event) => {

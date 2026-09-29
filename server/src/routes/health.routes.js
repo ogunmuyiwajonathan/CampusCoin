@@ -11,7 +11,6 @@ const READY_STATES = [
   "uninitialized",
 ];
 
-// Proves two things at once: the process is up, and the database is reachable.
 router.get("/", (req, res) => {
   const db = READY_STATES[mongoose.connection.readyState] ?? "unknown";
   res.json({

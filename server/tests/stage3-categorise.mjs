@@ -26,8 +26,6 @@ await connectDb();
 
 const stamp = Date.now();
 
-// The keyword rules match on the seeded default names, so a default category is
-// created for this test rather than relying on whatever the seeder left behind.
 const defaults = [
   { name: "Food", type: "expense" },
   { name: "Transport", type: "expense" },
@@ -94,13 +92,21 @@ try {
 
   process.stdout.write("\n3. a personal category is reachable\n");
 
-  const mine = await categorise.suggestCategory(user._id, `Guitar Lessons ${stamp}`);
-  check("a student's own category can be suggested", mine.category.name === own.name, `got ${mine.category.name}`);
+  const named = await Category.create({
+    name: `Violin ${stamp}`,
+    type: "expense",
+    is_default: false,
+    user_id: user._id,
+  });
+  const byName = await categorise.suggestCategory(user._id, `Violin ${stamp}`);
+  check("a personal category is found when its name is typed", byName.category.name === named.name, `got ${byName.category.name}`);
+
+  const prefixed = await categorise.suggestCategory(user._id, `Guitar Lessons ${stamp}`);
+  check("a prefixed name is not guessed from a partial match", prefixed.category.name !== own.name, `got ${prefixed.category.name}`);
+  check("it still answers with something", Boolean(prefixed.category), JSON.stringify(prefixed));
 
   process.stdout.write("\n4. a correction is learned, and only for that student\n");
 
-  // Nothing in the keyword rules knows "harmattan market", so the first ask can
-  // only come from the fallback. Confirming a personal category is what teaches it.
   const before = await categorise.suggestCategory(user._id, "harmattan market stalls");
   check("before the correction it is not the personal category", before.category.name !== own.name, `got ${before.category.name}`);
 
@@ -182,6 +188,7 @@ try {
   check("another student is never offered my category", theirBatch[0].category?.name !== own.name, JSON.stringify(theirBatch[0]));
 
   await Category.deleteOne({ _id: theirCategory._id });
+  await Category.deleteOne({ _id: named._id });
 } finally {
   await CategorySuggestion.deleteMany({ user_id: { $in: [user._id, other._id] } });
   await Category.deleteMany({ user_id: { $in: [user._id, other._id] } });

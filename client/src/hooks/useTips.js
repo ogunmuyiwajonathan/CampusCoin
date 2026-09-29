@@ -2,13 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch, dismissTip, pinTip, restoreTip, unpinTip } from "../lib/apiClient.js";
 import { currentMonthKey } from "../lib/formatMonth.js";
 
-// The tips engine ships as its own stage of work, so this hook treats a route
-// that does not exist as "not there yet" instead of as a failure: the card on
-// the dashboard stays out of the way rather than showing an error the student
-// cannot fix. Every other answer - a real tip list, an empty one, a server
-// fault - is reported so the card can render its own state. The month is part
-// of the contract: tips are generated per month, so the current one is asked
-// for by name.
 export function useTips() {
   const [nonce, setNonce] = useState(0);
   const [result, setResult] = useState({
@@ -60,10 +53,6 @@ export function useTips() {
 
   const refresh = useCallback(() => setNonce((value) => value + 1), []);
 
-  // Every write goes through here: the server is the only copy of whether a tip
-  // is pinned, so the row is re-read rather than patched locally. Optimistic
-  // local state would be a second answer to the same question, and the two drift
-  // the moment a request fails.
   const act = useCallback(
     async (id, call) => {
       if (pendingId) return { ok: false, error: "One change at a time." };

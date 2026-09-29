@@ -1,6 +1,3 @@
-// The only place in the client that talks to the server. Every hook goes
-// through apiFetch, so swapping localStorage for the API is a change here and
-// in the hooks, not scattered across components.
 
 const BASE = (import.meta.env.VITE_API_URL ?? "/api").replace(/\/+$/, "");
 
@@ -9,17 +6,12 @@ export class ApiError extends Error {
     super(message);
     this.name = "ApiError";
     this.status = status;
-    // Field-level messages from the server's zod validation, keyed by field
-    // name, so a form can put each one next to the input that caused it.
     this.details = details ?? null;
   }
 }
 
 function readErrorMessage(status, payload) {
   const message = payload?.error?.message;
-  // A missing route answers with Express's own "No route matches ..." text.
-  // That is a fact about the server's wiring, not something a person can act
-  // on, so it never reaches the screen.
   if (status === 404 && /no route matches/i.test(String(message))) {
     return "That could not be found.";
   }
@@ -33,8 +25,6 @@ function readErrorMessage(status, payload) {
 }
 
 export async function apiFetch(path, { method = "GET", body, formData, signal } = {}) {
-  // Built up rather than written as one literal, because a GET carrying an
-  // explicit body key is rejected by fetch even when the value is undefined.
   const options = { method, credentials: "include", signal };
   if (formData) {
     options.body = formData;
@@ -72,8 +62,6 @@ export async function apiFetch(path, { method = "GET", body, formData, signal } 
   return payload;
 }
 
-// ---------------------------------------------------------------- auth
-
 export function getMe() {
   return apiFetch("/auth/me");
 }
@@ -90,9 +78,6 @@ export function logoutAccount() {
   return apiFetch("/auth/logout", { method: "POST" });
 }
 
-// Development shortcut. The server refuses this route in production, so it is
-// not a back door - it signs in as a seeded student with a real session, which
-// is why the data endpoints keep working after it.
 export function demoLogin() {
   return apiFetch("/auth/demo", { method: "POST" });
 }
@@ -109,8 +94,6 @@ export function saveProfile(patch) {
   return apiFetch("/auth/me", { method: "PATCH", body: patch });
 }
 
-// Changing the display name goes through the same profile patch, so both
-// settings live behind one call.
 export function changeUsername(name) {
   return apiFetch("/auth/me", { method: "PATCH", body: { name } });
 }
@@ -136,14 +119,10 @@ function checkAvatarFile(file) {
   return file;
 }
 
-// A local object URL for the confirm dialog. Nothing is uploaded until the
-// student says yes, so backing out of the dialog sends nothing to the server.
 export function previewAvatar(file) {
   return URL.createObjectURL(checkAvatarFile(file));
 }
 
-// Cropped to a square before upload so the stored image matches the round
-// avatar it is displayed in, and so a 12 MP phone photo is not stored in full.
 export async function uploadAvatar(file) {
   checkAvatarFile(file);
   const blob = await cropToSquare(file);
@@ -187,8 +166,6 @@ function cropToSquare(file, size = 192) {
     reader.readAsDataURL(file);
   });
 }
-
-// ------------------------------------------------------- ledger + budgets
 
 export function listCategories() {
   return apiFetch("/categories");
@@ -283,8 +260,6 @@ export function markAllNotificationsRead() {
   return apiFetch("/notifications/read-all", { method: "PATCH" });
 }
 
-// ------------------------------------------------------------------ tips
-
 export function listTips(month) {
   return apiFetch(`/tips?month=${encodeURIComponent(month)}`);
 }
@@ -309,8 +284,6 @@ export function restoreTip(id) {
   return apiFetch(`/tips/${id}/restore`, { method: "POST" });
 }
 
-// -------------------------------------------------------------- insights
-
 export function listInsights() {
   return apiFetch("/insights");
 }
@@ -322,8 +295,6 @@ export function getInsight(month) {
 export function regenerateInsight(month) {
   return apiFetch(`/insights/month?month=${encodeURIComponent(month)}`, { method: "POST" });
 }
-
-// --------------------------------------------------------- categorisation
 
 export function suggestCategory(text) {
   return apiFetch(`/ai/categorise/suggest?q=${encodeURIComponent(text)}`);
@@ -340,10 +311,6 @@ export function suggestCategoryBatch(rows) {
   return apiFetch("/ai/categorise/batch", { method: "POST", body: { rows } });
 }
 
-// ---------------------------------------------------------------- reports
-
-// The filter is built here rather than in the page so every caller sends the
-// same parameter names, and an empty filter sends nothing at all.
 export function getReports({ from, to, category, granularity } = {}) {
   const query = new URLSearchParams();
   if (from) query.set("from", from);
@@ -361,8 +328,6 @@ export function getReportCategories() {
 export function shareReport(body) {
   return apiFetch("/reports/share", { method: "POST", body });
 }
-
-// ---------------------------------------------------------------- bookmarks
 
 export function listBookmarks() {
   return apiFetch("/bookmarks");

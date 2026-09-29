@@ -1,10 +1,3 @@
-// Every test run goes against the real Atlas cluster, in a separate database
-// so it can never touch the demo data in campuscoin.
-//
-// The guard below is the point of this file. A test that calls dropDatabase()
-// with a wrong URI would delete the dataset a demo depends on, and no amount of
-// care in the test body prevents that. So the database name is derived here,
-// once, and every destructive helper re-checks it before touching anything.
 import mongoose from "mongoose";
 
 export const TEST_DB_NAME = "campuscoin_test";
@@ -20,8 +13,6 @@ function assertTestDatabase(uri) {
   return uri;
 }
 
-// Rewrites whatever database the app URI names to the test one, leaving the
-// credentials, host and options untouched.
 export function testDatabaseUri() {
   const base = process.env.MONGODB_URI?.trim();
   if (!base) {
@@ -43,10 +34,6 @@ export async function connectTestDb() {
   return uri;
 }
 
-// Must be called before anything imports the app or the config, because
-// config/env.js reads process.env once at module load. Without this a test
-// that boots the whole app would put its users and sessions in the demo
-// database, which is exactly the accident this file exists to prevent.
 export function useTestDatabaseEnv() {
   const uri = testDatabaseUri();
   process.env.MONGODB_URI = uri;

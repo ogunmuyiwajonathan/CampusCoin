@@ -1,16 +1,5 @@
 import { env } from "../config/env.js";
 
-// Browsers attach the Origin header to cross-site state-changing requests, and
-// the session cookie is what identifies the caller, so an origin that is not on
-// the allowlist is refused outright rather than left to sameSite to catch.
-//
-// Three things count as trusted:
-//   1. no Origin at all - curl and server-to-server calls do not send one;
-//   2. an exact match for an entry in CORS_ORIGIN - this is the only rule that
-//      ever applies in production;
-//   3. in development, any loopback origin and any origin served from the same
-//      host as the API. The client runs through Vite dev and several preview
-//      ports, and hard-coding them in .env meant a new port broke sign-in again.
 const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
 
 function originHostname(origin) {

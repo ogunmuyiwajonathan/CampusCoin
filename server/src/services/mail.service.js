@@ -42,9 +42,6 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-// Always resolves. A caller must never be able to tell from the outcome
-// whether the email was sent, the account exists, or the provider rejected it,
-// because that difference is exactly what an attacker enumerates accounts with.
 export async function sendPasswordResetEmail({ to, firstName, code }) {
   const api = resend();
   if (!api) {
@@ -73,9 +70,6 @@ export async function sendPasswordResetEmail({ to, firstName, code }) {
   }
 }
 
-// A shared report arrives as a table in the body, not a link, so the numbers
-// the sender is looking at are the numbers in the email. Same deliverability
-// contract as the reset mail: always resolves, never throws.
 function reportEmailHtml({ firstName, message, report }) {
   const safeFirst = escapeHtml(firstName);
   const safeMessage = escapeHtml(message || "Here is my spending report.");
@@ -119,9 +113,6 @@ function reportEmailHtml({ firstName, message, report }) {
 </html>`;
 }
 
-// Signup is not gated on this email. It exists so the address the student typed
-// is proven to reach a real inbox, and so a typo is something we tell them about
-// rather than something they find out about when a reset never arrives.
 export async function sendWelcomeEmail({ to, firstName }) {
   const api = resend();
   if (!api) {

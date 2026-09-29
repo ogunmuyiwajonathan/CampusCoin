@@ -7,9 +7,6 @@ const objectId = z
 const month = z.string().regex(/^\d{4}-\d{2}$/, "Use a YYYY-MM month.");
 const note = z.string().trim().max(280, "Keep the note under 280 characters.").default("");
 
-// A bookmark points at a month, an insight or a tip. The model allows the
-// columns to coexist so a link keeps working if the other kind is generated
-// later, so the rule lives here: at least one target must be set.
 export const createBookmarkSchema = z
   .object({
     month: month.optional(),
@@ -21,7 +18,6 @@ export const createBookmarkSchema = z
     message: "Save a month, an insight or a tip.",
   });
 
-// Editing a note does not move the bookmark, so no target is required here.
 export const updateBookmarkSchema = z.object({
   month: month.optional(),
   note: note.optional(),

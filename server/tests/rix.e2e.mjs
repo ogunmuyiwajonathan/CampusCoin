@@ -180,7 +180,7 @@ async function runCleanup({ session, userId, created, injectionTxId }) {
       const res = await session.call(`/api/transactions/${id}`, { method: "DELETE" });
       if (res.status < 400) delTx += 1;
     } catch {
-      /* fall through to the direct delete below */
+
     }
   }
   if (txIds.length) {

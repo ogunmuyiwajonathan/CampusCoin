@@ -3,11 +3,6 @@ import ApiError from "../utils/ApiError.js";
 import { env } from "../config/env.js";
 import { Category, CategorySuggestion } from "../models/index.js";
 
-// Three tiers, cheapest first. The student's own confirmed corrections beat the
-// shared keyword rules, which beat the model. That order is the whole of "learns
-// from corrections": a student who keeps typing "bus fare" and picking Transport
-// gets Transport suggested next time, for their own account only, without any
-// training and without another student's habit leaking into theirs.
 const KEYWORD_RULES = [
   { words: ["food", "cafe", "cafeteria", "canteen", "restaurant", "lunch", "dinner", "breakfast", "snack", "jollof", "rice", "meal", "eats", "eatery", "grill", "munch"], category: "Food" },
   { words: ["bus", "transport", "taxi", "uber", "bolt", "fare", "fuel", "petrol", "gas", "train", "metro", "danfo", "okada", "ride", "commute"], category: "Transport" },
@@ -29,8 +24,6 @@ const STOP_WORDS = new Set([
 
 let client = null;
 
-// The same provider Rix uses. Returns null when no key is configured, so
-// suggestions still work from the keyword rules without the model.
 function provider() {
   if (!env.poolsideApiKey) return null;
   if (!client) {
@@ -63,6 +56,21 @@ function matchCategoryName(categories, name) {
   );
 }
 
+function ownNameMatch(categories, text) {
+  const haystack = ` ${words(text).join(" ")} `;
+  if (haystack.trim().length < 3) return null;
+
+  let best = null;
+  for (const category of categories) {
+    const name = category.name.toLowerCase().trim();
+    if (name.length < 3) continue;
+    if (!haystack.includes(` ${name} `) && haystack.trim() !== name) continue;
+    if (!best || name.length > best.name.length) best = category;
+  }
+  if (!best) return null;
+  return { category: best, source: "name", confidence: 0.7, matched: best.name };
+}
+
 function keywordMatch(categories, text) {
   const parts = words(text);
   if (!parts.length) return null;
@@ -80,9 +88,6 @@ function keywordMatch(categories, text) {
   return null;
 }
 
-// The student's own confirmed pairings. A fragment is any meaningful word or
-// adjacent word pair from what they typed, and hit_count decides how strong the
-// signal is.
 async function learnedMatch(userId, text) {
   const parts = words(text);
   if (!parts.length) return null;
@@ -174,6 +179,9 @@ export async function suggestCategory(userId, text) {
   const ai = await modelMatch(categories, text);
   if (ai) return ai;
 
+  const named = ownNameMatch(categories, text);
+  if (named) return named;
+
   const fallback =
     categories.find((category) => category.name.toLowerCase() === "others") ??
     categories.find((category) => category.type === "expense") ??
@@ -181,10 +189,6 @@ export async function suggestCategory(userId, text) {
   return { category: fallback, source: "default", confidence: 0.2, matched: null };
 }
 
-// Records that a student filed this description under this category, so the next
-// identical or similar description is suggested correctly. Each fragment is
-// counted separately so one confirmation strengthens every word it contains, and
-// the hit_count is what decides whether the learned signal beats the rules.
 export async function recordSuggestion(userId, description, categoryId) {
   const category = await Category.findOne({
     _id: categoryId,
@@ -216,9 +220,6 @@ export async function recordSuggestion(userId, description, categoryId) {
   return { learned: fragments.size, type: category.type };
 }
 
-// One suggestion per CSV row, so an import can be reviewed before it is saved.
-// An empty description is skipped rather than guessed at, because there is
-// nothing to categorise.
 export async function suggestBatch(userId, rows) {
   const results = [];
   for (const row of rows) {

@@ -4,9 +4,6 @@ import { useTestDatabaseEnv } from "./helpers/testDb.js";
 useTestDatabaseEnv();
 process.env.CORS_ORIGIN = "http://localhost:5173";
 
-// The admin login takes a password only and reads which account from
-// ADMIN_EMAIL, so that variable has to name this run's admin before the app is
-// imported: config/env.js reads process.env once, at module load.
 const stamp = Date.now();
 const adminEmail = `adminfix-${stamp}@campuscoin.test`;
 process.env.ADMIN_EMAIL = adminEmail;
@@ -77,9 +74,6 @@ const client = (appInstance) => {
     put: (url, body, options) => call("PUT", url, body, options),
     patch: (url, body, options) => call("PATCH", url, body, options),
     delete: (url, options) => call("DELETE", url, undefined, options),
-    // closeAllConnections() matters here. fetch keeps a connection alive after a
-    // response, so a plain close() waits for the client to go away and the run
-    // never finishes.
     close: () =>
       new Promise((resolve) => {
         server.closeAllConnections();
@@ -97,8 +91,6 @@ const api = client(app);
 try {
   process.stdout.write("\n1. a disabled student is signed out and blocked\n");
 
-  // Both accounts are written with a real password hash so the sign-in below is
-  // the genuine article rather than a route stubbed for the test.
   const bcrypt = (await import("bcryptjs")).default;
   const studentPassword = "StudentPass!23";
   const adminPassword = "AdminPass!23";
@@ -125,8 +117,6 @@ try {
   const worksBefore = await api.get("/api/transactions");
   check("the student can read their ledger while active", worksBefore.status === 200, `got ${worksBefore.status}`);
 
-  // Set through the database rather than the admin route, so this block tests the
-  // consequence of a disabled account rather than the route that causes it.
   await User.updateOne({ _id: student._id }, { $set: { is_active: false } });
   const blocked = await api.get("/api/transactions");
   check("a disabled student is refused with 401", blocked.status === 401, `got ${blocked.status}`);
@@ -153,8 +143,6 @@ try {
 
   process.stdout.write("\n2. the enable and disable routes both exist and are symmetric\n");
 
-  // The admin routes need an admin session, so the admin signs in on their own
-  // client rather than replacing the student's cookie.
   const adminApi = client(app);
   const adminLogin = await adminApi.post("/api/admin/auth/login", {
     password: adminPassword,
@@ -185,8 +173,6 @@ try {
 
   process.stdout.write("\n3. the routes set a state rather than flipping it\n");
 
-  // The bug this covers: a toggle cannot be pressed twice without the second
-  // press undoing the first, so a retried request re-enabled a student.
   await adminApi.put(`/api/admin/users/${student._id}/disable`);
   await adminApi.put(`/api/admin/users/${student._id}/disable`);
   const afterTwoDisables = await User.findById(student._id).select("is_active").lean();
@@ -269,8 +255,6 @@ try {
     { upsert: true },
   );
 
-  // The engine only has something to say when a template matches real spending,
-  // so this gives the student a month's food spending and an active template.
   const { TipTemplate } = await import("../src/models/index.js");
   await TipTemplate.findOneAndUpdate(
     { key: "top_category_share" },

@@ -1,18 +1,12 @@
 import { z } from "zod";
 import { ACADEMIC_YEARS } from "../models/User.js";
 
-// Length and shape rules live here so the client can import the same module and
-// the two can never drift. A client-side rule is a convenience; this one is the
-// rule, because anyone can post to the API without ever opening the app.
 const name = z
   .string()
   .trim()
   .min(2, "Name must be at least 2 characters.")
   .max(80, "Name must be 80 characters or fewer.");
 
-// Composition rules rather than a single score: a length floor plus three of
-// four character classes rejects the passwords that actually get guessed,
-// without pushing anyone towards P@ssw0rd1.
 const password = z
   .string()
   .min(8, "Password must be at least 8 characters.")
@@ -29,8 +23,6 @@ export const registerSchema = z.object({
 
 export const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email address.").max(254),
-  // No rules on the way in. Login must never tell a user their old password was
-  // too short; that would confirm which addresses have accounts.
   password: z.string().min(1, "Enter your password.").max(200),
 });
 

@@ -81,8 +81,6 @@ export default function Bookmarks() {
   const [savingId, setSavingId] = useState("");
   const [toast, setToast] = useState(null);
 
-  // Same request-tagging as the other ledger hooks: the answer carries the
-  // request it belongs to, and anything else is still loading.
   const requestKey = `bookmarks:${nonce}`;
 
   useEffect(() => {
@@ -116,8 +114,6 @@ export default function Bookmarks() {
     return () => clearTimeout(timer);
   }, [toast]);
 
-  // Grouped by month so a saved month reads as one block rather than a flat
-  // list, which is how a student actually looks for "that one I saved".
   const groups = useMemo(() => {
     const byMonth = new Map();
     for (const bookmark of bookmarks) {
@@ -128,9 +124,6 @@ export default function Bookmarks() {
     return [...byMonth.entries()].sort(([a], [b]) => (a === "other" ? 1 : b === "other" ? -1 : b.localeCompare(a)));
   }, [bookmarks]);
 
-  // After a write the row is patched in place, so the page does not have to
-  // re-fetch a list it is already holding. The shared cache is kept in step at
-  // the same time, so a star on an insight card agrees with what is on screen.
   const replace = (bookmark) =>
     setResult((current) => {
       const rows = current.rows.map((b) => (b.bookmark_id === bookmark.bookmark_id ? bookmark : b));

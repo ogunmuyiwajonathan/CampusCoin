@@ -23,14 +23,11 @@ function money(value) {
   return `N${Math.round(value).toLocaleString("en-NG")}`;
 }
 
-// Everything the narrative is allowed to say something about, gathered in one
-// pass per month. One aggregation per question rather than a query per category,
-// which is the N+1 the SRS warns about.
 async function monthTotals(userId, month) {
   const from = `${month}-01`;
   const to = `${month}-31`;
 
-  const [income, expense, byCategory] = await Promise.all([
+  const [income, expense, byCategory, counted] = await Promise.all([
     Transaction.aggregate([
       { $match: { user_id: userId, type: "income", date: { $gte: from, $lte: to } } },
       { $group: { _id: null, total: { $sum: "$amount" } } },
@@ -44,6 +41,10 @@ async function monthTotals(userId, month) {
       { $group: { _id: "$category_id", total: { $sum: "$amount" }, count: { $sum: 1 } } },
       { $sort: { total: -1 } },
       { $limit: 5 },
+    ]),
+    Transaction.aggregate([
+      { $match: { user_id: userId, date: { $gte: from, $lte: to } } },
+      { $count: "count" },
     ]),
   ]);
 
@@ -59,7 +60,7 @@ async function monthTotals(userId, month) {
     income: income[0]?.total ?? 0,
     expense: total,
     net: (income[0]?.total ?? 0) - total,
-    transactionCount: byCategory.reduce((sum, row) => sum + row.count, 0),
+    transactionCount: counted[0]?.count ?? 0,
     categories: byCategory.map((row) => ({
       name: names.get(String(row._id)) ?? "Uncategorised",
       total: row.total,
@@ -176,9 +177,6 @@ async function buildTipText(userId, current, user) {
   return lines.slice(0, 3).join(" ");
 }
 
-// Writes the Insight for one month. A month that already has one is left alone
-// unless the caller asked for a fresh read, so opening the page does not rewrite
-// the narrative a student has already read.
 export async function generateInsight(userId, month, { force = false } = {}) {
   if (!force) {
     const existing = await Insight.findOne({ user_id: userId, month }).lean();
@@ -194,10 +192,6 @@ export async function generateInsight(userId, month, { force = false } = {}) {
   const summary = buildSummaryText(current, previous, user);
   const tip = await buildTipText(userId, current, user);
 
-  // Upsert, not create. Two of the student's own tabs asking for the same month
-  // at the same time is ordinary, and the unique index on (user_id, month) is the
-  // database's answer to it: without an upsert the loser of that race sees a
-  // duplicate key error instead of the insight they asked for.
   const written = await Insight.findOneAndUpdate(
     { user_id: userId, month },
     { $set: { summary_text: summary, tip_text: tip, generated_at: new Date() } },
@@ -228,8 +222,6 @@ export async function getOrGenerateInsight(userId, month) {
   return generateInsight(userId, month);
 }
 
-// Only a student asking for a fresh read rewrites their own month, and the
-// upsert settles a race between two of them doing it at once.
 export async function regenerateInsight(userId, month) {
   return generateInsight(userId, month, { force: true });
 }

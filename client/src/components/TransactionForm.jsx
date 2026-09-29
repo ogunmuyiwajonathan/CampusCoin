@@ -47,9 +47,6 @@ export default function TransactionForm({ initial, onClose, onSave }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Opening an entry to look at it is what puts it on the dashboard's
-  // recently-viewed list. The record runs again when the categories arrive so
-  // an entry without its own description can show its category name instead.
   useEffect(() => {
     if (!initial?.transaction_id) return;
     const categoryName = categories.find(
@@ -81,9 +78,6 @@ export default function TransactionForm({ initial, onClose, onSave }) {
     }
   };
 
-  // Detection is advisory: the twin is looked up in the month being saved,
-  // and a lookup that fails simply lets the save continue - a broken check
-  // must never stop the student from logging money.
   const findExistingTwin = async (payload) => {
     try {
       const { transactions } = await listTransactions(monthKey(payload.date));

@@ -81,9 +81,6 @@ export default function Users() {
     try {
       setActionLoading(user.user_id);
       setActionError("");
-      // Named rather than toggled: the button says which state it is about to
-      // set, and the endpoint does the same. A request that arrives twice puts
-      // the account in the state the admin asked for, not the opposite one.
       const res = await fetch(`/api/admin/users/${user.user_id}/${disabling ? "disable" : "enable"}`, {
         method: "PUT",
       });

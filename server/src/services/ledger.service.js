@@ -12,9 +12,6 @@ import { isDateString, monthKey, nextRunFrom, todayString } from "../utils/dateM
 export const ALERT_NEAR = 0.95;
 export const ALERT_OVER = 1;
 
-// Categories a student may see: the system defaults plus their own. Scoped in one
-// place because every other query filters on the same thing, and a route that
-// forgot the filter would leak another student's personal categories.
 export function visibleCategories(userId) {
   return { $or: [{ user_id: null }, { user_id: userId }] };
 }
@@ -25,8 +22,6 @@ export async function listCategories(userId) {
 }
 
 export async function createCategory(userId, body) {
-  // The database has a unique index on (user_id, name, type), so this check is
-  // for a friendly message rather than for correctness.
   const clash = await Category.findOne({
     user_id: userId,
     name: body.name,
@@ -37,7 +32,6 @@ export async function createCategory(userId, body) {
   }
   return Category.create({
     ...body,
-    // A personal category is never a default, whatever the client sent.
     is_default: false,
     user_id: userId,
   });
@@ -55,10 +49,6 @@ export async function updateCategory(userId, id, body) {
   return category;
 }
 
-// A default category is shared by everyone, so deleting one would break other
-// students' history. What is allowed is managing your own: the row is only
-// removed once nothing else points at it, otherwise the student is told exactly
-// what to move first rather than being left with a dangling budget.
 export async function deleteCategory(userId, id) {
   const owned = await Category.exists({ _id: id, user_id: userId });
   const inUse = await Transaction.exists({ user_id: userId, category_id: id });
@@ -80,8 +70,6 @@ export async function deleteCategory(userId, id) {
   throw ApiError.forbidden("The default categories cannot be deleted.");
 }
 
-// The month window is built from string dates, which compare correctly as ISO
-// strings, so no timezone maths is involved anywhere in this file.
 function monthWindow(month) {
   if (!month) return null;
   return { $gte: `${month}-01`, $lte: `${month}-31` };
@@ -101,9 +89,6 @@ async function assertOwnsCategory(userId, categoryId) {
 export async function createTransaction(userId, body) {
   const category = await assertOwnsCategory(userId, body.category_id);
   const frequency = body.is_recurring ? body.frequency ?? "monthly" : null;
-  // A recurring row with no next_run_at would never fire, so the date is worked
-  // out from the transaction's own date the first time it is saved. Anything the
-  // client sent that is not a real date is ignored rather than stored broken.
   const requested = body.is_recurring && isDateString(body.next_run_at) ? body.next_run_at : null;
   const payload = {
     ...body,
@@ -118,9 +103,6 @@ export async function createTransaction(userId, body) {
       user_id: userId,
       request_id: body.request_id,
     }).lean();
-    // Serialized, because this row goes back as the response body. A lean row
-    // still carries _id, so returning it raw would answer a duplicate submission
-    // with an object that has no transaction_id in it at all.
     if (already) return serialize(already, "transaction_id");
   }
 
@@ -128,9 +110,6 @@ export async function createTransaction(userId, body) {
   try {
     transaction = await Transaction.create(payload);
   } catch (error) {
-    // Two copies of the same click raced past the lookup above. The unique
-    // index settles it: the loser reads back the row the winner just wrote
-    // instead of saving the expense twice.
     if (error?.code === 11000 && body.request_id) {
       const already = await Transaction.findOne({
         user_id: userId,
@@ -164,10 +143,6 @@ export async function updateTransaction(userId, id, body) {
   return updated;
 }
 
-// Deleting keeps the row's contents rather than dropping them. The live
-// transaction is removed so every total, budget and report stops counting it,
-// and a history document holds what it was, which is what makes an accidental
-// delete recoverable instead of permanent.
 export async function deleteTransaction(userId, id) {
   const removed = await Transaction.findOneAndDelete({ _id: id, user_id: userId }).lean();
   if (!removed) throw ApiError.notFound("That transaction was not found.");
@@ -258,17 +233,6 @@ export async function restoreTransaction(userId, historyId) {
   return serialize(restored.toObject(), "transaction_id");
 }
 
-// The next occurrence of every recurring row that is due. This is the step that
-// turns the is_recurring flag into real transactions: a monthly allowance saved
-// on the 20th writes itself on the 20th of every following month.
-//
-// It is called from listTransactions rather than a timer, so it needs no
-// scheduler and no second process. The read is already the moment a student is
-// looking at their ledger, which is exactly when a new entry should appear.
-//
-// Bounded on purpose. A row is only ever advanced one period at a time, and the
-// catch-up loop stops after 24 steps, so a transaction dated years ago or a
-// daily-ish frequency written by a bad client cannot stall the request.
 const MAX_CATCH_UP_STEPS = 24;
 
 export async function materialiseRecurring(userId) {
@@ -355,16 +319,12 @@ export async function listTransactions(userId, month) {
   return serializeAll(rows, "transaction_id");
 }
 
-// ------------------------------------------------------- budgets and alerts
-
 export async function listBudgets(userId, month) {
   const query = { user_id: userId };
   if (month) query.month = month;
   const budgets = await Budget.find(query).sort({ month: -1 }).lean();
   if (!budgets.length) return [];
 
-  // Spent is one aggregation over the whole window rather than a query per
-  // budget, which is the N+1 the SRS explicitly warns about.
   const budgetMonth = month ?? budgets[0].month;
   const spent = await Transaction.aggregate([
     { $match: { user_id: userId, date: monthWindow(budgetMonth) } },
@@ -413,9 +373,6 @@ export async function deleteBudget(userId, id) {
   return removed;
 }
 
-// Called after every write that can move a category's total. The unique index
-// on (user_id, dedupe_key) is what stops a student who logs ten transactions in
-// a row from collecting ten identical alerts, so this is safe to call often.
 export async function evaluateBudgets(userId, transaction) {
   if (!transaction || transaction.type !== "expense") return [];
 
@@ -454,8 +411,6 @@ export async function evaluateBudgets(userId, transaction) {
     dedupe_key: dedupeKey,
   });
 }
-
-// ----------------------------------------------------------- notifications
 
 export async function listNotifications(userId) {
   const rows = await Notification.find({ user_id: userId })

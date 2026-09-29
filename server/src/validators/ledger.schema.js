@@ -59,9 +59,6 @@ const amount = z
 
 export const createTransactionSchema = z.object({
   category_id: z.string().min(1, "Choose a category."),
-  // Accepted but never trusted: the type always comes from the category the
-  // transaction points at, so an expense cannot be filed as income by posting a
-  // different type here.
   type: categoryType.optional(),
   amount,
   description: z.string().trim().max(140).default(""),
@@ -82,10 +79,6 @@ export const idParamSchema = z.object({
   id: z.string().min(1),
 });
 
-// Stricter than idParamSchema on purpose. A route whose :id is looked up by
-// Mongo throws a BSON cast error on anything that is not a 24 character hex
-// string, which surfaces as a 500: a server fault caused entirely by the URL. This
-// turns that into the 400 it should have been.
 export const objectIdParamSchema = z.object({
   id: z.string().regex(/^[a-f\d]{24}$/i, "That is not a valid id."),
 });

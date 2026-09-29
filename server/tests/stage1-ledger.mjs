@@ -121,9 +121,6 @@ try {
   const week2 = await Transaction.findOne({ user_id: user._id, date: "2026-06-08" });
   check("a weekly row generates a week later", Boolean(week2), "no row for 2026-06-08");
   const weekNext = await Transaction.findById(weekly._id).lean();
-  // The row was four months stale, so the catch-up pass advanced it week by week
-  // until it reached the future. What matters is the weekday held and the final
-  // date is ahead of today, not that it stopped after one step.
   check(
     "a stale weekly row catches up to the future",
     weekNext.next_run_at > today,
@@ -226,9 +223,6 @@ try {
   );
   check("alternative header spellings are accepted", headerAliases.summary.accepted === 1, JSON.stringify(headerAliases.summary));
 
-  // The thousands separator has to be quoted, exactly as a spreadsheet exports
-  // it. Unquoted, a comma is a column break and no parser can recover the
-  // intended value, so the app reads the two cells as separate columns instead.
   const euro = await importTransactionsCsv(
     user._id,
     Buffer.from('date,description,amount\n20/07/2026,Day first,"1,500.50"\n', "utf8"),

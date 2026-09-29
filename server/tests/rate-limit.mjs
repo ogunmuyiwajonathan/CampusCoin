@@ -13,9 +13,6 @@ function check(label, ok, detail) {
   }
 }
 
-// Each section sends its own X-Forwarded-For so it gets a clean limiter bucket.
-// That also proves app.set("trust proxy", 1) is in effect: without it every
-// request would look like one client and share a single bucket.
 let ipCounter = 0;
 const nextIp = () => `203.0.113.${(ipCounter += 1)}`;
 

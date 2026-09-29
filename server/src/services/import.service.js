@@ -106,9 +106,6 @@ function pickFallback(categories, type) {
   return partial ?? ofType[0] ?? null;
 }
 
-// Turns a driver or validation failure into something a student can act on. The
-// raw message would name indexes and internal field names, which tells them
-// nothing about their own file.
 function saveFailureReason(error) {
   if (error?.name === "ValidationError") {
     const first = Object.values(error.errors ?? {})[0];
@@ -250,10 +247,6 @@ export async function importTransactionsCsv(userId, buffer) {
   const failureReasons = new Map();
   if (accepted.length) {
     const documents = accepted.map((entry) => entry.payload);
-    // Written one document at a time rather than in a single insertMany, because
-    // the report below has to name which row failed and why. insertMany reports
-    // failures by position only, and with ordered:false the positions do not map
-    // back onto the report the student reads.
     for (let index = 0; index < documents.length; index += 1) {
       try {
         await Transaction.create(documents[index]);

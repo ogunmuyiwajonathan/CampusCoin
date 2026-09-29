@@ -150,8 +150,6 @@ export default function Transactions() {
     .filter((item) => typeFilter === ALL || item.type === typeFilter)
     .sort((a, b) => b.date.localeCompare(a.date));
 
-  // Flagged against what is on screen, so a row never carries the warning
-  // while its twin is hidden behind a filter.
   const flagged = duplicateIds(rows);
 
   const totals = computeTotals(periodItems);

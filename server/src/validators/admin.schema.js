@@ -6,12 +6,6 @@ export {
   CATEGORY_ICON_KEYS,
 } from "./category.schema.js";
 
-// The rules the tips engine can actually run, with the placeholders each one
-// fills in. The engine skips a template whose rule it does not recognise, so
-// without this list an admin could save a tip that is active, looks correct in
-// the panel, and is silently never shown to anybody. The three lists are the
-// contract between the engine and this form, and the admin route below serves
-// them so the panel never has to hardcode them.
 export const TIP_RULES = [
   {
     rule: "category_share_above",
@@ -43,11 +37,6 @@ export const TIP_RULES = [
 
 export const TIP_RULE_NAMES = TIP_RULES.map((entry) => entry.rule);
 
-// Declared once, with no defaults, because a default is a value the field takes
-// when the key is absent. That is right when creating a row and wrong when
-// updating one: zod still fills a defaulted key in on a partial object, so a
-// request that only flipped is_active also wrote savings_impact back to 0 and
-// quietly undid the admin's ranking on every student's dashboard.
 const tipKey = z
   .string()
   .trim()
@@ -64,9 +53,6 @@ const tipText = z
     message: "Braces are only for placeholders, like {category}.",
   });
 
-// A missing rule and a misspelled one are the same mistake to whoever is filling
-// this in, and both are answered with the choices rather than "invalid option",
-// which is the validation library's wording rather than ours.
 const RULE_CHOICES = TIP_RULES.map((entry) => entry.label).join(", ");
 
 const tipRule = z.enum(TIP_RULE_NAMES, {
@@ -86,9 +72,6 @@ const tipActive = z.boolean();
 export const tipTemplateBodySchema = z.object({
   key: tipKey,
   text: tipText,
-  // Required, not optional. The engine reads this to decide whether the tip
-  // applies at all, so a template without one can never be shown, and letting it
-  // through turned a client's mistake into a 500 from Mongoose's own check.
   rule: tipRule,
   threshold: tipThreshold.optional(),
   category_id: tipCategory.optional(),
@@ -96,8 +79,6 @@ export const tipTemplateBodySchema = z.object({
   is_active: tipActive.default(true),
 });
 
-// Every field optional, and no defaults anywhere, so a partial update touches
-// exactly what it was sent and leaves the rest of the row alone.
 export const tipTemplatePatchSchema = z
   .object({
     key: tipKey.optional(),

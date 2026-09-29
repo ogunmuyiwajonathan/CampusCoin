@@ -6,10 +6,6 @@ function money(value) {
   return `N${Math.round(value).toLocaleString("en-NG")}`;
 }
 
-// A template is admin-authored data, never code, so a rule the engine does not
-// recognise is skipped rather than guessed at. That is also why the switch below
-// is exhaustive: adding a rule means adding a case here, and anything else is
-// inert.
 function fill(text, values) {
   return text.replace(/\{(\w+)\}/g, (match, key) =>
     values[key] === undefined || values[key] === null ? match : String(values[key]),
@@ -47,10 +43,6 @@ async function monthSnapshot(userId, month) {
   };
 }
 
-// Each rule takes the same context and answers one question about the student's
-// own numbers, returning the text and the money at stake or null when it does not
-// apply. They are all async and all take the whole context, so adding a rule never
-// means changing how an existing one is called.
 const RULES = {
   async category_share_above({ snapshot }, template) {
     const threshold = template.threshold ?? 30;
@@ -98,16 +90,6 @@ const RULES = {
   },
 };
 
-// Regenerates the student's tips for a month from the templates that are active
-// now, then re-reads them. Each template's tip is updated in place and matched
-// on template_key, so a template whose wording an admin changed reaches the
-// student on their next read, and a template the admin deactivated simply stops
-// being written.
-//
-// Updating in place rather than deleting and reinserting is what makes pin and
-// dismiss survive: the row is the same row, so the flags on it are untouched by
-// a regeneration. Toggling a rule, editing a template, or a second tab rendering
-// the dashboard all leave a pinned tip pinned.
 export async function generateTips(userId, month) {
   const templates = await TipTemplate.find({ is_active: true })
     .sort({ savings_impact: -1 })
@@ -131,10 +113,6 @@ export async function generateTips(userId, month) {
     );
   }
 
-  // A rule that no longer applies is removed rather than left behind, so a
-  // student who brings a category under its threshold stops being warned about
-  // it. Dismissed tips are kept: the student asked to stop seeing them, and
-  // keeping the row is what lets them bring one back.
   await Tip.deleteMany({
     user_id: userId,
     month,
@@ -148,9 +126,6 @@ export async function generateTips(userId, month) {
   return serializeAll(rows, "tip_id");
 }
 
-// Regenerates on every read. The upsert above makes that cheap when nothing has
-// changed, and it is what lets a deactivated template or an edited wording reach
-// the student without anyone having to remember to invalidate a cache.
 export async function listTips(userId, month) {
   await generateTips(userId, month);
   return readTips(userId, month);
@@ -163,8 +138,6 @@ async function readTips(userId, month) {
   return serializeAll(rows, "tip_id");
 }
 
-// Dismissed tips are read back separately, because a student who hid a tip still
-// needs a way to see that they hid one and undo it.
 export async function listDismissedTips(userId, month) {
   const rows = await Tip.find({ user_id: userId, month, is_dismissed: true })
     .sort({ dismissed_at: -1 })
@@ -172,9 +145,6 @@ export async function listDismissedTips(userId, month) {
   return serializeAll(rows, "tip_id");
 }
 
-// Scoped to the owner on every write. A tip id belonging to another student
-// matches nothing here, so the caller gets a 404 rather than a chance to change
-// someone else's state.
 async function ownTip(userId, id) {
   return Tip.exists({ _id: id, user_id: userId });
 }

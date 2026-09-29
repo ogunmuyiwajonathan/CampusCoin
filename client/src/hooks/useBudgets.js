@@ -7,15 +7,10 @@ import {
 } from "../lib/apiClient.js";
 import { currentMonthKey } from "../lib/formatMonth.js";
 
-// Spent, percentage and the near/over band are all computed by the server from
-// the same aggregation the budgets page used to run by hand in the browser, so
-// the numbers on screen are the database's numbers.
 export function useBudgets(month = currentMonthKey()) {
   const [nonce, setNonce] = useState(0);
   const [result, setResult] = useState({ key: null, items: [], error: null });
 
-  // Same request-tagging as useTransactions: the answer carries the key it
-  // answers, and anything else counts as still loading.
   const key = `${month}:${nonce}`;
 
   useEffect(() => {

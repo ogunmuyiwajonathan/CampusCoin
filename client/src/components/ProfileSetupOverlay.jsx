@@ -18,8 +18,6 @@ const AMOUNT_FIELDS = [
   },
 ];
 
-// How long the confirmation stays up before the card gets out of the way. Long
-// enough to read, short enough that nobody thinks it has frozen.
 const CONFIRM_MS = 1600;
 
 function parseAmount(raw) {
@@ -41,16 +39,11 @@ export default function ProfileSetupOverlay({ onSave, onSkip, onDismiss }) {
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
-  // "saved" and "skipped" read differently on purpose: skipping stored no
-  // profile details, so claiming a profile was saved would be untrue.
   const confirmThenLeave = (kind, leave) => {
     setConfirmed(kind);
     timer.current = setTimeout(leave, CONFIRM_MS);
   };
 
-  // Escape and a click on the dimmed background both mean skip, so there is no
-  // way to be trapped on this card and no way to dismiss it without the flag
-  // being set, which is what would bring it straight back on the next login.
   const skip = useCallback(async () => {
     if (busy) return;
     setBusy(true);
@@ -68,9 +61,6 @@ export default function ProfileSetupOverlay({ onSave, onSkip, onDismiss }) {
     }
   }, [busy, onSkip, onDismiss]);
 
-  // Escape works at any point the card is open, not only after a button has
-  // been pressed. Once the confirmation is up it just closes, because the flag
-  // has been written by then and skipping again would be a second write.
   useEffect(() => {
     const onKey = (event) => {
       if (event.key !== "Escape") return;

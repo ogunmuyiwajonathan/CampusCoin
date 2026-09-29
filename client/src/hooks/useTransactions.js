@@ -7,20 +7,10 @@ import {
 } from "../lib/apiClient.js";
 import { currentMonthKey } from "../lib/formatMonth.js";
 
-// The server is the only copy of the ledger now. A write refetches rather than
-// patching local state, so what the screen shows is always what the database
-// holds - which matters because creating a transaction can also raise a budget
-// alert, and the row the student added is not the only thing that changed.
-//
-// The month defaults to the current one so the pages that do not care about
-// filtering get a single month rather than the whole history.
 export function useTransactions(month = currentMonthKey()) {
   const [nonce, setNonce] = useState(0);
   const [result, setResult] = useState({ key: null, items: [], error: null });
 
-  // The result is tagged with the request it answers. Anything else - a month
-  // that just changed, a write that has not come back yet - is still loading,
-  // which avoids calling setState synchronously inside the effect.
   const key = `${month}:${nonce}`;
 
   useEffect(() => {
