@@ -17,6 +17,13 @@ const FEATURES = [
 const inputClass =
   "w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-11 text-sm text-ink-900 placeholder:text-ink-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
 
+const PASSWORD_RULES = [
+  { key: "length", label: "8+ characters", test: (value) => value.length >= 8 },
+  { key: "lower", label: "a lowercase letter", test: (value) => /[a-z]/.test(value) },
+  { key: "upper", label: "an uppercase letter", test: (value) => /[A-Z]/.test(value) },
+  { key: "digit", label: "a number", test: (value) => /\d/.test(value) },
+];
+
 export default function Signup() {
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -50,7 +57,11 @@ export default function Signup() {
         navigate("/dashboard");
       }, { oneShot: true });
     } catch (err) {
-      setError(err.message);
+      const detail =
+        err.details && typeof err.details === "object"
+          ? Object.values(err.details).find((value) => typeof value === "string" && value)
+          : null;
+      setError(detail || err.message);
     }
   };
 
@@ -203,6 +214,25 @@ export default function Signup() {
                 <Icon name={showPassword ? "eye-off" : "eye"} size={17} />
               </button>
             </div>
+
+            <ul
+              className="animate-auth-rise flex flex-wrap gap-x-4 gap-y-1 text-xs"
+              style={{ animationDelay: "155ms" }}
+            >
+              {PASSWORD_RULES.map((rule) => {
+                const met = rule.test(password);
+                return (
+                  <li
+                    key={rule.key}
+                    className={met ? "font-semibold text-emerald-600" : "text-ink-500"}
+                  >
+                    <span aria-hidden="true">{met ? "✓ " : "○ "}</span>
+                    {rule.label}
+                    <span className="sr-only">{met ? " (met)" : " (not met yet)"}</span>
+                  </li>
+                );
+              })}
+            </ul>
 
             <div className="relative">
               <Icon
