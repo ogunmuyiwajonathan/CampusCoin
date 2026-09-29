@@ -54,15 +54,27 @@ transactionSchema.index({ user_id: 1, date: -1 });
 // aggregation never has to scan the whole collection.
 transactionSchema.index({ user_id: 1, category_id: 1 });
 // Makes the double-click guard a database guarantee rather than a client
-// promise. Sparse, so rows written without a request_id (the seeder, imports,
-// generated recurring rows) are all exempt and do not collide with one another.
-// This only holds while request_id is left unset rather than set to null.
-transactionSchema.index({ user_id: 1, request_id: 1 }, { unique: true, sparse: true });
+// promise.
+//
+// Partial, not sparse. A sparse index on a compound key still indexes a document
+// when any of its fields are present, so with user_id always set, a sparse index
+// wrote a null request_id entry for every row written without one (the seeder, a
+// CSV import, a generated recurring row) and the second such row for a student
+// was rejected as a duplicate. A partial filter that requires request_id to
+// exist exempts those rows entirely.
+transactionSchema.index(
+  { user_id: 1, request_id: 1 },
+  { unique: true, partialFilterExpression: { request_id: { $type: "string" } } },
+);
 // Makes the recurring catch-up idempotent: the same series cannot write two rows
 // for one date, so a pass that runs twice inserts nothing the second time.
-transactionSchema.index({ user_id: 1, recurring_root: 1, date: 1 }, {
-  sparse: true,
-  unique: true,
-});
+// Partial for the same reason as the index above.
+transactionSchema.index(
+  { user_id: 1, recurring_root: 1, date: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { recurring_root: { $type: "objectId" } },
+  },
+);
 
 export const Transaction = mongoose.model("Transaction", transactionSchema);

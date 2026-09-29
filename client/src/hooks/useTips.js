@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { apiFetch } from "../lib/apiClient.js";
+import { apiFetch, dismissTip, pinTip, restoreTip, unpinTip } from "../lib/apiClient.js";
 import { currentMonthKey } from "../lib/formatMonth.js";
 
 // The tips engine ships as its own stage of work, so this hook treats a route

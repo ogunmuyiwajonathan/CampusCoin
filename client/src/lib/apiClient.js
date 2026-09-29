@@ -283,6 +283,63 @@ export function markAllNotificationsRead() {
   return apiFetch("/notifications/read-all", { method: "PATCH" });
 }
 
+// ------------------------------------------------------------------ tips
+
+export function listTips(month) {
+  return apiFetch(`/tips?month=${encodeURIComponent(month)}`);
+}
+
+export function listDismissedTips(month) {
+  return apiFetch(`/tips/dismissed?month=${encodeURIComponent(month)}`);
+}
+
+export function pinTip(id) {
+  return apiFetch(`/tips/${id}/pin`, { method: "POST" });
+}
+
+export function unpinTip(id) {
+  return apiFetch(`/tips/${id}/unpin`, { method: "POST" });
+}
+
+export function dismissTip(id) {
+  return apiFetch(`/tips/${id}/dismiss`, { method: "POST" });
+}
+
+export function restoreTip(id) {
+  return apiFetch(`/tips/${id}/restore`, { method: "POST" });
+}
+
+// -------------------------------------------------------------- insights
+
+export function listInsights() {
+  return apiFetch("/insights");
+}
+
+export function getInsight(month) {
+  return apiFetch(`/insights/month?month=${encodeURIComponent(month)}`);
+}
+
+export function regenerateInsight(month) {
+  return apiFetch(`/insights/month?month=${encodeURIComponent(month)}`, { method: "POST" });
+}
+
+// --------------------------------------------------------- categorisation
+
+export function suggestCategory(text) {
+  return apiFetch(`/ai/categorise/suggest?q=${encodeURIComponent(text)}`);
+}
+
+export function confirmSuggestion({ description, categoryId }) {
+  return apiFetch("/ai/categorise/confirm", {
+    method: "POST",
+    body: { description, category_id: categoryId },
+  });
+}
+
+export function suggestCategoryBatch(rows) {
+  return apiFetch("/ai/categorise/batch", { method: "POST", body: { rows } });
+}
+
 // ---------------------------------------------------------------- reports
 
 // The filter is built here rather than in the page so every caller sends the

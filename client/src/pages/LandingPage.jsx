@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
 import Reveal from "../components/Reveal.jsx";
+import Sitemap from "../components/Sitemap.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import SpendingDonut from "../components/SpendingDonut.jsx";
 import { CATEGORY_COLORS } from "../data/mockData.js";
@@ -570,6 +571,10 @@ export default function LandingPage() {
               <Icon name="arrow-right" size={17} />
             </button>
           </Reveal>
+        </section>
+
+        <section id="sitemap" className="mx-auto max-w-7xl px-4 pb-16 pt-14">
+          <Sitemap />
         </section>
       </main>
 

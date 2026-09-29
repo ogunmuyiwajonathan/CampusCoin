@@ -21,6 +21,37 @@ export const renameConversationSchema = z.object({
 
 export const conversationParamsSchema = z.object({ id: ID });
 
+// The description the student is typing, read as they type. Short and required,
+// because an empty string has nothing to categorise and a very long one is not
+// what the field accepts anyway.
+export const suggestSchema = z.object({
+  q: z
+    .string()
+    .trim()
+    .min(1, "Type a few words first.")
+    .max(140, "Keep the description under 140 characters."),
+});
+
+export const confirmSuggestionSchema = z.object({
+  description: z.string().trim().min(1, "Type a description first.").max(140),
+  category_id: z.string().trim().min(1, "Choose a category."),
+});
+
+// One suggestion per imported CSV row, so the whole batch is reviewed before
+// anything is saved. Capped so the request cannot ask for work the model would
+// never finish.
+export const batchSuggestSchema = z.object({
+  rows: z
+    .array(
+      z.object({
+        row: z.number().int().min(1).max(1000),
+        description: z.string().trim().max(140),
+      }),
+    )
+    .min(1, "There is nothing to categorise.")
+    .max(100, "Suggest 100 rows at a time."),
+});
+
 export const conversationListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(30).default(30),
   cursor: z.string().trim().max(64).optional(),

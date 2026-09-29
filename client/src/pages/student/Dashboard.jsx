@@ -22,7 +22,7 @@ import {
 } from "../../data/mockData.js";
 import { useBudgets } from "../../hooks/useBudgets.js";
 import { useRecentlyViewed } from "../../hooks/useRecentlyViewed.js";
-import { useTips } from "../../hooks/useTips.js";
+import TipsPanel from "../../components/TipsPanel.jsx";
 import { useTransactions } from "../../hooks/useTransactions.js";
 import { currentMonthKey, formatDate, monthLabel } from "../../lib/formatMonth.js";
 import { formatCurrency } from "../../lib/formatCurrency.js";
@@ -99,7 +99,6 @@ export default function Dashboard() {
 
   const { status, items, error, refresh } = useTransactions();
   const budgets = useBudgets();
-  const tips = useTips();
   const recently = useRecentlyViewed();
 
   const totals = computeTotals(items);
@@ -128,13 +127,6 @@ export default function Dashboard() {
   const barWidth = Math.min(Math.max(ratio * 100, 0), 100);
   const isOver = totalLimit > 0 && ratio >= 1;
   const isNear = !isOver && ratio >= 0.95;
-
-  const rankedTips = [...tips.tips].sort(
-    (a, b) =>
-      Number(b.is_pinned ?? false) - Number(a.is_pinned ?? false) ||
-      (b.savings_impact ?? 0) - (a.savings_impact ?? 0),
-  );
-  const topTip = rankedTips[0] ?? null;
 
   // Month-end pace: what has actually been spent divided into the days that
   // have gone by, then stretched over the whole month. The comparison target
@@ -436,9 +428,7 @@ export default function Dashboard() {
                 </div>
               </section>
 
-              <section
-                className={`grid grid-cols-1 gap-4${tips.status === "absent" ? "" : " md:grid-cols-2"}`}
-              >
+              <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="rounded-card bg-surface p-5 shadow-card">
                   <CardTitle
                     action={
@@ -481,48 +471,7 @@ export default function Dashboard() {
                   )}
                 </div>
 
-                {tips.status === "loading" && (
-                  <div
-                    className="h-44 animate-pulse rounded-card bg-surface shadow-card"
-                    role="status"
-                    aria-busy="true"
-                  >
-                    <span className="sr-only">Loading tips...</span>
-                  </div>
-                )}
-
-                {tips.status === "error" && (
-                  <div className="rounded-card bg-surface p-5 shadow-card" role="alert">
-                    <CardTitle>Savings tip</CardTitle>
-                    <p className="text-sm font-semibold text-red-500">{tips.error}</p>
-                    <RetryButton onClick={tips.refresh} />
-                  </div>
-                )}
-
-                {tips.status === "ready" && (
-                  <div className="rounded-card bg-surface p-5 shadow-card">
-                    <CardTitle
-                      action={<Icon name="lightbulb" size={18} className="text-amber-500" />}
-                    >
-                      Savings tip
-                    </CardTitle>
-                    {topTip ? (
-                      <>
-                        <p className="text-sm leading-relaxed text-ink-900">{topTip.text}</p>
-                        {topTip.is_pinned && (
-                          <p className="mt-2 text-xs font-semibold text-ink-500">
-                            Pinned to your list
-                          </p>
-                        )}
-                      </>
-                    ) : (
-                      <p className="text-sm text-ink-500">
-                        No tips this month yet. They appear once there is something worth
-                        changing.
-                      </p>
-                    )}
-                  </div>
-                )}
+                <TipsPanel />
               </section>
 
               <section className="grid grid-cols-1 gap-4 xl:grid-cols-[40fr_35fr_25fr]">

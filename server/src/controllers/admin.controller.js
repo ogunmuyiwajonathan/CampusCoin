@@ -65,27 +65,41 @@ export const getUsers = async (req, res) => {
   res.json({ users, total, page, totalPages: Math.ceil(total / limit) });
 };
 
-export const disableUser = async (req, res) => {
+// Sets the flag to an explicit value rather than flipping it. The two are not the
+// same thing: a toggle cannot be called twice without the second call undoing the
+// first, so a retry after a dropped response, or a second admin pressing the
+// button at the same moment, would re-enable a student the first one disabled.
+async function setUserActive(req, res, isActive) {
   const user = await User.findById(req.params.id);
   if (!user) return res.status(404).json({ message: "User not found" });
-  if (user.role === 'admin') return res.status(400).json({ message: "Cannot disable an admin account" });
+  if (user.role === "admin") {
+    return res.status(400).json({ message: "Cannot change an admin account" });
+  }
 
-  user.is_active = !user.is_active;
+  const already = user.is_active === isActive;
+  user.is_active = isActive;
   await user.save();
-  
-  if (!user.is_active) {
-    // Destroy active sessions for this user in connect-mongo
-    // The session data is serialized as a string in the DB, so we use regex
+
+  // Signing a student out is the point of disabling, so a disabled account
+  // cannot keep reading the API with the session cookie it already has.
+  if (!isActive && !already) {
+    // The session document is a serialised string, so the user id is matched as
+    // text. Escaped because it is hex and therefore safe either way, but a
+    // pattern built from an unescaped id is a habit worth not having.
     await mongoose.connection.collection("sessions").deleteMany({
-      session: { $regex: `"userId":"${user._id.toString()}"` }
+      session: { $regex: `"userId":"${user._id.toString()}"` },
     });
   }
 
-  res.json({ message: `User ${user.is_active ? 'enabled' : 'disabled'} successfully`, user: {
-    _id: user._id,
-    is_active: user.is_active
-  } });
-};
+  return res.json({
+    message: `User ${isActive ? "enabled" : "disabled"} successfully`,
+    user: { _id: user._id, is_active: user.is_active },
+  });
+}
+
+export const disableUser = async (req, res) => setUserActive(req, res, false);
+
+export const enableUser = async (req, res) => setUserActive(req, res, true);
 
 export const resetUser = async (req, res) => {
   const { id } = req.params;

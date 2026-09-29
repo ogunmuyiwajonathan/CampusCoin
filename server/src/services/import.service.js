@@ -106,6 +106,21 @@ function pickFallback(categories, type) {
   return partial ?? ofType[0] ?? null;
 }
 
+// Turns a driver or validation failure into something a student can act on. The
+// raw message would name indexes and internal field names, which tells them
+// nothing about their own file.
+function saveFailureReason(error) {
+  if (error?.name === "ValidationError") {
+    const first = Object.values(error.errors ?? {})[0];
+    return first?.message ? String(first.message) : "That row is not valid.";
+  }
+  if (error?.code === 11000) return "That row duplicates one you already have.";
+  if (typeof error?.message === "string" && error.message) {
+    return "That row could not be saved.";
+  }
+  return "That row could not be saved.";
+}
+
 function matchCategory(categories, raw) {
   const text = clean(raw).toLowerCase();
   if (!text) return null;
@@ -210,6 +225,7 @@ export async function importTransactionsCsv(userId, buffer) {
       lineNumber,
       base,
       payload: {
+        _id: new mongoose.Types.ObjectId(),
         user_id: userId,
         category_id: category._id,
         type,
@@ -234,54 +250,26 @@ export async function importTransactionsCsv(userId, buffer) {
   const failureReasons = new Map();
   if (accepted.length) {
     const documents = accepted.map((entry) => entry.payload);
-    try {
-      await Transaction.insertMany(documents, { ordered: false });
-    } catch (error) {
-      const writeErrors = error?.writeErrors ?? error?.result?.writeErrors;
-      if (Array.isArray(writeErrors) && writeErrors.length) {
-        for (const writeError of writeErrors) {
-          failureReasons.set(
-            writeError.index,
-            String(writeError.errmsg || "That row could not be saved."),
-          );
-        }
-      } else {
-        documents.forEach((_document, index) =>
-          failureReasons.set(index, "That row could not be saved."),
-        );
-      }
-
-      const retryIndexes = Array.from(failureReasons.keys());
-      for (const index of retryIndexes) {
-        try {
-          await Transaction.create(documents[index]);
-          failureReasons.delete(index);
-        } catch {
-          if (!failureReasons.get(index)) {
-            failureReasons.set(index, "That row could not be saved.");
-          }
-        }
+    // Written one document at a time rather than in a single insertMany, because
+    // the report below has to name which row failed and why. insertMany reports
+    // failures by position only, and with ordered:false the positions do not map
+    // back onto the report the student reads.
+    for (let index = 0; index < documents.length; index += 1) {
+      try {
+        await Transaction.create(documents[index]);
+      } catch (error) {
+        failureReasons.set(index, saveFailureReason(error));
       }
     }
   }
 
-  const saved = await Transaction.find({ user_id: userId, import_batch_id: batchId })
-    .select("_id")
-    .lean();
-  const savedIds = new Set(saved.map((row) => String(row._id)));
-
   for (let index = 0; index < accepted.length; index += 1) {
     const entry = accepted[index];
-    const row = { ...entry.base, ...entry.display, status: "accepted" };
-    if (savedIds.has(String(entry.payload._id))) {
-      row.transaction_id = String(entry.payload._id);
-      report.push(row);
+    const row = { ...entry.base, ...entry.display };
+    if (failureReasons.has(index)) {
+      report.push({ ...row, status: "rejected", reason: failureReasons.get(index) });
     } else {
-      report.push({
-        ...row,
-        status: "rejected",
-        reason: failureReasons.get(index) || "That row could not be saved.",
-      });
+      report.push({ ...row, status: "accepted", transaction_id: String(entry.payload._id) });
     }
   }
 

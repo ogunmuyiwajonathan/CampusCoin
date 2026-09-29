@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import adminArt from "../assets/Admin.webp";
 import Icon from "../components/Icon.jsx";
 import SubmitSpinner from "../components/SubmitSpinner.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
@@ -101,30 +100,12 @@ export default function AdminLogin() {
               </li>
             ))}
           </ul>
-
-          <div className="mt-auto flex min-h-0 w-full flex-1 items-end justify-center pt-6">
-            <img
-              src={adminArt}
-              alt=""
-              className="max-h-64 w-auto object-contain lg:max-h-72"
-              aria-hidden="true"
-            />
-          </div>
         </div>
       </aside>
 
       <main className="flex w-full items-center justify-center px-4 py-8 lg:w-1/2 lg:overflow-y-auto lg:p-8">
         <div className="animate-auth-right relative w-full max-w-md">
           <ThemeToggle className="absolute right-3.5 top-3.5 z-10" />
-
-          <div className="mb-6 flex justify-center lg:hidden">
-            <img
-              src={adminArt}
-              alt=""
-              className="max-h-36 w-auto object-contain"
-              aria-hidden="true"
-            />
-          </div>
 
           <div className="rounded-card bg-surface p-7 shadow-card lg:p-8">
             <div className="flex flex-col items-center text-center">

@@ -24,6 +24,9 @@ const check = (name, condition, detail = "") => {
   }
 };
 
+const daysBetween = (from, to) =>
+  Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+
 const throwsWith = async (name, status, fn) => {
   try {
     await fn();
@@ -47,7 +50,7 @@ const expenses = await Category.create([
   { name: `S1 Food ${stamp}`, type: "expense", is_default: false, user_id: user._id },
   { name: `S1 Transport ${stamp}`, type: "expense", is_default: false, user_id: user._id },
 ]);
-const income = await Category.create({
+await Category.create({
   name: `S1 Allowance ${stamp}`,
   type: "income",
   is_default: false,
@@ -118,7 +121,21 @@ try {
   const week2 = await Transaction.findOne({ user_id: user._id, date: "2026-06-08" });
   check("a weekly row generates a week later", Boolean(week2), "no row for 2026-06-08");
   const weekNext = await Transaction.findById(weekly._id).lean();
-  check("weekly next_run_at advances by 7 days", weekNext.next_run_at === "2026-06-15", `got ${weekNext.next_run_at}`);
+  // The row was four months stale, so the catch-up pass advanced it week by week
+  // until it reached the future. What matters is the weekday held and the final
+  // date is ahead of today, not that it stopped after one step.
+  check(
+    "a stale weekly row catches up to the future",
+    weekNext.next_run_at > today,
+    `got ${weekNext.next_run_at}, today ${today}`,
+  );
+  check(
+    "catching up kept the same weekday",
+    new Date(weekNext.next_run_at).getUTCDay() === new Date("2026-06-01").getUTCDay(),
+    `${weekNext.next_run_at} is not the same weekday as 2026-06-01`,
+  );
+  const weeklyDates = await Transaction.find({ recurring_root: weekly._id }).sort({ date: 1 }).lean();
+  check("every weekly occurrence is exactly 7 days apart", weeklyDates.every((row, index) => index === 0 || daysBetween(weeklyDates[index - 1].date, row.date) === 7), JSON.stringify(weeklyDates.map((row) => row.date)));
 
   process.stdout.write("\n2. delete keeps the row recoverable\n");
 
@@ -208,11 +225,15 @@ try {
   );
   check("alternative header spellings are accepted", headerAliases.summary.accepted === 1, JSON.stringify(headerAliases.summary));
 
+  // The thousands separator has to be quoted, exactly as a spreadsheet exports
+  // it. Unquoted, a comma is a column break and no parser can recover the
+  // intended value, so the app reads the two cells as separate columns instead.
   const euro = await importTransactionsCsv(
     user._id,
-    Buffer.from("date,description,amount\n20/07/2026,Day first,1,500.50\n", "utf8"),
+    Buffer.from('date,description,amount\n20/07/2026,Day first,"1,500.50"\n', "utf8"),
   );
-  check("a comma amount and day-first date are read", euro.rows[0].amount === 1500.5, JSON.stringify(euro.rows[0]));
+  check("a day-first date is read", euro.rows[0].date === "2026-07-20", JSON.stringify(euro.rows[0]));
+  check("a quoted thousands amount is read whole", euro.rows[0].amount === 1500.5, JSON.stringify(euro.rows[0]));
 
   const quoted = await importTransactionsCsv(
     user._id,
@@ -238,10 +259,24 @@ try {
     email: `stage1-other-${stamp}@campuscoin.test`,
     password_hash: "x",
   });
-  await importTransactionsCsv(other._id, Buffer.from("date,description,amount\n2026-07-15,Theirs,400\n", "utf8"));
-  const mineAfter = await Transaction.countDocuments({ user_id: user._id, import_batch_id: result.batch_id });
+  await Category.create({
+    name: `S1 Other ${stamp}`,
+    type: "expense",
+    is_default: false,
+    user_id: other._id,
+  });
+  const theirs = await importTransactionsCsv(
+    other._id,
+    Buffer.from(`date,description,amount,category\n2026-07-15,Theirs,400,S1 Other ${stamp}\n`, "utf8"),
+  );
+  check("their import succeeded", theirs.summary.accepted === 1, JSON.stringify(theirs.summary));
+  const mineAfter = await Transaction.countDocuments({ user_id: user._id, import_batch_id: theirs.batch_id });
   check("their import created nothing of mine", mineAfter === 0, `${mineAfter} rows of mine`);
-  await throwsWith("I cannot undo their batch", 404, () => undoImportBatch(user._id, "507f1f77bcf86cd799439011"));
+  const theirRows = await Transaction.find({ user_id: other._id });
+  check("their rows belong to them alone", theirRows.every((row) => String(row.user_id) === String(other._id)));
+  await throwsWith("I cannot undo their batch", 404, () => undoImportBatch(other._id, theirs.batch_id) && undoImportBatch(user._id, theirs.batch_id));
+  const stillTheirs = await Transaction.countDocuments({ user_id: other._id });
+  check("a wrong-owner undo changes nothing", stillTheirs === 1, `${stillTheirs} rows left`);
 
   process.stdout.write("\n7. recurring generation stays inside the reader's own data\n");
 
@@ -250,8 +285,9 @@ try {
   const leaked = await Transaction.countDocuments({ user_id: other._id, recurring_root: { $ne: null } });
   check("nothing I generated leaks into their ledger", leaked === 0, `${leaked} leaked`);
 
-  await User.deleteOne({ _id: other._id });
   await Transaction.deleteMany({ user_id: other._id });
+  await Category.deleteMany({ user_id: other._id });
+  await User.deleteOne({ _id: other._id });
 } finally {
   await Transaction.deleteMany({ user_id: user._id });
   await TransactionHistory.deleteMany({ user_id: user._id });

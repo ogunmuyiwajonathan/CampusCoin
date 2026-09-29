@@ -6,6 +6,7 @@ import ThemeToggle from "../components/ThemeToggle.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import { useSubmitLock } from "../hooks/useSubmitLock.js";
 import SubmitSpinner from "../components/SubmitSpinner.jsx";
+import loginArt from "../assets/login.webp";
 
 const FEATURES = [
   { icon: "chart-column", title: "Track Spending", description: "See where your money goes" },
@@ -70,34 +71,47 @@ export default function Login() {
             made for students, by students.
           </p>
 
-          <ul className="mt-7 flex max-w-md flex-col gap-3.5 pl-4 lg:pl-6">
-            {FEATURES.map((feature) => (
-              <li key={feature.title} className="flex items-center gap-3.5">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                  <Icon name={feature.icon} size={18} />
-                </span>
-                <div>
-                  <p className="text-sm font-bold text-ink-900">{feature.title}</p>
-                  <p className="text-sm text-ink-500">{feature.description}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-7 flex min-h-0 flex-1 gap-6">
+            <div className="flex min-w-0 flex-1 flex-col">
+              <ul className="flex max-w-md flex-col gap-3.5 pl-4 lg:pl-6">
+                {FEATURES.map((feature) => (
+                  <li key={feature.title} className="flex items-center gap-3.5">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                      <Icon name={feature.icon} size={18} />
+                    </span>
+                    <div>
+                      <p className="text-sm font-bold text-ink-900">{feature.title}</p>
+                      <p className="text-sm text-ink-500">{feature.description}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
 
-          <div className="mt-6 flex items-center gap-2 pl-4 lg:pl-6">
-            <p className="-rotate-2 font-['Segoe_Script','Comic_Sans_MS',cursive] text-2xl font-bold text-brand-500">
-              Small Steps
-              <br />
-              Big Goals
-            </p>
-            <Icon name="arrow-right" size={40} className="rotate-12 text-brand-500" />
+              <div className="mt-6 flex items-center gap-2 pl-4 lg:pl-6">
+                <p className="-rotate-2 font-['Segoe_Script','Comic_Sans_MS',cursive] text-2xl font-bold text-brand-500">
+                  Small Steps
+                  <br />
+                  Big Goals
+                </p>
+                <Icon name="arrow-right" size={40} className="rotate-12 text-brand-500" />
+              </div>
+            </div>
+
+            <div
+              id="hero-illustration-slot"
+              className="flex min-w-0 flex-[0_0_32%] items-end"
+              aria-hidden="true"
+            >
+              <img
+                src={loginArt}
+                alt=""
+                width={800}
+                height={908}
+                loading="lazy"
+                className="h-auto w-full max-h-full object-contain object-bottom"
+              />
+            </div>
           </div>
-
-          <div
-            id="hero-illustration-slot"
-            className="min-h-0 w-full max-w-xl flex-1"
-            aria-hidden="true"
-          />
         </div>
       </aside>
 

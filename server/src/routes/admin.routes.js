@@ -25,6 +25,7 @@ router.get("/admin/stats", adminCtrl.getStats);
 // Users
 router.get("/admin/users", adminCtrl.getUsers);
 router.put("/admin/users/:id/disable", adminCtrl.disableUser);
+router.put("/admin/users/:id/enable", adminCtrl.enableUser);
 router.put("/admin/users/:id/reset", adminCtrl.resetUser);
 
 // Categories

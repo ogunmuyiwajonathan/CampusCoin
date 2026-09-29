@@ -4,8 +4,8 @@ TechWiz 7 rules require full disclosure of any AI assistance used while building
 
 ## Tools used
 
-| Tool | What it was used for 
-|------|----------------------|--------------|
+| Tool | What it was used for |
+|------|----------------------|
 | Claude (AI assistant) | Design ideas, task breakdowns, code suggestions 
 | Chatgpt (AI image generation) | Student-with-laptop hero illustration, logo concepts
 | Vscode Copilot | Debugging and Fix my codes |

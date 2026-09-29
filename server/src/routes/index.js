@@ -6,6 +6,7 @@ import ledgerRoutes from "./ledger.routes.js";
 import adminRoutes from "./admin.routes.js";
 import reportsRoutes from "./reports.routes.js";
 import bookmarksRoutes from "./bookmarks.routes.js";
+import insightsRoutes from "./insights.routes.js";
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use("/", adminRoutes);
 router.use("/", ledgerRoutes);
 router.use("/", reportsRoutes);
 router.use("/", bookmarksRoutes);
+router.use("/", insightsRoutes);
 
 export default router;
