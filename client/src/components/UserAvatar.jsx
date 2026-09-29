@@ -1,12 +1,14 @@
 import { useState } from "react";
+import { apiAssetUrl } from "../lib/apiClient.js";
 
 export default function UserAvatar({ name, src, className = "h-9 w-9", textClassName = "text-sm" }) {
   const [failed, setFailed] = useState(false);
+  const resolved = apiAssetUrl(src);
 
-  if (src && !failed) {
+  if (resolved && !failed) {
     return (
       <img
-        src={src}
+        src={resolved}
         alt=""
         onError={() => setFailed(true)}
         className={`${className} shrink-0 rounded-full border border-slate-200 object-cover`}

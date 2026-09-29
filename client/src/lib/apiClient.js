@@ -1,6 +1,16 @@
 
 const BASE = (import.meta.env.VITE_API_URL ?? "/api").replace(/\/+$/, "");
 
+const API_ORIGIN = BASE.match(/^https?:\/\/[^/]+/i)?.[0] ?? "";
+
+export function apiAssetUrl(path) {
+  if (!path || typeof path !== "string") return path;
+  if (/^([a-z][a-z0-9+.-]*:)?\/\//i.test(path)) return path;
+  if (path.startsWith("data:") || path.startsWith("blob:")) return path;
+  if (!API_ORIGIN) return path;
+  return `${API_ORIGIN}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
 export class ApiError extends Error {
   constructor(message, { status, details } = {}) {
     super(message);
