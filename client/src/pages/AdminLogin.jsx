@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
 import SubmitSpinner from "../components/SubmitSpinner.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
@@ -24,6 +24,7 @@ export default function AdminLogin() {
   const { locked, run, minWidth, measure } = useSubmitLock();
   const { refresh } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const submit = async (event) => {
     event.preventDefault();
@@ -46,7 +47,9 @@ export default function AdminLogin() {
             throw new Error("The server couldn't be reached. Please try again.");
           }
           await refresh();
-          navigate("/admin", { replace: true });
+          const from = location.state?.from?.pathname;
+          const back = typeof from === "string" && from.startsWith("/") && !from.startsWith("//") && from.startsWith("/admin") ? from : "/admin";
+          navigate(back, { replace: true });
         },
         { oneShot: true },
       );

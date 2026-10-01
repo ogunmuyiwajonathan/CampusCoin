@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./hooks/AuthProvider.jsx";
 import { ThemeProvider } from "./hooks/ThemeProvider.jsx";
 import { useAuth } from "./hooks/useAuth.js";
@@ -66,10 +66,9 @@ function AdminSkeleton() {
 }
 
 function AdminRoutes() {
-  const { user, status } = useAuth();
+  const { status } = useAuth();
 
   if (status === "loading") return <AdminSkeleton />;
-  if (user?.role !== "admin") return <Navigate to="/admin/login" replace />;
 
   return (
     <ProtectedRoute requireAdmin>
@@ -98,6 +97,9 @@ function AppRoutes() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/faq" element={<Faq />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
 
           <Route
             path="/dashboard"

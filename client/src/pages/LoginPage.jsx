@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import GoogleG from "../components/GoogleG.jsx";
 import Icon from "../components/Icon.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
@@ -20,6 +20,7 @@ const inputClass =
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -38,7 +39,9 @@ export default function Login() {
       await run(
         async () => {
           await handleLogin(email.trim(), password);
-          navigate("/dashboard");
+          const from = location.state?.from?.pathname;
+          const back = typeof from === "string" && from.startsWith("/") && !from.startsWith("//") && !from.startsWith("/admin") ? from : "/dashboard";
+          navigate(back, { replace: true });
         },
         { oneShot: true },
       );

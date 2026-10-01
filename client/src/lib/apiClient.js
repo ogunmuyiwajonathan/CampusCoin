@@ -88,10 +88,6 @@ export function logoutAccount() {
   return apiFetch("/auth/logout", { method: "POST" });
 }
 
-export function demoLogin() {
-  return apiFetch("/auth/demo", { method: "POST" });
-}
-
 export function requestPasswordReset(email) {
   return apiFetch("/auth/forgot-password", { method: "POST", body: { email } });
 }

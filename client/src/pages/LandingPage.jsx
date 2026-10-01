@@ -6,7 +6,6 @@ import Sitemap from "../components/Sitemap.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import SpendingDonut from "../components/SpendingDonut.jsx";
 import { CATEGORY_COLORS } from "../data/mockData.js";
-import { demoLogin } from "../lib/apiClient.js";
 import { formatCurrency } from "../lib/formatCurrency.js";
 import aibot from "../assets/aibot.webp";
 import aboutArt from "../assets/about.webp";
@@ -134,21 +133,9 @@ function SocialIcon({ icon }) {
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const [busy, setBusy] = useState(false);
-
-  const start = async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await demoLogin();
-      navigate("/dashboard");
-    } catch {
-      navigate("/signup");
-    } finally {
-      setBusy(false);
-    }
-  };
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const start = () => navigate("/signup");
 
   useEffect(() => {
     const root = document.documentElement;
