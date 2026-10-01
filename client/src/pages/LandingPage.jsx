@@ -315,6 +315,8 @@ export default function LandingPage() {
             <img
               src={laptop}
               alt="Campus Coin dashboard on a laptop and phone"
+              width={1400}
+              height={783}
               loading="eager"
               className="h-auto w-full object-contain"
             />
@@ -326,6 +328,8 @@ export default function LandingPage() {
             <img
               src={student}
               alt="Student with a laptop wondering where their money went"
+              width={1000}
+              height={800}
               loading="lazy"
               className="mx-auto h-auto w-full max-w-md object-contain"
             />
@@ -386,8 +390,8 @@ export default function LandingPage() {
               <img
                 src={aboutArt}
                 alt="A student reviewing their Campus Coin budget on a laptop"
-                width={1740}
-                height={904}
+                width={1200}
+                height={623}
                 loading="lazy"
                 className="relative mx-auto h-auto w-full object-contain"
               />

@@ -68,6 +68,8 @@ export default function Sidebar({ open, onClose }) {
             src={bushSide}
             alt=""
             aria-hidden="true"
+            width={900}
+            height={757}
             className="max-h-48 w-full select-none object-contain object-bottom"
           />
         </div>

@@ -197,6 +197,8 @@ export default function Dashboard() {
                 <img
                   src={campusboy}
                   alt="Student holding a laptop"
+                  width={900}
+                  height={890}
                   loading="lazy"
                   className="h-30 w-auto shrink-0 object-contain object-bottom sm:h-35 md:h-40 lg:h-44"
                 />
