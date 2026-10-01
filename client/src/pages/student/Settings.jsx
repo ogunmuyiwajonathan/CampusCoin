@@ -11,6 +11,7 @@ import Sidebar from "../../components/Sidebar.jsx";
 import Toast from "../../components/Toast.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
 import { useTheme } from "../../hooks/useTheme.js";
+import { CONTACT_EMAIL } from "../../data/legal.js";
 import { formatCurrency } from "../../lib/formatCurrency.js";
 
 const QUICK_ROWS = [
@@ -18,6 +19,12 @@ const QUICK_ROWS = [
   { icon: "sun", title: "Appearance", subtitle: "Switch between light and dark mode" },
   { icon: "globe", title: "Language", subtitle: "Choose your preferred language" },
   { icon: "shield", title: "Data & Privacy", subtitle: "Control your data and privacy settings" },
+];
+
+const LEGAL_LINKS = [
+  { to: "/faq", label: "FAQ", subtitle: "Answers to common questions", icon: "book-open" },
+  { to: "/privacy", label: "Privacy Policy", subtitle: "What we store and who sees it", icon: "shield" },
+  { to: "/terms", label: "Terms of Service", subtitle: "The rules for using Campus Coin", icon: "file-text" },
 ];
 
 const NOT_ADDED = "Not added";
@@ -366,12 +373,43 @@ export default function Settings() {
                   </p>
                 </div>
                 <a
-                  href="mailto:support@campuscoin.app"
+                  href={`mailto:${CONTACT_EMAIL}`}
                   className="flex items-center gap-2 rounded-lg border border-emerald-300 bg-surface px-4 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
                 >
                   <Icon name="mail" size={14} />
                   Contact Support
                 </a>
+              </section>
+
+              <section className="overflow-hidden rounded-card bg-surface shadow-card">
+                <div className="flex items-center gap-2.5 px-5 py-4">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                    <Icon name="book-open" size={17} />
+                  </span>
+                  <h2 className="font-display text-base font-bold text-ink-900">
+                    Help and legal
+                  </h2>
+                </div>
+                <div className="divide-y divide-slate-100 border-t border-slate-100">
+                  {LEGAL_LINKS.map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      className="flex items-center gap-3.5 px-5 py-4 text-left transition hover:bg-slate-50"
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                        <Icon name={link.icon} size={16} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold text-ink-900">
+                          {link.label}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-ink-500">{link.subtitle}</span>
+                      </span>
+                      <Icon name="chevron-right" size={16} className="shrink-0 text-slate-400" />
+                    </Link>
+                  ))}
+                </div>
               </section>
             </div>
           </div>

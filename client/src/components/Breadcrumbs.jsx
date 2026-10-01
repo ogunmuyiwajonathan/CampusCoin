@@ -6,11 +6,14 @@ const LABELS = {
   "/bookmarks": "Bookmarks",
   "/budgets": "Budgets",
   "/dashboard": "Dashboard",
+  "/faq": "FAQ",
   "/insights": "Insights",
   "/more": "More",
   "/notifications": "Notifications",
+  "/privacy": "Privacy Policy",
   "/reports": "Reports",
   "/settings": "Settings",
+  "/terms": "Terms of Service",
   "/transactions": "Transactions",
 };
 

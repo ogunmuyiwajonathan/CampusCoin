@@ -268,13 +268,23 @@ export default function Signup() {
               />
               <span>
                 I agree to the{" "}
-                <Link to="/terms" className="font-semibold text-brand-600 hover:underline">
+                <a
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-brand-600 hover:underline"
+                >
                   Terms of Service
-                </Link>{" "}
+                </a>{" "}
                 and{" "}
-                <Link to="/privacy" className="font-semibold text-brand-600 hover:underline">
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-brand-600 hover:underline"
+                >
                   Privacy Policy
-                </Link>
+                </a>
               </span>
             </label>
 

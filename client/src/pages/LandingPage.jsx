@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
 import Reveal from "../components/Reveal.jsx";
 import Sitemap from "../components/Sitemap.jsx";
@@ -608,13 +608,12 @@ export default function LandingPage() {
             <ul className="mt-3 space-y-2">
               {ACCOUNT_LINKS.map((link) => (
                 <li key={link.label}>
-                  <button
-                    type="button"
-                    onClick={() => navigate(link.to)}
+                  <Link
+                    to={link.to}
                     className="text-sm text-white/85 transition hover:text-white hover:underline"
                   >
                     {link.label}
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>
