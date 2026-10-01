@@ -5,6 +5,7 @@ import SubmitSpinner from "../components/SubmitSpinner.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import { useSubmitLock } from "../hooks/useSubmitLock.js";
+import { adminLogin } from "../lib/apiClient.js";
 
 const inputClass =
   "w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-11 text-sm text-ink-900 placeholder:text-ink-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60";
@@ -31,11 +32,7 @@ export default function AdminLogin() {
     try {
       await run(
         async () => {
-          const res = await fetch("/api/admin/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ password, rememberMe }),
-          });
+          const res = await adminLogin({ password, rememberMe });
           const data = await res.json().catch(() => ({}));
           if (!res.ok) {
             if (res.status === 429) {
@@ -43,7 +40,10 @@ export default function AdminLogin() {
                 data.error?.message || "Too many attempts. Please wait a few minutes.",
               );
             }
-            throw new Error(data.error?.message || "That password does not match.");
+            if (res.status === 401 || res.status === 400) {
+              throw new Error(data.error?.message || "That password does not match.");
+            }
+            throw new Error("The server couldn't be reached. Please try again.");
           }
           await refresh();
           navigate("/admin", { replace: true });

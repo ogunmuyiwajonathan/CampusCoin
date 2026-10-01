@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Icon from "../../components/Icon.jsx";
 import SubmitSpinner from "../../components/SubmitSpinner.jsx";
 import { useSubmitLock } from "../../hooks/useSubmitLock.js";
+import { adminFetch } from "../../lib/apiClient.js";
 
 function AnnouncementModal({ ann, onClose, onSave }) {
   const [title, setTitle] = useState(ann?.title ?? "");
@@ -18,7 +19,7 @@ function AnnouncementModal({ ann, onClose, onSave }) {
       await run(async () => {
         const url = ann ? `/api/admin/announcements/${ann.id}` : "/api/admin/announcements";
         const method = ann ? "PUT" : "POST";
-        const res = await fetch(url, {
+        const res = await adminFetch(url, {
           method,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: title.trim(), body: body.trim(), active }),
@@ -81,7 +82,7 @@ export default function Announcements() {
   const deleteLockRef = useRef(false);
 
   const requestAnnouncements = async () => {
-    const res = await fetch("/api/admin/announcements");
+    const res = await adminFetch("/api/admin/announcements");
     if (!res.ok) throw new Error("Failed to load announcements");
     return res.json();
   };
@@ -123,7 +124,7 @@ export default function Announcements() {
     deleteLockRef.current = true;
     setDeleting(ann.id);
     try {
-      await fetch(`/api/admin/announcements/${ann.id}`, { method: "DELETE" });
+      await adminFetch(`/api/admin/announcements/${ann.id}`, { method: "DELETE" });
       await load();
     } catch {
     } finally {
@@ -215,3 +216,6 @@ export default function Announcements() {
     </div>
   );
 }
+
+
+

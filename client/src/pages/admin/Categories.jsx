@@ -4,6 +4,7 @@ import CategoryIcon from "../../components/CategoryIcon.jsx";
 import CategoryIconPicker from "../../components/CategoryIconPicker.jsx";
 import SubmitSpinner from "../../components/SubmitSpinner.jsx";
 import { useSubmitLock } from "../../hooks/useSubmitLock.js";
+import { adminFetch } from "../../lib/apiClient.js";
 
 function CategoryModal({ cat, onClose, onSave }) {
   const [name, setName] = useState(cat?.name ?? "");
@@ -21,7 +22,7 @@ function CategoryModal({ cat, onClose, onSave }) {
       await run(async () => {
         const url = cat ? `/api/admin/categories/${cat.id}` : "/api/admin/categories";
         const method = cat ? "PUT" : "POST";
-        const res = await fetch(url, {
+        const res = await adminFetch(url, {
           method,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: name.trim(), type, icon_key: iconKey, icon_svg: iconSvg }),
@@ -108,7 +109,7 @@ export default function Categories() {
   const loadLockRef = useRef(false);
 
   const requestCategories = async () => {
-    const res = await fetch("/api/admin/categories");
+    const res = await adminFetch("/api/admin/categories");
     if (!res.ok) throw new Error("Failed to load categories");
     return res.json();
   };
@@ -151,7 +152,7 @@ export default function Categories() {
     setDeleteError(null);
     setDeleting(cat.id);
     try {
-      const res = await fetch(`/api/admin/categories/${cat.id}`, { method: "DELETE" });
+      const res = await adminFetch(`/api/admin/categories/${cat.id}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Delete failed");
       await load();
@@ -309,3 +310,6 @@ export default function Categories() {
     </div>
   );
 }
+
+
+

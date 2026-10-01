@@ -11,6 +11,7 @@ import {
 import Icon from "../../components/Icon.jsx";
 import AdminStatCard from "../../components/admin/AdminStatCard.jsx";
 import { categoryColor } from "../../data/mockData.js";
+import { adminFetch } from "../../lib/apiClient.js";
 
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -31,7 +32,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
 
   const requestStats = async () => {
-    const res = await fetch("/api/admin/stats");
+    const res = await adminFetch("/api/admin/stats");
     if (!res.ok) throw new Error("Failed to load stats");
     return res.json();
   };
@@ -198,3 +199,6 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+
+

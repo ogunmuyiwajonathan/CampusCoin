@@ -354,3 +354,36 @@ export function editBookmark(id, body) {
 export function removeBookmark(id) {
   return apiFetch(`/bookmarks/${id}`, { method: "DELETE" });
 }
+
+// The admin pages were written against a hardcoded "/api/..." path, which the
+// Vite dev proxy forwarded to the API and a static host answers 405. This keeps
+// the plain fetch contract those pages already read (res.ok, res.json) and only
+// fixes the host, so their response handling does not have to change.
+export function adminFetch(path, options = {}) {
+  const suffix = String(path ?? "").replace(/^\/api(?=\/|$)/, "");
+  return fetch(`${BASE}${suffix}`, { credentials: "include", ...options });
+}
+
+export function adminLogin({ password, rememberMe }) {
+  return adminFetch("/api/admin/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password, rememberMe }),
+  });
+}
+
+export function adminForgotPassword(name) {
+  return adminFetch("/api/admin/auth/forgot-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+}
+
+export function adminResetPassword(name, code, password) {
+  return adminFetch("/api/admin/auth/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, code, password }),
+  });
+}

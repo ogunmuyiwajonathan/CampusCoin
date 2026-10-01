@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Icon from "../../components/Icon.jsx";
 import SubmitSpinner from "../../components/SubmitSpinner.jsx";
+import { adminFetch } from "../../lib/apiClient.js";
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -17,7 +18,7 @@ export default function Users() {
   const searchLockRef = useRef(false);
 
   const requestUsers = async (p, s) => {
-    const res = await fetch(`/api/admin/users?page=${p}&limit=10&search=${encodeURIComponent(s)}`);
+    const res = await adminFetch(`/api/admin/users?page=${p}&limit=10&search=${encodeURIComponent(s)}`);
     if (!res.ok) throw new Error("Failed to load users");
     return res.json();
   };
@@ -81,7 +82,7 @@ export default function Users() {
     try {
       setActionLoading(user.user_id);
       setActionError("");
-      const res = await fetch(`/api/admin/users/${user.user_id}/${disabling ? "disable" : "enable"}`, {
+      const res = await adminFetch(`/api/admin/users/${user.user_id}/${disabling ? "disable" : "enable"}`, {
         method: "PUT",
       });
       if (!res.ok) {
@@ -103,7 +104,7 @@ export default function Users() {
     try {
       setActionLoading(id);
       setActionError("");
-      const res = await fetch(`/api/admin/users/${id}/reset`, { method: "PUT" });
+      const res = await adminFetch(`/api/admin/users/${id}/reset`, { method: "PUT" });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.message || "Reset failed");
@@ -315,3 +316,6 @@ export default function Users() {
     </div>
   );
 }
+
+
+

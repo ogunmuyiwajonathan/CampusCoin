@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "../../components/Icon.jsx";
 import SubmitSpinner from "../../components/SubmitSpinner.jsx";
 import { useSubmitLock } from "../../hooks/useSubmitLock.js";
+import { adminFetch } from "../../lib/apiClient.js";
 
 const FALLBACK_RULES = [
   {
@@ -114,7 +115,7 @@ function TipModal({ tip, rules, onClose, onSaved }) {
 
     try {
       await run(async () => {
-        const res = await fetch(tip ? `/api/admin/tips/${tip.id}` : "/api/admin/tips", {
+        const res = await adminFetch(tip ? `/api/admin/tips/${tip.id}` : "/api/admin/tips", {
           method: tip ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
@@ -342,8 +343,8 @@ export default function Tips() {
     loadLock.current = true;
     try {
       const [tipsRes, rulesRes] = await Promise.all([
-        fetch("/api/admin/tips"),
-        fetch("/api/admin/tip-rules"),
+        adminFetch("/api/admin/tips"),
+        adminFetch("/api/admin/tip-rules"),
       ]);
       const tipsBody = await readJson(tipsRes);
       if (!tipsRes.ok) throw new Error(messageFrom(tipsBody, "The tip list could not be loaded."));
@@ -362,7 +363,7 @@ export default function Tips() {
   useEffect(() => {
     let cancelled = false;
     loadLock.current = true;
-    Promise.all([fetch("/api/admin/tips"), fetch("/api/admin/tip-rules")])
+    Promise.all([adminFetch("/api/admin/tips"), adminFetch("/api/admin/tip-rules")])
       .then(async ([tipsRes, rulesRes]) => {
         if (cancelled) return;
         const tipsBody = await readJson(tipsRes);
@@ -407,7 +408,7 @@ export default function Tips() {
 
   const toggleActive = (tip) =>
     act(tip.id, async (id) => {
-      const res = await fetch(`/api/admin/tips/${id}`, {
+      const res = await adminFetch(`/api/admin/tips/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_active: !tip.is_active }),
@@ -421,7 +422,7 @@ export default function Tips() {
   const handleDelete = (tip) => {
     if (!window.confirm(`Delete "${tip.key}"? Students stop seeing it immediately.`)) return;
     act(tip.id, async (id) => {
-      const res = await fetch(`/api/admin/tips/${id}`, { method: "DELETE" });
+      const res = await adminFetch(`/api/admin/tips/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(messageFrom(await readJson(res), "That tip could not be deleted."));
       return `"${tip.key}" was deleted.`;
     });
@@ -612,3 +613,6 @@ export default function Tips() {
     </div>
   );
 }
+
+
+
