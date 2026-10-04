@@ -201,5 +201,5 @@ try {
 process.stdout.write(`\nroute authz: ${passed} passed, ${failed} failed\n`);
 if (failed) {
   process.stdout.write(`failing: ${failures.join(", ")}\n`);
-  process.exitCode = 1;
 }
+process.exit(failed === 0 ? 0 : 1);
