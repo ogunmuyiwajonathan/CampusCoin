@@ -41,6 +41,10 @@ const money = (amount) =>
 
 const FOCUS_RING = "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500";
 
+/** Icon-only buttons need a real 44px touch target, not just padding around the icon. */
+const TOUCH_TARGET =
+  "flex h-11 w-11 items-center justify-center md:h-9 md:w-9";
+
 function firstName(user) {
   const name = user?.name;
   if (typeof name !== "string") return "";
@@ -104,6 +108,26 @@ function TypingRow() {
   );
 }
 
+/**
+ * The saved card used to read "Food · Food · 2026-10-01": the category printed
+ * twice (once as the description, once as the category) and the date was raw.
+ * The category name appears once and the description is only added when it says
+ * something the category does not already say.
+ */
+function savedMeta(proposal) {
+  const category = proposal?.category_name ?? "";
+  const description = String(proposal?.description ?? "").trim();
+  const sameAsCategory =
+    description &&
+    description.toLowerCase() === String(category).toLowerCase();
+  const parts = [];
+  if (description && !sameAsCategory) parts.push(description);
+  if (category) parts.push(category);
+  else if (description) parts.push(description);
+  parts.push(formatDate(proposal?.date ?? ""));
+  return parts.filter(Boolean).join(" · ");
+}
+
 function ProposalBlock({
   messageId,
   proposal,
@@ -115,6 +139,7 @@ function ProposalBlock({
   onConfirm,
   onCancel,
   onRecreate,
+  onViewTransactions,
 }) {
   const [picked, setPicked] = useState("");
   const isIncome = proposal?.type === "income";
@@ -136,9 +161,15 @@ function ProposalBlock({
           <div className="min-w-0">
             <p className="text-sm font-semibold text-ink-900">Saved · {amount}</p>
             <p className="mt-0.5 break-words text-sm text-ink-500">
-              {proposal.description}
-              {categoryLabel ? ` · ${categoryLabel}` : ""} · {dateText}
+              {savedMeta(proposal)}
             </p>
+            <button
+              type="button"
+              onClick={onViewTransactions}
+              className={`mt-1.5 text-xs font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800 ${FOCUS_RING}`}
+            >
+              View in Transactions
+            </button>
           </div>
         </div>
       </div>
@@ -244,8 +275,17 @@ function ProposalBlock({
       )}
 
       {proposalError ? (
-        <p className="text-sm font-medium text-red-500">{proposalError}</p>
-      ) : null}
+          <p className="text-sm font-medium text-red-500">
+            {proposalError}{" "}
+            <button
+              type="button"
+              onClick={() => onConfirm(picked)}
+              className={`font-semibold underline ${FOCUS_RING}`}
+            >
+              Try again
+            </button>
+          </p>
+        ) : null}
 
       <div className="flex flex-wrap gap-2">
         <button
@@ -698,7 +738,8 @@ export default function AssistantChat({ onClose } = {}) {
       type="button"
       onClick={onClose}
       aria-label="Close assistant"
-      className={`rounded-lg p-1.5 text-ink-500 transition hover:bg-slate-100 ${FOCUS_RING}`}
+      title="Close assistant"
+      className={`${TOUCH_TARGET} rounded-lg text-ink-500 transition hover:bg-slate-100 ${FOCUS_RING}`}
     >
       <Icon name="x" size={18} />
     </button>
@@ -752,9 +793,10 @@ export default function AssistantChat({ onClose } = {}) {
               type="button"
               onClick={() => setShowHistory((value) => !value)}
               aria-label="Chat history"
+              title="Chat history"
               aria-expanded={showHistory}
               aria-controls="rix-history"
-              className={`rounded-lg p-1.5 transition hover:bg-slate-100 ${
+              className={`${TOUCH_TARGET} rounded-lg transition hover:bg-slate-100 ${
                 showHistory ? "bg-slate-100 text-ink-900" : "text-ink-500"
               } ${FOCUS_RING}`}
             >
@@ -764,7 +806,8 @@ export default function AssistantChat({ onClose } = {}) {
               type="button"
               onClick={startNewChat}
               aria-label="New chat"
-              className={`rounded-lg p-1.5 text-ink-500 transition hover:bg-slate-100 ${FOCUS_RING}`}
+              title="New chat"
+              className={`${TOUCH_TARGET} rounded-lg text-ink-500 transition hover:bg-slate-100 ${FOCUS_RING}`}
             >
               <Icon name="plus" size={18} />
             </button>
@@ -847,7 +890,7 @@ export default function AssistantChat({ onClose } = {}) {
                   {grouped ? null : <BotAvatar />}
                   <div className="min-w-0 flex-1 space-y-3">
                     {text ? (
-                      <p className="whitespace-pre-wrap break-words rounded-2xl rounded-tl-md bg-slate-100 px-4 py-2.5 text-sm leading-relaxed text-ink-900">
+                      <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-tl-md bg-slate-100 px-4 py-2.5 text-sm leading-relaxed text-ink-900 lg:max-w-[70%]">
                         {text}
                       </p>
                     ) : null}
@@ -864,6 +907,7 @@ export default function AssistantChat({ onClose } = {}) {
                       onConfirm={(categoryId) => onConfirm(message.id, categoryId)}
                       onCancel={() => onCancelProposal(message.id)}
                       onRecreate={() => onRecreate(message.id)}
+                      onViewTransactions={() => navigate("/transactions")}
                     />
                   </div>
                 </div>
@@ -880,7 +924,7 @@ export default function AssistantChat({ onClose } = {}) {
             return (
               <div key={message.id} className={`${wrapper} mb-4`}>
                 {grouped ? null : <BotAvatar />}
-                <p className="whitespace-pre-wrap break-words rounded-2xl rounded-tl-md bg-slate-100 px-4 py-2.5 text-sm leading-relaxed text-ink-900">
+                <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-tl-md bg-slate-100 px-4 py-2.5 text-sm leading-relaxed text-ink-900 lg:max-w-[70%]">
                   {honest}
                 </p>
               </div>
@@ -896,6 +940,7 @@ export default function AssistantChat({ onClose } = {}) {
             type="button"
             onClick={jumpToLatest}
             aria-label="Scroll to the latest reply"
+            title="Jump to latest"
             className={`absolute bottom-3 left-1/2 z-10 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border border-slate-200 bg-surface text-ink-500 shadow-card transition hover:text-ink-900 ${FOCUS_RING}`}
           >
             <Icon name="arrow-down" size={18} />
