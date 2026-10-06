@@ -115,15 +115,17 @@ function TypingRow() {
  * something the category does not already say.
  */
 function savedMeta(proposal) {
-  const category = proposal?.category_name ?? "";
+  const category = String(proposal?.category_name ?? "").trim();
   const description = String(proposal?.description ?? "").trim();
-  const sameAsCategory =
-    description &&
-    description.toLowerCase() === String(category).toLowerCase();
   const parts = [];
-  if (description && !sameAsCategory) parts.push(description);
-  if (category) parts.push(category);
-  else if (description) parts.push(description);
+  if (category) {
+    if (description && description.toLowerCase() !== category.toLowerCase()) {
+      parts.push(description);
+    }
+    parts.push(category);
+  } else if (description) {
+    parts.push(description);
+  }
   parts.push(formatDate(proposal?.date ?? ""));
   return parts.filter(Boolean).join(" · ");
 }
