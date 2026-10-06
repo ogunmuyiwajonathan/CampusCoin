@@ -77,3 +77,11 @@ export async function confirmProposal(messageId, categoryId) {
 export async function cancelProposal(messageId) {
   return apiFetch(`/ai/messages/${messageId}/cancel`, { method: "POST" });
 }
+
+/** "Create it again" for a draft that has gone stale. */
+export async function recreateProposal(messageId) {
+  const data = await apiFetch(`/ai/messages/${messageId}/recreate`, {
+    method: "POST",
+  });
+  return data.message ?? null;
+}

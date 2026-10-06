@@ -1,9 +1,15 @@
 import { Budget, Category, Transaction, User } from "../models/index.js";
+import { materialiseRecurring } from "./ledger.service.js";
+import {
+  currentMonth as lagosCurrentMonth,
+  dayOfMonth as lagosDayOfMonth,
+  daysInMonth,
+} from "../utils/lagosDate.js";
 
 const NEAR_LIMIT = 0.95;
 
 export function currentMonth() {
-  return new Date().toISOString().slice(0, 7);
+  return lagosCurrentMonth();
 }
 
 export function shiftMonth(month, delta) {
@@ -11,10 +17,7 @@ export function shiftMonth(month, delta) {
   return new Date(Date.UTC(year, mon - 1 + delta, 1)).toISOString().slice(0, 7);
 }
 
-export function daysInMonth(month) {
-  const [year, mon] = month.split("-").map(Number);
-  return new Date(Date.UTC(year, mon, 0)).getUTCDate();
-}
+export { daysInMonth };
 
 export function monthWindow(month) {
   return { $gte: `${month}-01`, $lte: `${month}-31` };
@@ -78,10 +81,14 @@ function compareBreakdown(current, previous) {
 }
 
 export async function buildSnapshot(userId) {
+  // The Dashboard reads its totals through listTransactions(), which first
+  // materialises any recurring row that has come due. Without the same call
+  // here Rix would quote totals that are behind the Dashboard card.
+  await materialiseRecurring(userId);
+
   const month = currentMonth();
   const prevMonth = shiftMonth(month, -1);
-  const now = new Date();
-  const dayOfMonth = now.getUTCDate();
+  const dayOfMonth = lagosDayOfMonth();
   const monthDays = daysInMonth(month);
   const daysLeft = Math.max(monthDays - dayOfMonth, 0);
 
@@ -253,8 +260,7 @@ export async function comparePeriods(userId, a, b) {
 
 export async function forecastMonthEnd(userId, categoryName) {
   const month = currentMonth();
-  const now = new Date();
-  const dayOfMonth = now.getUTCDate();
+  const dayOfMonth = lagosDayOfMonth();
   const monthDays = daysInMonth(month);
   const byCategory = await monthByCategory(userId, month);
   const names = await categoryNames(byCategory.map((row) => row._id));

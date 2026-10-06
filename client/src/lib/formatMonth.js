@@ -1,11 +1,14 @@
+import { currentMonth as lagosCurrentMonth, todayString } from "../../../server/src/utils/lagosDate.js";
+
 const DATE_LOCALE = "en-US";
 
 export function monthKey(isoDate) {
   return isoDate.slice(0, 7);
 }
 
-export function currentMonthKey(today = new Date()) {
-  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+/** The month the app considers current, resolved in Africa/Lagos. */
+export function currentMonthKey() {
+  return lagosCurrentMonth();
 }
 
 export function monthLabel(key) {
@@ -20,6 +23,15 @@ export function shiftMonthKey(key, delta) {
   const [year, month] = key.split("-").map(Number);
   const date = new Date(year, month - 1 + delta, 1);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/**
+ * The month dropdown choices: the current month plus the ones before it. The
+ * list is built from the calendar, never from the rows that happen to have
+ * loaded, so a month with no data is still selectable.
+ */
+export function monthOptions(count = 12, from = currentMonthKey()) {
+  return Array.from({ length: Math.max(1, count) }, (_, index) => shiftMonthKey(from, -index));
 }
 
 export function monthRangeShort(startKey, endKey) {
@@ -64,9 +76,7 @@ export function formatDayMonth(isoDate) {
   return date.toLocaleDateString(DATE_LOCALE, { month: "short", day: "numeric" });
 }
 
+/** Today in Africa/Lagos as `YYYY-MM-DD`. */
 export function todayISO() {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${now.getFullYear()}-${month}-${day}`;
+  return todayString();
 }

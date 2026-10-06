@@ -107,4 +107,11 @@ router.post(
   ai.cancelProposal,
 );
 
+router.post(
+  "/messages/:id/recreate",
+  requireAuth,
+  validate({ params: conversationParamsSchema }),
+  ai.recreateProposal,
+);
+
 export default router;

@@ -10,13 +10,15 @@ export default function Assistant() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-svh">
+    // A fixed-height page: the chat owns the viewport so the composer and the
+    // pinned draft bar stay on screen above the tab bar and the home indicator.
+    <div className="h-[100dvh] overflow-hidden">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <MobileNav />
 
-      <div className="lg:pl-60">
-        <main className="flex min-h-svh flex-col px-4 pb-24 pt-5 md:pb-5">
-          <header className="mb-4">
+      <div className="h-full lg:pl-60">
+        <main className="flex h-full min-h-0 flex-col px-4 pb-[calc(6rem_+_env(safe-area-inset-bottom))] pt-5 md:pb-5">
+          <header className="mb-4 shrink-0">
             <div className="flex items-center gap-3">
               <button
                 type="button"

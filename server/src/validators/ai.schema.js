@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { daysFromToday } from "../utils/lagosDate.js";
 
 const ID = z.string().trim().min(1).max(64);
 
@@ -65,15 +66,10 @@ function isPlausibleDate(value) {
   );
 }
 
-function daysFromToday(value) {
-  const [year, month, day] = value.split("-").map(Number);
-  const target = Date.UTC(year, month - 1, day);
-  const now = new Date();
-  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-  return Math.round((target - today) / 86400000);
-}
-
 export const proposalSchema = z.object({
+  type: z
+    .enum(["income", "expense"], { message: "Type must be income or expense." })
+    .default("expense"),
   amount: z
     .number({ message: "An amount is needed." })
     .positive("The amount must be more than zero.")

@@ -1,3 +1,5 @@
+import { todayString as appTodayString } from "./lagosDate.js";
+
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MONTH_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
@@ -25,7 +27,7 @@ export function isDateString(value) {
 }
 
 export function todayString(now = new Date()) {
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return appTodayString(now);
 }
 
 export function addDays(dateString, days) {

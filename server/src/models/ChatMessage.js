@@ -3,6 +3,7 @@ import { defineSchema } from "../utils/idOptions.js";
 
 const proposalSchema = new mongoose.Schema(
   {
+    type: { type: String, enum: ["income", "expense"], default: "expense" },
     amount: { type: Number, required: true, min: 0 },
     description: { type: String, default: "", trim: true, maxlength: 140 },
     category_id: { type: mongoose.Schema.Types.ObjectId, ref: "Category", default: null },
@@ -10,7 +11,7 @@ const proposalSchema = new mongoose.Schema(
     date: { type: String, required: true, match: /^\d{4}-\d{2}-\d{2}$/ },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "cancelled"],
+      enum: ["pending", "confirmed", "cancelled", "superseded", "expired"],
       default: "pending",
     },
     transaction_id: { type: mongoose.Schema.Types.ObjectId, default: null },
