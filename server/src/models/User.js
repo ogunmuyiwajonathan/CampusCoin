@@ -34,4 +34,13 @@ const userSchema = defineSchema(
   { timestamps: true },
 );
 
+// Added for the admin typeahead. explain() showed the admin user search
+// ($or over name and email) answering COLLSCAN while email_1 sat unused: one
+// branch of the $or was indexed and the other was not, so the planner had no
+// index-only plan and fell back to reading every account. With name_1 present
+// the same query plans as IXSCAN email_1 + name_1. A compound {name, email}
+// does NOT help - MongoDB needs one index per $or branch - so this is a single
+// field index on purpose.
+userSchema.index({ name: 1 });
+
 export const User = mongoose.model("User", userSchema);

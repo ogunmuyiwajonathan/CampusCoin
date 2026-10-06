@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import Icon from "../../components/Icon.jsx";
 import SubmitSpinner from "../../components/SubmitSpinner.jsx";
 import { useSubmitLock } from "../../hooks/useSubmitLock.js";
@@ -77,7 +78,9 @@ export default function Announcements() {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [modal, setModal] = useState(null);
+  // "New announcement" in the header typeahead arrives as ?new=1.
+  const [params] = useSearchParams();
+  const [modal, setModal] = useState(() => (params.get("new") === "1" ? { ann: null } : null));
   const [deleting, setDeleting] = useState(null);
   const deleteLockRef = useRef(false);
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 import Icon from "../../components/Icon.jsx";
 import AssistantFab from "../../components/AssistantFab.jsx";
 import MobileNav from "../../components/MobileNav.jsx";
@@ -81,6 +82,10 @@ export default function Bookmarks() {
   const [savingId, setSavingId] = useState("");
   const [toast, setToast] = useState(null);
 
+  // A bookmark result from the typeahead opens on the month it came from.
+  const [searchParams] = useSearchParams();
+  const focusMonth = searchParams.get("month");
+
   const requestKey = `bookmarks:${nonce}`;
 
   useEffect(() => {
@@ -123,6 +128,12 @@ export default function Bookmarks() {
     }
     return [...byMonth.entries()].sort(([a], [b]) => (a === "other" ? 1 : b === "other" ? -1 : b.localeCompare(a)));
   }, [bookmarks]);
+
+  // With a month in the URL only that month is shown, which is what makes a
+  // single bookmark from the typeahead feel like it landed somewhere.
+  const visibleGroups = focusMonth
+    ? groups.filter(([key]) => key === focusMonth || (key === "other" && !focusMonth))
+    : groups;
 
   const replace = (bookmark) =>
     setResult((current) => {
@@ -199,6 +210,18 @@ export default function Bookmarks() {
               >
                 Try again
               </button>
+            </div>
+          )}
+
+          {status === "ready" && bookmarks.length > 0 && visibleGroups.length === 0 && (
+            <div className="rounded-card bg-surface p-8 text-center shadow-card">
+              <p className="text-sm font-semibold text-ink-900">Nothing saved for that month</p>
+              <Link
+                to="/bookmarks"
+                className="mt-3 inline-block text-xs font-bold text-brand-600 hover:underline"
+              >
+                Show every saved month
+              </Link>
             </div>
           )}
 

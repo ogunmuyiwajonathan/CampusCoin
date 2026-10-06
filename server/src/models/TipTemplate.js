@@ -17,4 +17,9 @@ const tipTemplateSchema = defineSchema(
 
 tipTemplateSchema.index({ is_active: 1, savings_impact: -1 });
 
+// Added for the admin typeahead. key is already uniquely indexed, but the search
+// is $or over text and key, so the un-indexed text branch was enough to force a
+// COLLSCAN. One index per $or branch: explain() plans IXSCAN key_1 + text_1.
+tipTemplateSchema.index({ text: 1 });
+
 export const TipTemplate = mongoose.model("TipTemplate", tipTemplateSchema);

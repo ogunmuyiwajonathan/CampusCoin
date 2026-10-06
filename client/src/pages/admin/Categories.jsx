@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import Icon from "../../components/Icon.jsx";
 import CategoryIcon from "../../components/CategoryIcon.jsx";
 import CategoryIconPicker from "../../components/CategoryIconPicker.jsx";
@@ -102,7 +103,10 @@ export default function Categories() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [modal, setModal] = useState(null);
+  // "New default category" in the header typeahead arrives as ?new=1, so the
+  // blank form is what this page renders with on arrival.
+  const [params] = useSearchParams();
+  const [modal, setModal] = useState(() => (params.get("new") === "1" ? { cat: null } : null));
   const [deleteError, setDeleteError] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const deleteLockRef = useRef(false);

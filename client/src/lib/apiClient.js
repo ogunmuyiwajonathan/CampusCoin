@@ -189,8 +189,16 @@ export function deleteCategory(id) {
   return apiFetch(`/categories/${id}`, { method: "DELETE" });
 }
 
+// `month` may be null when the page wants every month at once (the Transactions
+// "All months" filter). The parameter has to be left off entirely in that case
+// rather than sent as the string "null", which the server rejects with a 400.
+function withMonth(path, month) {
+  if (month === null || month === undefined || month === "") return apiFetch(path);
+  return apiFetch(`${path}?month=${encodeURIComponent(month)}`);
+}
+
 export function listTransactions(month) {
-  return apiFetch(`/transactions?month=${encodeURIComponent(month)}`);
+  return withMonth("/transactions", month);
 }
 
 export function createTransaction(body) {
@@ -235,7 +243,11 @@ export function undoImportBatch(batchId) {
 }
 
 export function listBudgets(month) {
-  return apiFetch(`/budgets?month=${encodeURIComponent(month)}`);
+  return withMonth("/budgets", month);
+}
+
+export function getSummary(month) {
+  return withMonth("/summary", month);
 }
 
 export function createBudget(body) {
@@ -292,6 +304,18 @@ export function restoreTip(id) {
 
 export function listInsights() {
   return apiFetch("/insights");
+}
+
+/**
+ * The typeahead. `signal` is passed straight through so a superseded keystroke
+ * can be aborted rather than left to arrive late and overwrite newer results.
+ */
+export function searchEverything(q, { signal } = {}) {
+  return apiFetch(`/search?q=${encodeURIComponent(q)}`, { signal });
+}
+
+export function searchAdmin(q, { signal } = {}) {
+  return apiFetch(`/admin/search?q=${encodeURIComponent(q)}`, { signal });
 }
 
 export function getInsight(month) {

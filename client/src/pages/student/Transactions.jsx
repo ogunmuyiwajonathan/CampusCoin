@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Icon from "../../components/Icon.jsx";
 import CategoryIcon from "../../components/CategoryIcon.jsx";
 import AssistantFab from "../../components/AssistantFab.jsx";
@@ -11,14 +12,10 @@ import CsvImportDialog from "../../components/CsvImportDialog.jsx";
 import DeletedTransactionsDialog from "../../components/DeletedTransactionsDialog.jsx";
 import SubmitSpinner from "../../components/SubmitSpinner.jsx";
 import { useTransactions } from "../../hooks/useTransactions.js";
+import { useSummary } from "../../hooks/useSummary.js";
 import { useSubmitLock } from "../../hooks/useSubmitLock.js";
 import { duplicateIds } from "../../lib/duplicates.js";
-import {
-  categoryColor,
-  categoryLookup,
-  computeTotals,
-  expenseBreakdown,
-} from "../../data/mockData.js";
+import { categoryColor, categoryLookup } from "../../data/mockData.js";
 import { formatCurrency } from "../../lib/formatCurrency.js";
 import {
   currentMonthKey,
@@ -26,10 +23,30 @@ import {
   formatDayMonth,
   monthKey,
   monthLabel,
+  monthOptions,
   monthRange,
 } from "../../lib/formatMonth.js";
 
 const ALL = "all";
+const MONTH_RANGE = 12;
+
+/**
+ * The client-side half of the same match the dropdown used: description,
+ * category name, date text, and the amount as typed digits (so "2,500" and
+ * "2500" both find 2500.50).
+ */
+function matchesSearch(item, query, categoryName = "") {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  const digits = needle.replace(/[,\s]/g, "");
+  const amount = String(item.amount ?? "");
+  return (
+    String(item.description ?? "").toLowerCase().includes(needle) ||
+    categoryName.toLowerCase().includes(needle) ||
+    String(item.date ?? "").includes(needle) ||
+    (digits !== "" && /^\d+(\.\d+)?$/.test(digits) && amount.startsWith(digits))
+  );
+}
 
 function TableSkeleton() {
   return (
@@ -39,7 +56,7 @@ function TableSkeleton() {
       aria-live="polite"
       aria-busy="true"
     >
-      <span className="sr-only">Loading transactions…</span>
+      <span className="sr-only">Loading transactionsÃ¢â‚¬Â¦</span>
       {Array.from({ length: 5 }, (_, index) => (
         <div key={index} className="flex animate-pulse items-center gap-4">
           <div className="h-4 w-24 rounded bg-slate-100" />
@@ -103,17 +120,59 @@ function ConfirmDeleteButton({ onConfirm, onCancel }) {
 }
 
 export default function Transactions() {
+  // The header typeahead hands over ?q= (text to match), ?id= (one row),
+  // ?category= (one category), ?month= (which month to show) and ?new=1 /
+  // ?import=1 (open a dialog straight away). Reading them before the state
+  // below means the page lands already filtered, with no second render.
+  const [params, setParams] = useSearchParams();
+  const query = (params.get("q") ?? "").trim();
+  const focusId = params.get("id");
+  const focusCategory = params.get("category");
+  const monthParam = params.get("month");
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState(ALL);
-  const [monthFilter, setMonthFilter] = useState(currentMonthKey());
-  const [formOpen, setFormOpen] = useState(false);
+  const [monthFilter, setMonthFilter] = useState(() =>
+    monthParam ? (monthParam === "all" ? ALL : monthParam) : currentMonthKey(),
+  );
+  const [formOpen, setFormOpen] = useState(() => params.get("new") === "1");
   const [editing, setEditing] = useState(null);
   const [menuId, setMenuId] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
-  const [importOpen, setImportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(() => params.get("import") === "1");
   const [deletedOpen, setDeletedOpen] = useState(false);
 
-  const { status, items, error, add, update, remove, refresh } = useTransactions();
+  // Searching again while already here changes ?month=, and the month the
+  // student is looking at has to follow it. Adjusting during render is React's
+  // supported way to reset state when an input changes - an effect would show
+  // the wrong month for a frame.
+  const [seenMonthParam, setSeenMonthParam] = useState(monthParam);
+  if (monthParam !== seenMonthParam) {
+    setSeenMonthParam(monthParam);
+    if (monthParam) setMonthFilter(monthParam === "all" ? ALL : monthParam);
+  }
+
+
+  // "All months" is sent as null so the parameter is left off the request; the
+  // server then returns every row instead of rejecting `?month=all` with a 400.
+  const {
+    status,
+    items,
+    error,
+    add: addTx,
+    update: updateTx,
+    remove: removeTx,
+    refresh: refreshRows,
+  } = useTransactions(monthFilter === ALL ? null : monthFilter);
+
+  // The four cards above the table are server totals for the same period. They
+  // are deliberately not summed from `items`, which will be paginated.
+  const {
+    status: summaryStatus,
+    summary,
+    error: summaryError,
+    refresh: refreshSummary,
+  } = useSummary(monthFilter === ALL ? null : monthFilter);
 
   useEffect(() => {
     if (menuId === null && confirmId === null) return undefined;
@@ -137,26 +196,53 @@ export default function Transactions() {
     };
   }, [menuId, confirmId]);
 
-  const uniqueMonths = [
-    ...new Set([...items.map((item) => monthKey(item.date)), currentMonthKey()]),
-  ]
-    .sort()
-    .reverse();
+  // Built from the calendar, not from whatever rows happen to be loaded, so the
+  // picker is the same for everyone and an empty month is still selectable.
+  const uniqueMonths = monthOptions(MONTH_RANGE);
+  const lookup = categoryLookup();
 
   const periodItems =
     monthFilter === ALL ? items : items.filter((item) => monthKey(item.date) === monthFilter);
 
   const rows = periodItems
     .filter((item) => typeFilter === ALL || item.type === typeFilter)
+    // The same text the dropdown searched for, applied again on arrival so
+    // "See all results" shows every hit rather than the whole month. `id` and
+    // `category` narrow it further when a single row or category was clicked.
+    .filter((item) =>
+      focusId
+        ? item.transaction_id === focusId
+        : matchesSearch(item, query, lookup[item.category_id]?.name ?? ""),
+    )
+    .filter((item) =>
+      focusCategory && focusCategory !== "all" ? item.category_id === focusCategory : true,
+    )
     .sort((a, b) => b.date.localeCompare(a.date));
 
   const flagged = duplicateIds(rows);
 
-  const totals = computeTotals(periodItems);
-  const balance = totals.income - totals.expense;
-  const top = expenseBreakdown(periodItems)[0] ?? null;
-  const lookup = categoryLookup();
+  const totals = summary?.totals ?? { income: 0, expense: 0, net: 0, count: 0 };
+  const balance = totals.net;
+  const top = summary?.breakdown?.[0] ?? null;
+  const totalsReady = summaryStatus === "ready";
   const periodHint = monthFilter === ALL ? "All time" : monthLabel(monthFilter);
+  const searchActive = Boolean(query || focusId || (focusCategory && focusCategory !== "all"));
+
+  // A write changes both the row list and the month totals, so both go back to
+  // the server. Nothing on this page recomputes a total from what it is holding.
+  const commit = (result) => {
+    refreshSummary();
+    return result;
+  };
+  const add = (payload) => addTx(payload).then(commit);
+  const update = (id, payload) => updateTx(id, payload).then(commit);
+  const remove = (id) => removeTx(id).then(commit);
+  const refresh = () => {
+    refreshRows();
+    refreshSummary();
+  };
+
+  const listError = [error, summaryError].filter(Boolean).join(" ") || null;
 
   const openAdd = () => {
     setEditing(null);
@@ -181,13 +267,16 @@ export default function Transactions() {
   const clearFilters = () => {
     setTypeFilter(ALL);
     setMonthFilter(ALL);
+    // The search parameters go too, otherwise the text filter would keep
+    // hiding rows and `Clear filters` would look like it did nothing.
+    if (searchActive) setParams(new URLSearchParams(), { replace: true });
   };
 
   const statCards = (
-    <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard
         label="Total Income"
-        value={formatCurrency(totals.income)}
+        value={totalsReady ? formatCurrency(totals.income) : "\u2014"}
         icon="arrow-up"
         tone="mint"
         hint={periodHint}
@@ -195,7 +284,7 @@ export default function Transactions() {
       />
       <StatCard
         label="Total Spending"
-        value={formatCurrency(totals.expense)}
+        value={totalsReady ? formatCurrency(totals.expense) : "\u2014"}
         icon="arrow-down"
         tone="coral"
         hint={periodHint}
@@ -203,7 +292,7 @@ export default function Transactions() {
       />
       <StatCard
         label="Remaining Balance"
-        value={formatCurrency(balance)}
+        value={totalsReady ? formatCurrency(balance) : "\u2014"}
         icon="wallet"
         tone="blue"
         hint={periodHint}
@@ -211,10 +300,12 @@ export default function Transactions() {
       />
       <StatCard
         label="Top Spending Category"
-        value={top ? top.name : "—"}
+        value={totalsReady && top ? top.name : "\u2014"}
         icon="chart-column"
         tone="purple"
-        hint={top ? `${top.percentage}% of total spending` : "No spending yet"}
+        hint={
+          totalsReady && top ? `${top.percentage}% of total spending` : "No spending yet"
+        }
         tint
       />
     </section>
@@ -248,9 +339,13 @@ export default function Transactions() {
         </span>
         <div>
           <p className="font-display text-base font-bold text-ink-900">
-            No transactions match these filters
+            {searchActive ? "Nothing matches that search" : "No transactions match these filters"}
           </p>
-          <p className="mt-1 text-sm text-ink-500">Try a different month or transaction type.</p>
+          <p className="mt-1 text-sm text-ink-500">
+            {searchActive
+              ? "Clear the search to see everything again."
+              : "Try a different month or transaction type."}
+          </p>
         </div>
         <button
           type="button"
@@ -372,12 +467,12 @@ export default function Transactions() {
               {monthFilter === ALL ? "All time" : monthRange(monthFilter)}
             </p>
 
-            {error && (
+            {listError && (
               <p
                 className="mx-5 mt-3 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-500"
                 role="alert"
               >
-                {error}
+                {listError}
               </p>
             )}
 

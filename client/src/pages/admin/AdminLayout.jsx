@@ -1,9 +1,11 @@
 import { Suspense, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import Icon from "../../components/Icon.jsx";
+import SearchBox from "../../components/SearchBox.jsx";
 import UserAvatar from "../../components/UserAvatar.jsx";
 import ThemeToggle from "../../components/ThemeToggle.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
+import { ADMIN_TARGETS } from "../../lib/searchTargets.js";
 
 const ADMIN_NAV = [
   { to: "/admin", label: "Dashboard", icon: "layout-dashboard", end: true },
@@ -15,6 +17,7 @@ const ADMIN_NAV = [
 
 export default function AdminLayout() {
   const [open, setOpen] = useState(false);
+  const [mobileSearch, setMobileSearch] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
 
@@ -26,6 +29,19 @@ export default function AdminLayout() {
     await logout();
     window.location.assign("/admin/login");
   };
+
+  if (mobileSearch) {
+    return (
+      <SearchBox
+        scope="admin"
+        targets={ADMIN_TARGETS}
+        variant="page"
+        autoFocus
+        label="Search the admin panel"
+        onClose={() => setMobileSearch(false)}
+      />
+    );
+  }
 
   return (
     <div className="flex h-svh overflow-hidden">
@@ -105,7 +121,7 @@ export default function AdminLayout() {
             <Icon name="menu" size={20} />
           </button>
 
-          <nav aria-label="Breadcrumb" className="min-w-0">
+          <nav aria-label="Breadcrumb" className="hidden min-w-0 md:block">
             <ol className="flex items-center gap-1.5 text-sm">
               <li>
                 <Link to="/admin" className="font-medium text-ink-500 transition hover:text-brand-600">
@@ -127,7 +143,19 @@ export default function AdminLayout() {
             </ol>
           </nav>
 
+          <div className="hidden min-w-0 flex-1 md:block lg:max-w-md lg:ml-4">
+            <SearchBox scope="admin" targets={ADMIN_TARGETS} label="Search the admin panel" />
+          </div>
+
           <div className="ml-auto flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setMobileSearch(true)}
+              aria-label="Open search"
+              className="rounded-lg p-2 text-ink-500 transition hover:bg-mint-50 md:hidden"
+            >
+              <Icon name="search" size={19} />
+            </button>
             <ThemeToggle />
             <UserAvatar name={user?.name} src={user?.profile_image_url} className="h-9 w-9" textClassName="text-sm" />
             <span className="hidden max-w-[9rem] truncate text-sm font-semibold text-ink-900 sm:block">

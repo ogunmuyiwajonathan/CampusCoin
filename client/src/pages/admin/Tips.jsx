@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Icon from "../../components/Icon.jsx";
 import SubmitSpinner from "../../components/SubmitSpinner.jsx";
 import { useSubmitLock } from "../../hooks/useSubmitLock.js";
@@ -333,7 +334,9 @@ export default function Tips() {
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
-  const [modal, setModal] = useState(null);
+  // "New tip template" in the header typeahead arrives as ?new=1.
+  const [params] = useSearchParams();
+  const [modal, setModal] = useState(() => (params.get("new") === "1" ? { tip: null } : null));
   const [pendingId, setPendingId] = useState(null);
   const [notice, setNotice] = useState("");
   const loadLock = useRef(false);

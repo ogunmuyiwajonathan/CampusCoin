@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import AvatarPicker from "../../components/AvatarPicker.jsx";
 import Icon from "../../components/Icon.jsx";
 import AssistantFab from "../../components/AssistantFab.jsx";
@@ -44,9 +44,13 @@ function SoonPill() {
 }
 
 export default function Settings() {
+  // "Change password" in the typeahead arrives as ?password=1 and opens the
+  // dialog directly, rather than dropping the student on a page they then have
+  // to find the button on.
+  const [params] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
-  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(() => params.get("password") === "1");
   const [toast, setToast] = useState(null);
   const { user, updateProfile } = useAuth();
   const { theme, toggle, fontSize, setFontSize } = useTheme();

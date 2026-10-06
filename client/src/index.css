@@ -182,6 +182,12 @@ body {
     animation: none;
   }
 
+  /* The typeahead rows cross-fade as the highlight moves; with reduced motion
+     requested that movement is instant rather than animated. */
+  [role="option"] {
+    transition: none !important;
+  }
+
   html {
     scroll-behavior: auto;
   }

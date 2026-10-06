@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import BudgetForm from "../../components/BudgetForm.jsx";
 import CategoryManagerDialog from "../../components/CategoryManagerDialog.jsx";
@@ -20,7 +20,9 @@ import {
   categoryLookup,
 } from "../../data/mockData.js";
 import { formatCurrency } from "../../lib/formatCurrency.js";
-import { currentMonthKey, monthKey, monthLabel, monthRange } from "../../lib/formatMonth.js";
+import { currentMonthKey, monthKey, monthLabel, monthOptions, monthRange } from "../../lib/formatMonth.js";
+
+const MONTH_RANGE = 12;
 
 function statusFor(pct) {
   if (pct >= 100) return "exceeded";
@@ -182,14 +184,22 @@ export default function Budgets() {
   const [menuId, setMenuId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
-  const { status, items, error, add, update, remove } = useBudgets();
-  const { items: transactions } = useTransactions();
+  // The month has to exist before the hooks that take it: this is what decides
+  // which rows the server returns, rather than the other way round. A month in
+  // the URL wins, so a budget result from the typeahead opens on its own month.
+  const [searchParams] = useSearchParams();
+  const [month, setMonth] = useState(
+    () => searchParams.get("month") || currentMonthKey(),
+  );
 
-  const availableMonths = [...new Set(items.map((item) => item.month))].sort().reverse();
-  const [month, setMonth] = useState(() => {
-    const now = currentMonthKey();
-    return availableMonths.includes(now) ? now : (availableMonths[0] ?? now);
-  });
+  const { status, items, error, add, update, remove } = useBudgets(month);
+  const { items: transactions } = useTransactions(month);
+
+  // Twelve calendar months, never a list scraped out of whatever loaded.
+  const loadedMonths = monthOptions(MONTH_RANGE);
+  const availableMonths = loadedMonths.includes(month)
+    ? loadedMonths
+    : [month, ...loadedMonths];
 
   const lookup = categoryLookup();
   const spentByCategory = transactions.reduce((acc, item) => {
@@ -378,7 +388,7 @@ export default function Budgets() {
                 </p>
               </section>
 
-              <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+              <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard label="Total Budget" value={formatCurrency(totalLimit)} icon="wallet" tone="mint" tint />
                 <StatCard label="Total Spent" value={formatCurrency(totalSpent)} icon="arrow-down" tone="blue" tint />
                 <StatCard label="Remaining" value={formatCurrency(remaining)} icon="piggy-bank" tone="mint" tint />

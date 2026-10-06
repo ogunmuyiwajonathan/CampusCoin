@@ -1,72 +1,111 @@
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import Icon from "../../components/Icon.jsx";
 import SubmitSpinner from "../../components/SubmitSpinner.jsx";
 import { adminFetch } from "../../lib/apiClient.js";
+
+// Long enough to swallow a burst of keystrokes, short enough that the list feels
+// like it is answering you rather than waiting to be asked.
+const DEBOUNCE_MS = 200;
+
+async function requestUsers(p, s, { signal } = {}) {
+  const res = await adminFetch(
+    `/api/admin/users?page=${p}&limit=10&search=${encodeURIComponent(s)}`,
+    { signal },
+  );
+  if (!res.ok) throw new Error("Failed to load users");
+  return res.json();
+}
 
 export default function Users() {
   const [users, setUsers] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState("");
+  // A user result from the header typeahead arrives as ?search=, so the box is
+  // seeded with that term and the first page is fetched for it on arrival.
+  const [params] = useSearchParams();
+  const initialSearch = params.get("search") ?? "";
+  const [search, setSearch] = useState(initialSearch);
+  // What the table is actually showing, as opposed to what is in the box. Kept
+  // apart so the row count and the empty message never describe a half-typed
+  // word while the next request is still in flight.
+  const [appliedSearch, setAppliedSearch] = useState(initialSearch);
+  const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
   const [actionError, setActionError] = useState("");
   const [resetModal, setResetModal] = useState(null);
   const actionLockRef = useRef(false);
-  const searchLockRef = useRef(false);
 
-  const requestUsers = async (p, s) => {
-    const res = await adminFetch(`/api/admin/users?page=${p}&limit=10&search=${encodeURIComponent(s)}`);
-    if (!res.ok) throw new Error("Failed to load users");
-    return res.json();
-  };
+  // Only the newest request is allowed to write to the table. Anything older
+  // that still lands is dropped, so a slow reply can never overwrite fresher
+  // rows, and the in-flight one is aborted as soon as a new keystroke supersedes
+  // it. This is what makes the box feel live instead of laggy.
+  const controllerRef = useRef(null);
+  const requestIdRef = useRef(0);
 
-  const fetchUsers = async (p = 1, s = search) => {
+  const runQuery = useCallback(async (p, s, { signal } = {}) => {
+    const id = requestIdRef.current + 1;
+    requestIdRef.current = id;
+    setLoading(true);
     try {
-      setLoading(true);
-      const data = await requestUsers(p, s);
+      const data = await requestUsers(p, s, { signal });
+      if (requestIdRef.current !== id) return;
       setUsers(data.users);
       setTotal(data.total);
       setPage(data.page);
       setTotalPages(data.totalPages);
+      setAppliedSearch(s);
       setError(null);
     } catch (err) {
+      if (err?.name === "AbortError") return;
+      if (requestIdRef.current !== id) return;
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (requestIdRef.current === id) setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-    requestUsers(1, "")
-      .then((data) => {
-        if (cancelled) return;
-        setUsers(data.users);
-        setTotal(data.total);
-        setPage(data.page);
-        setTotalPages(data.totalPages);
-        setError(null);
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setError(err.message);
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  // Paging acts on what is on screen, not on a half-typed word in the box.
+  const fetchUsers = (p = 1, s = appliedSearch) => runQuery(p, s);
+
+  // A new ?search= arriving from the header typeahead reseeds the box. React
+  // documents adjusting state during render for exactly this case, so the
+  // debounced effect below picks the new term up on the very next pass.
+  const [seed, setSeed] = useState(initialSearch);
+  if (initialSearch !== seed) {
+    setSeed(initialSearch);
+    setSearch(initialSearch);
+  }
+
+  /* As-you-type. The timer is cleared on every keystroke, so a burst of typing
+     costs one request, not one request per letter. */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      controllerRef.current?.abort();
+      const controller = new AbortController();
+      controllerRef.current = controller;
+      setSearching(true);
+      runQuery(1, search, { signal: controller.signal }).finally(() => {
+        if (controllerRef.current === controller) setSearching(false);
+      });
+    }, DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [search, runQuery]);
+
+  /* An unmount mid-flight must not set state afterwards. */
+  useEffect(() => () => controllerRef.current?.abort(), []);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchLockRef.current) return;
-    searchLockRef.current = true;
-    fetchUsers(1, search).finally(() => {
-      searchLockRef.current = false;
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    setSearching(true);
+    runQuery(1, search, { signal: controller.signal }).finally(() => {
+      if (controllerRef.current === controller) setSearching(false);
     });
   };
 
@@ -89,7 +128,7 @@ export default function Users() {
         const err = await res.json();
         throw new Error(err.message || "Action failed");
       }
-      await fetchUsers(page, search);
+      await fetchUsers(page);
     } catch (err) {
       setActionError(err.message || "That did not work. Try again.");
     } finally {
@@ -164,21 +203,45 @@ export default function Users() {
         </div>
         
         <form onSubmit={handleSearch} className="relative w-full sm:w-72">
+          <label htmlFor="admin-user-search" className="sr-only">
+            Search users by name or email
+          </label>
           <input
-            type="text"
+            id="admin-user-search"
+            type="search"
             placeholder="Search name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-10 pr-4 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            aria-busy={searching}
+            autoComplete="off"
+            className="w-full rounded-lg border border-slate-200 bg-surface py-2.5 pl-10 pr-9 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           />
-          <div className="absolute left-3 top-2.5 text-sage-400">
+          <div className="pointer-events-none absolute left-3 top-2.5 text-sage-400">
             <Icon name="search" size={18} />
           </div>
+          {searching && (
+            <span className="absolute right-3 top-2.5 text-brand-600">
+              <SubmitSpinner className="h-[18px] w-[18px]" />
+            </span>
+          )}
           <button type="submit" className="sr-only">Search</button>
         </form>
       </div>
 
-      <div className="overflow-x-auto rounded-card bg-surface shadow-card">
+      {/* The list now updates on its own, so a screen reader needs to be told. */}
+      <p className="sr-only" role="status" aria-live="polite">
+        {searching
+          ? "Searching"
+          : appliedSearch
+            ? `${total} ${total === 1 ? "result" : "results"} for ${appliedSearch}`
+            : `${total} ${total === 1 ? "user" : "users"}`}
+      </p>
+
+      <div
+        className={`overflow-x-auto rounded-card bg-surface shadow-card transition-opacity ${
+          searching ? "opacity-60" : ""
+        }`}
+      >
         <table className="w-full min-w-[660px] text-left text-sm">
           <thead className="bg-mint-50 text-ink-500">
             <tr>
@@ -193,7 +256,7 @@ export default function Users() {
             {users.length === 0 ? (
               <tr>
                 <td colSpan="5" className="px-6 py-12 text-center text-ink-500">
-                  No users found matching "{search}".
+                  No users found matching "{appliedSearch}".
                 </td>
               </tr>
             ) : (
