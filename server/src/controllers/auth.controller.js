@@ -33,7 +33,11 @@ function startSession(req, user) {
 export const register = asyncHandler(async (req, res) => {
   const user = await registerUser(req.body);
   await startSession(req, user);
-  void sendWelcomeEmail({ to: user.email, firstName: firstNameOf(user.name) });
+  // Fire and forget: a welcome mail that the provider rejects (an unverified
+  // sending domain, a quota error) must never turn a good registration into a
+  // 500. The .catch is belt and braces because sendWelcomeEmail already
+  // swallows provider failures.
+  void sendWelcomeEmail({ to: user.email, firstName: firstNameOf(user.name) }).catch(() => {});
   res.status(201).json({ user: publicUser(user) });
 });
 
@@ -99,11 +103,18 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   if (user) {
     await invalidateResetTokens(user._id);
     const code = await createResetCode(user._id);
-    await sendPasswordResetEmail({
-      to: user.email,
-      firstName: firstNameOf(user.name),
-      code,
-    });
+    // A send failure must not 500 this endpoint: the response is deliberately
+    // identical whether or not the address exists, and the client falls back to
+    // showing the reset link on screen when the mail could not be sent.
+    try {
+      await sendPasswordResetEmail({
+        to: user.email,
+        firstName: firstNameOf(user.name),
+        code,
+      });
+    } catch {
+      console.error("[mail] password reset send threw; continuing without an email");
+    }
   }
 
   res.json({

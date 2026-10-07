@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+﻿import { Resend } from "resend";
 import { env } from "../config/env.js";
 
 let client = null;
@@ -6,6 +6,18 @@ function resend() {
   if (!env.resendApiKey) return null;
   if (!client) client = new Resend(env.resendApiKey);
   return client;
+}
+
+/**
+ * Logs a delivery failure without the provider's message text. Resend echoes the
+ * recipient address back inside that text, so writing it out would put every new
+ * user's email address in the logs. The name and status code are enough to tell
+ * a rejected sending domain apart from a quota or network error.
+ */
+function logMailFailure(tag, error) {
+  const name = error?.name || "Error";
+  const status = error?.statusCode ?? error?.status ?? "unknown";
+  console.error(`[mail] ${tag} (provider=${name} status=${status})`);
 }
 
 function resetEmailHtml({ firstName, code }) {
@@ -45,9 +57,7 @@ function escapeHtml(value) {
 export async function sendPasswordResetEmail({ to, firstName, code }) {
   const api = resend();
   if (!api) {
-    console.error(
-      `[mail] RESEND_API_KEY is not set, so no reset code was sent to ${to}.`,
-    );
+    console.error("[mail] RESEND_API_KEY is not set, so no reset code was sent.");
     return { delivered: false, reason: "no_api_key" };
   }
 
@@ -59,13 +69,13 @@ export async function sendPasswordResetEmail({ to, firstName, code }) {
       html: resetEmailHtml({ firstName, code }),
     });
     if (error) {
-      console.error(`[mail] Resend rejected the message: ${error.message}`);
+      logMailFailure("reset message rejected", error);
       return { delivered: false, reason: "provider_error" };
     }
-    console.log(`[mail] reset email sent to ${to}`);
+    console.log("[mail] reset email handed to the provider");
     return { delivered: true };
   } catch (error) {
-    console.error(`[mail] sending failed: ${error.message}`);
+    logMailFailure("reset send threw", error);
     return { delivered: false, reason: "send_failed" };
   }
 }
@@ -116,7 +126,7 @@ function reportEmailHtml({ firstName, message, report }) {
 export async function sendWelcomeEmail({ to, firstName }) {
   const api = resend();
   if (!api) {
-    console.error(`[mail] RESEND_API_KEY is not set, so no welcome mail was sent to ${to}.`);
+    console.error("[mail] RESEND_API_KEY is not set, so no welcome mail was sent.");
     return { delivered: false, reason: "no_api_key" };
   }
 
@@ -146,13 +156,13 @@ export async function sendWelcomeEmail({ to, firstName }) {
 </html>`,
     });
     if (error) {
-      console.error(`[mail] Resend rejected the welcome mail: ${error.message}`);
+      logMailFailure("welcome mail rejected", error);
       return { delivered: false, reason: "provider_error" };
     }
-    console.log(`[mail] welcome email sent to ${to}`);
+    console.log("[mail] welcome email handed to the provider");
     return { delivered: true };
   } catch (error) {
-    console.error(`[mail] welcome send failed: ${error.message}`);
+    logMailFailure("welcome send threw", error);
     return { delivered: false, reason: "send_failed" };
   }
 }
@@ -160,7 +170,7 @@ export async function sendWelcomeEmail({ to, firstName }) {
 export async function sendReportEmail({ to, name, message, report }) {
   const api = resend();
   if (!api) {
-    console.error(`[mail] RESEND_API_KEY is not set, so no report was sent to ${to}.`);
+    console.error("[mail] RESEND_API_KEY is not set, so no report was sent.");
     return { delivered: false, reason: "no_api_key" };
   }
 
@@ -172,13 +182,13 @@ export async function sendReportEmail({ to, name, message, report }) {
       html: reportEmailHtml({ firstName: name, message, report }),
     });
     if (error) {
-      console.error(`[mail] Resend rejected the report: ${error.message}`);
+      logMailFailure("report mail rejected", error);
       return { delivered: false, reason: "provider_error" };
     }
-    console.log(`[mail] report sent to ${to}`);
+    console.log("[mail] report handed to the provider");
     return { delivered: true };
   } catch (error) {
-    console.error(`[mail] report send failed: ${error.message}`);
+    logMailFailure("report send threw", error);
     return { delivered: false, reason: "send_failed" };
   }
 }
