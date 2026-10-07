@@ -21,7 +21,13 @@ export const deleteCategory = asyncHandler(async (req, res) => {
 });
 
 export const listTransactions = asyncHandler(async (req, res) => {
-  res.json({ transactions: await ledger.listTransactions(me(req), req.validatedQuery?.month) });
+  const { month, page, limit } = req.validatedQuery ?? {};
+  res.json(
+    await ledger.listTransactions(me(req), month, {
+      page,
+      limit,
+    }),
+  );
 });
 
 export const listTransactionHistory = asyncHandler(async (req, res) => {
