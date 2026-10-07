@@ -69,6 +69,7 @@ export async function authenticate({ email, password }) {
   const ok = await verifyPassword(password, user.password_hash);
   if (!ok) throw loginFailed();
   if (!user.is_active) throw loginFailed();
+  if (user.role !== "student") throw loginFailed();
 
   return user;
 }

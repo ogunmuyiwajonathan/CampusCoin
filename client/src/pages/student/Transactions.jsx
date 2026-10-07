@@ -566,7 +566,7 @@ export default function Transactions() {
                 <button
                   type="button"
                   onClick={openAdd}
-                  className="flex items-center gap-1.5 rounded-lg bg-brand-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-800"
+                  className="flex min-h-11 items-center gap-1.5 rounded-lg bg-brand-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:min-h-0"
                 >
                   <Icon name="plus" size={16} />
                   Add Transaction
@@ -575,7 +575,7 @@ export default function Transactions() {
                 <button
                   type="button"
                   onClick={() => setImportOpen(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-ink-500 transition hover:bg-slate-50"
+                  className="flex min-h-11 items-center gap-1.5 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-ink-500 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:min-h-0"
                 >
                   <Icon name="upload" size={16} />
                   Import CSV
@@ -584,7 +584,7 @@ export default function Transactions() {
                 <button
                   type="button"
                   onClick={() => setDeletedOpen(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-ink-500 transition hover:bg-slate-50"
+                  className="flex min-h-11 items-center gap-1.5 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-ink-500 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:min-h-0"
                 >
                   <Icon name="history" size={16} />
                   Deleted

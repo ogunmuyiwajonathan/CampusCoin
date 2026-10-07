@@ -3,6 +3,7 @@ import { useTestDatabaseEnv } from "./helpers/testDb.js";
 
 useTestDatabaseEnv();
 process.env.CORS_ORIGIN = "http://localhost:5173";
+process.env.ADMIN_SEED_PASSWORD = "AuthzAdmin!23";
 
 const stamp = Date.now();
 
@@ -105,7 +106,6 @@ const STUDENT_FORBIDDEN = [
 await connectDb();
 
 let student = null;
-let admin = null;
 const anon = client(app);
 const asStudent = client(app);
 const asAdmin = client(app);
@@ -133,12 +133,6 @@ try {
     password_hash: await bcrypt.hash("AuthzPass!23", 10),
     role: "student",
   });
-  admin = await User.create({
-    name: `authz admin ${stamp}`,
-    email: `authz-admin-${stamp}@campuscoin.test`,
-    password_hash: await bcrypt.hash("AuthzPass!23", 10),
-    role: "admin",
-  });
 
   const studentLogin = await asStudent.post("/api/auth/login", {
     email: `authz-student-${stamp}@campuscoin.test`,
@@ -162,9 +156,8 @@ try {
 
   process.stdout.write("\n3. an admin session reaches the same admin routes\n");
 
-  const adminLogin = await asAdmin.post("/api/auth/login", {
-    email: `authz-admin-${stamp}@campuscoin.test`,
-    password: "AuthzPass!23",
+  const adminLogin = await asAdmin.post("/api/admin/auth/login", {
+    password: "AuthzAdmin!23",
   });
   check("the admin signs in", adminLogin.status === 200, `got ${adminLogin.status}`);
 
@@ -186,7 +179,7 @@ try {
   const disabledMe = await asStudent.get("/api/auth/me");
   check("me reports 401 for a disabled account", disabledMe.status === 401, `got ${disabledMe.status}`);
   const disabledAdmin = await asStudent.get("/api/admin/users");
-  check("a disabled admin-role cookie is refused", disabledAdmin.status === 401, `got ${disabledAdmin.status}`);
+  check("a disabled student cookie is refused on admin routes", disabledAdmin.status === 401, `got ${disabledAdmin.status}`);
 
   await User.updateOne({ _id: student._id }, { $set: { is_active: true } });
   const backMe = await asStudent.get("/api/auth/me");
@@ -194,7 +187,6 @@ try {
 } finally {
   await Promise.all([anon.close(), asStudent.close(), asAdmin.close()]);
   if (student) await User.deleteOne({ _id: student._id });
-  if (admin) await User.deleteOne({ _id: admin._id });
   await disconnectDb();
 }
 

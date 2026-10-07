@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import Icon from "../../components/Icon.jsx";
 import AssistantFab from "../../components/AssistantFab.jsx";
@@ -80,6 +80,9 @@ export default function Bookmarks() {
   const [result, setResult] = useState({ key: null, rows: [], error: null });
   const [editing, setEditing] = useState(null);
   const [savingId, setSavingId] = useState("");
+  // A ref guard, not just `savingId`: two clicks inside one frame both read the
+  // same state value, so `disabled` alone cannot stop a double delete.
+  const inFlight = useRef(false);
   const [toast, setToast] = useState(null);
 
   // A bookmark result from the typeahead opens on the month it came from.
@@ -143,6 +146,8 @@ export default function Bookmarks() {
     });
 
   const remove = async (bookmark) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setSavingId(bookmark.bookmark_id);
     try {
       await removeBookmark(bookmark.bookmark_id);
@@ -155,6 +160,7 @@ export default function Bookmarks() {
     } catch (err) {
       setToast({ kind: "error", message: err.message || "Couldn't remove that." });
     } finally {
+      inFlight.current = false;
       setSavingId("");
     }
   };
@@ -272,7 +278,7 @@ export default function Bookmarks() {
                               )
                             }
                             aria-label="Edit note"
-                            className="rounded-lg p-1.5 text-ink-500 transition hover:bg-slate-50 hover:text-ink-900"
+                            className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-500 transition hover:bg-slate-50 hover:text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9"
                           >
                             <Icon name="pencil" size={16} />
                           </button>
@@ -281,7 +287,7 @@ export default function Bookmarks() {
                             onClick={() => remove(bookmark)}
                             disabled={savingId === bookmark.bookmark_id}
                             aria-label="Delete bookmark"
-                            className="rounded-lg p-1.5 text-ink-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                            className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9"
                           >
                             {savingId === bookmark.bookmark_id ? (
                               <SubmitSpinner />

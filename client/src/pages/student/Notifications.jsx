@@ -203,7 +203,7 @@ export default function Notifications() {
                   type="button"
                   onClick={refresh}
                   aria-label="Refresh notifications"
-                  className="rounded-lg p-2 text-ink-500 transition hover:bg-surface hover:text-ink-900"
+                  className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-500 transition hover:bg-surface hover:text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9"
                 >
                   <Icon name="history" size={17} />
                 </button>
@@ -338,7 +338,7 @@ export default function Notifications() {
                         disabled={markingId === item.notification_id}
                         aria-label={`Mark "${item.title}" as read`}
                         title="Mark as read"
-                        className="mt-2 rounded-lg p-1.5 text-ink-500 transition hover:bg-white hover:text-emerald-600 disabled:opacity-50"
+                        className="mt-2 flex h-11 w-11 items-center justify-center rounded-lg text-ink-500 transition hover:bg-white hover:text-emerald-600 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9"
                       >
                         {markingId === item.notification_id ? (
                           <SubmitSpinner />

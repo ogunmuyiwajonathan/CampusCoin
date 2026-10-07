@@ -81,9 +81,13 @@ export default function Users() {
   }
 
   /* As-you-type. The timer is cleared on every keystroke, so a burst of typing
-     costs one request, not one request per letter. */
+     costs one request, not one request per letter. It is kept on a ref so a
+     submit can cancel it: otherwise Enter starts one request and the pending
+     timer starts the identical one a moment later, throwing the first away. */
+  const searchTimerRef = useRef(null);
+
   useEffect(() => {
-    const timer = setTimeout(() => {
+    searchTimerRef.current = setTimeout(() => {
       controllerRef.current?.abort();
       const controller = new AbortController();
       controllerRef.current = controller;
@@ -92,7 +96,7 @@ export default function Users() {
         if (controllerRef.current === controller) setSearching(false);
       });
     }, DEBOUNCE_MS);
-    return () => clearTimeout(timer);
+    return () => clearTimeout(searchTimerRef.current);
   }, [search, runQuery]);
 
   /* An unmount mid-flight must not set state afterwards. */
@@ -100,6 +104,7 @@ export default function Users() {
 
   const handleSearch = (e) => {
     e.preventDefault();
+    clearTimeout(searchTimerRef.current);
     controllerRef.current?.abort();
     const controller = new AbortController();
     controllerRef.current = controller;
@@ -237,9 +242,15 @@ export default function Users() {
             : `${total} ${total === 1 ? "user" : "users"}`}
       </p>
 
+      {/* `loading`, not `searching`: paging and retrying fetch too, and with the
+          API answering in a second or more a silent table reads as broken.
+          Deliberately un-animated: the wrapper sits inside the scroll-reveal
+          block and its transition never progresses, leaving the table at full
+          opacity for the whole request. */}
       <div
-        className={`overflow-x-auto rounded-card bg-surface shadow-card transition-opacity ${
-          searching ? "opacity-60" : ""
+        aria-busy={loading}
+        className={`overflow-x-auto rounded-card bg-surface shadow-card ${
+          loading ? "opacity-60" : ""
         }`}
       >
         <table className="w-full min-w-[660px] text-left text-sm">

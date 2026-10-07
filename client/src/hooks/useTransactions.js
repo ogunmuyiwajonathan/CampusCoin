@@ -7,27 +7,38 @@ import {
 } from "../lib/apiClient.js";
 import { currentMonthKey } from "../lib/formatMonth.js";
 
-export function useTransactions(month = currentMonthKey()) {
+/**
+ * `month` of null means every month, which is paged server-side. Pass `page`
+ * to walk it; the response's `total` drives the pager. A month-scoped call is
+ * returned whole by the server, so `paged` comes back false.
+ */
+export function useTransactions(month = currentMonthKey(), { page, limit } = {}) {
   const [nonce, setNonce] = useState(0);
   const [result, setResult] = useState({ key: null, items: [], error: null });
 
-  const key = `${month}:${nonce}`;
+  const key = `${month ?? "all"}:${page ?? 1}:${limit ?? ""}:${nonce}`;
 
   useEffect(() => {
     let cancelled = false;
-    listTransactions(month)
+    listTransactions(month, { page, limit })
       .then((data) => {
         if (cancelled) return;
-        setResult({ key, items: data.transactions, error: null });
+        setResult({
+          key,
+          items: data.transactions,
+          error: null,
+          total: data.total ?? data.transactions.length,
+          paged: Boolean(data.paged),
+        });
       })
       .catch((error) => {
         if (cancelled) return;
-        setResult({ key, items: [], error: error.message });
+        setResult({ key, items: [], error: error.message, total: 0, paged: false });
       });
     return () => {
       cancelled = true;
     };
-  }, [month, nonce, key]);
+  }, [month, page, limit, nonce, key]);
 
   const settled = result.key === key;
   const status = settled ? (result.error ? "error" : "ready") : "loading";
@@ -57,6 +68,8 @@ export function useTransactions(month = currentMonthKey()) {
       status,
       items: settled ? result.items : [],
       error: result.error,
+      total: settled ? (result.total ?? 0) : 0,
+      paged: settled ? Boolean(result.paged) : false,
       add,
       update,
       remove,

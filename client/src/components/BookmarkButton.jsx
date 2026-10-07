@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon.jsx";
 import SubmitSpinner from "./SubmitSpinner.jsx";
 import { useBookmarks } from "../hooks/useBookmarks.js";
@@ -11,16 +11,48 @@ export default function BookmarkButton({ month, suggestedNote = "", onError, cla
 
   const saved = findForMonth(month);
 
+  // The dialog says aria-modal, so the keyboard must behave as if the page
+  // behind it does not exist: focus moves in, Tab stays inside, and closing
+  // puts focus back on the button that opened it.
+  const triggerRef = useRef(null);
+  const dialogRef = useRef(null);
+  useEffect(() => {
+    if (open) return undefined;
+    // Only restore if focus is still inside the dialog that just closed,
+    // otherwise a click somewhere else would steal it back.
+    const active = document.activeElement;
+    if (active && dialogRef.current?.contains(active)) triggerRef.current?.focus();
+    return undefined;
+  }, [open]);
+
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (event) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = dialogRef.current?.querySelectorAll(
+        'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusable || focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
   const remove = async () => {
+    if (busy) return;
     setBusy(true);
     try {
       await toggle(month);
@@ -49,6 +81,7 @@ export default function BookmarkButton({ month, suggestedNote = "", onError, cla
     <>
       <button
         type="button"
+        ref={triggerRef}
         onClick={() => (saved ? remove() : setOpen(true))}
         disabled={busy}
         aria-pressed={Boolean(saved)}
@@ -76,6 +109,7 @@ export default function BookmarkButton({ month, suggestedNote = "", onError, cla
         >
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} aria-hidden="true" />
           <form
+            ref={dialogRef}
             onSubmit={save}
             className="relative w-full max-w-md rounded-card bg-surface p-6 shadow-card"
           >
@@ -87,7 +121,7 @@ export default function BookmarkButton({ month, suggestedNote = "", onError, cla
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close"
-                className="rounded-lg p-1.5 text-ink-500 transition hover:bg-slate-50 hover:text-ink-900"
+                className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-500 transition hover:bg-slate-50 hover:text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9"
               >
                 <Icon name="x" size={18} />
               </button>
@@ -112,7 +146,7 @@ export default function BookmarkButton({ month, suggestedNote = "", onError, cla
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-ink-500 transition hover:bg-slate-50"
+                className="min-h-11 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-ink-500 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:min-h-0"
               >
                 Cancel
               </button>

@@ -10,7 +10,7 @@ export default function ThemeToggle({ className = "" }) {
       type="button"
       onClick={toggle}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className={`rounded-lg p-2 text-ink-500 transition hover:bg-slate-50 hover:text-ink-900 ${className}`}
+      className={`flex h-11 w-11 items-center justify-center rounded-lg text-ink-500 transition hover:bg-slate-50 hover:text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9 ${className}`}
     >
       <Icon name={isDark ? "sun" : "moon"} size={18} />
     </button>

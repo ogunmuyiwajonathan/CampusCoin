@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AuthContext } from "./authContext.js";
 import {
   getMe,
@@ -63,12 +63,23 @@ export function AuthProvider({ children }) {
     return data.user;
   }, []);
 
-  const logout = useCallback(async () => {
-    try {
-      await logoutAccount();
-    } finally {
-      setUser(null);
-    }
+  // A ref guard: two clicks in one frame both read the same `busy` state, so a
+  // double tap would fire two logout requests. The second caller gets the same
+  // promise rather than a second request.
+  const logoutPending = useRef(null);
+  const logout = useCallback(() => {
+    if (logoutPending.current) return logoutPending.current;
+    const run = (async () => {
+      try {
+        await logoutAccount();
+      } finally {
+        setUser(null);
+      }
+    })().finally(() => {
+      logoutPending.current = null;
+    });
+    logoutPending.current = run;
+    return run;
   }, []);
 
   const refresh = useCallback(async () => {

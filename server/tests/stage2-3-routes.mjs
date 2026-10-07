@@ -7,6 +7,7 @@ process.env.CORS_ORIGIN = "http://localhost:5173";
 const stamp = Date.now();
 const adminEmail = `adminfix-${stamp}@campuscoin.test`;
 process.env.ADMIN_EMAIL = adminEmail;
+process.env.ADMIN_SEED_PASSWORD = "AdminPass!23";
 
 const { connectDb, disconnectDb } = await import("../src/config/db.js");
 const { User, Category, Transaction, TransactionHistory } = await import("../src/models/index.js");

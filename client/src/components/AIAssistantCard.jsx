@@ -12,9 +12,13 @@ export default function AIAssistantCard() {
   const [status, setStatus] = useState("idle");
   const { locked, lock: lockSend, unlock: unlockSend, measure: measureSend } = useSubmitLock();
 
+  // The lock is taken here, not in the callers, so every path that starts a
+  // request is covered. Before, only the send button locked: "Try again" and
+  // the example chips called load() directly and could be clicked twice.
   const load = (value) => {
     const text = value.trim();
     if (!text) return;
+    if (!lockSend()) return;
     setLastQuestion(text);
     setStatus("loading");
     sendMessage(text)
@@ -33,7 +37,6 @@ export default function AIAssistantCard() {
     event.preventDefault();
     const value = question.trim();
     if (!value || status === "loading") return;
-    if (!lockSend()) return;
     setQuestion("");
     load(value);
   };
@@ -65,9 +68,11 @@ export default function AIAssistantCard() {
             <button
               type="button"
               onClick={() => load(lastQuestion)}
-              className="font-semibold underline"
+              disabled={locked}
+              aria-busy={locked}
+              className="font-semibold underline disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Try again
+              {locked ? "Trying..." : "Try again"}
             </button>
           </p>
         )}

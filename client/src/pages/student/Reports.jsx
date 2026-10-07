@@ -137,6 +137,22 @@ export default function Reports() {
 
   const requestKey = `${JSON.stringify(filters)}:${nonce}`;
 
+  // A ref guard, not just the loading state: two clicks in one frame both read
+  // the same `status`, so the button's disabled attribute alone cannot stop a
+  // second fetch from starting. The ref is never read during render.
+  const refreshPending = useRef(false);
+  const [retrying, setRetrying] = useState(false);
+  const settleRetry = useCallback(() => {
+    refreshPending.current = false;
+    setRetrying(false);
+  }, []);
+  const refresh = useCallback(() => {
+    if (refreshPending.current) return;
+    refreshPending.current = true;
+    setRetrying(true);
+    setNonce((value) => value + 1);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     getReportCategories()
@@ -158,6 +174,7 @@ export default function Reports() {
       .then((data) => {
         if (cancelled) return;
         setResult({ key: requestKey, data: { ...emptyReport, ...data }, error: null });
+        settleRetry();
       })
       .catch((err) => {
         if (cancelled) return;
@@ -166,17 +183,17 @@ export default function Reports() {
           data: emptyReport,
           error: err.message || "Couldn't load your report.",
         });
+        settleRetry();
       });
     return () => {
       cancelled = true;
     };
-  }, [requestKey, filters]);
+  }, [requestKey, filters, settleRetry]);
 
   const settled = result.key === requestKey;
   const status = settled ? (result.error ? "error" : "ready") : "loading";
   const error = result.error;
   const report = result.data;
-  const refresh = useCallback(() => setNonce((value) => value + 1), []);
 
   const setFilter = (field, value) => setFilters((f) => ({ ...f, [field]: value }));
 
@@ -477,7 +494,9 @@ export default function Reports() {
               <button
                 type="button"
                 onClick={refresh}
-                className="mt-3 rounded-lg bg-brand-700 px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-800"
+                disabled={retrying}
+                aria-busy={retrying}
+                className="mt-3 min-h-11 rounded-lg bg-brand-700 px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-60 md:min-h-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
                 Try again
               </button>

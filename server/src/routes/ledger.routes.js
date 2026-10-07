@@ -9,6 +9,7 @@ import {
   createTransactionSchema,
   idParamSchema,
   monthSchema,
+  transactionListSchema,
   updateBudgetSchema,
   updateCategorySchema,
   updateTransactionSchema,
@@ -29,7 +30,12 @@ router.patch(
 );
 router.delete("/categories/:id", ...auth, validate({ params: idParamSchema }), ledger.deleteCategory);
 
-router.get("/transactions", ...auth, validate({ query: monthSchema }), ledger.listTransactions);
+router.get(
+  "/transactions",
+  ...auth,
+  validate({ query: transactionListSchema }),
+  ledger.listTransactions,
+);
 router.post("/transactions", ...auth, validate({ body: createTransactionSchema }), ledger.createTransaction);
 router.patch(
   "/transactions/:id",

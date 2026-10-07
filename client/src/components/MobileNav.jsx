@@ -26,7 +26,7 @@ export default function MobileNav() {
               <Link
                 to={tab.to}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-w-0 flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-semibold transition ${
+                className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[10px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
                   active ? "text-brand-600" : "text-ink-500 hover:text-ink-900"
                 }`}
               >

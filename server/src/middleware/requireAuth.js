@@ -1,8 +1,36 @@
 import ApiError from "../utils/ApiError.js";
 import { isTrustedOrigin } from "../utils/trustedOrigin.js";
+import { env } from "../config/env.js";
+
+function adminName() {
+  const local = env.adminEmail?.split("@")[0]?.trim();
+  return local || "Admin";
+}
+
+function adminPrincipal() {
+  return Object.freeze({
+    _id: null,
+    user_id: null,
+    name: adminName(),
+    email: env.adminEmail ?? "admin@campuscoin.test",
+    academic_year: null,
+    allowance_baseline: null,
+    monthly_savings_goal: null,
+    role: "admin",
+    profileOnboarded: true,
+    is_active: true,
+    profile_image_url: null,
+    createdAt: null,
+    created_at: null,
+  });
+}
 
 export async function loadUser(req, _res, next) {
   req.user = null;
+  if (req.session?.isAdmin) {
+    req.user = adminPrincipal();
+    return next();
+  }
   const userId = req.session?.userId;
   if (!userId) return next();
 

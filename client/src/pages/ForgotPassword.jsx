@@ -58,7 +58,7 @@ export default function ForgotPassword() {
               </p>
               <Link
                 to={`/reset-password?email=${encodeURIComponent(email.trim())}`}
-                className="mt-6 block rounded-lg bg-brand-500 py-2.5 text-center text-sm font-bold text-white transition hover:bg-brand-600"
+                className="mt-6 block rounded-lg bg-brand-700 py-2.5 text-center text-sm font-bold text-white transition hover:bg-brand-800"
               >
                 Enter the code
               </Link>
@@ -98,7 +98,7 @@ export default function ForgotPassword() {
                   disabled={locked}
                   aria-busy={locked}
                   style={minWidth ? { minWidth } : undefined}
-                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-5 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand-700 py-2.5 text-sm font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:min-h-0"
                 >
                   {locked && <SubmitSpinner />}
                   {locked ? "Sending..." : "Send reset code"}

@@ -32,7 +32,7 @@ export default function NotificationBell() {
       onClick={() => navigate("/notifications")}
       aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
       aria-current={onNotificationsPage ? "page" : undefined}
-      className={`relative rounded-lg p-2 transition hover:bg-surface ${
+      className={`relative flex h-11 w-11 items-center justify-center rounded-lg transition hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9 ${
         onNotificationsPage ? "bg-surface" : ""
       }`}
     >

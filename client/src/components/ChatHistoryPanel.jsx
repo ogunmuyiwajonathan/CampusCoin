@@ -103,7 +103,7 @@ export default function ChatHistoryPanel({
           type="button"
           onClick={onClose}
           aria-label="Close history"
-          className="ml-auto rounded-lg p-1.5 text-ink-500 transition hover:bg-slate-100"
+          className="ml-auto flex h-11 w-11 items-center justify-center rounded-lg text-ink-500 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9"
         >
           <Icon name="x" size={18} />
         </button>
@@ -220,7 +220,7 @@ export default function ChatHistoryPanel({
                         type="button"
                         onClick={() => startRename(row)}
                         aria-label={`Rename ${row.title}`}
-                        className="rounded-lg p-1.5 text-ink-500 opacity-0 transition hover:bg-slate-100 focus:opacity-100 group-hover:opacity-100"
+                        className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-500 opacity-100 transition hover:bg-slate-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9 md:opacity-0 md:group-hover:opacity-100"
                       >
                         <Icon name="pencil" size={15} />
                       </button>
@@ -231,7 +231,7 @@ export default function ChatHistoryPanel({
                           setConfirming(row.id);
                         }}
                         aria-label={`Delete ${row.title}`}
-                        className="rounded-lg p-1.5 text-ink-500 opacity-0 transition hover:bg-red-50 hover:text-red-600 focus:opacity-100 group-hover:opacity-100"
+                        className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-500 opacity-100 transition hover:bg-red-50 hover:text-red-600 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9 md:opacity-0 md:group-hover:opacity-100"
                       >
                         <Icon name="trash-2" size={15} />
                       </button>

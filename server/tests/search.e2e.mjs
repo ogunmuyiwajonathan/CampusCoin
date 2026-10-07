@@ -4,6 +4,7 @@ import { resetTestDb, useTestDatabaseEnv } from "./helpers/testDb.js";
 
 useTestDatabaseEnv();
 process.env.CORS_ORIGIN = "http://localhost:5173";
+process.env.ADMIN_SEED_PASSWORD = "SearchPass123";
 
 const { connectDb, disconnectDb } = await import("../src/config/db.js");
 const { User, Category, Transaction, Budget, Bookmark, Notification } =
@@ -22,17 +23,6 @@ await resetTestDb();
 const stamp = Date.now();
 const password = await bcrypt.hash("SearchPass123", 10);
 
-const admin = await User.create({
-  name: "Search Admin",
-  email: `srch.admin.${stamp}@campuscoin.test`,
-  password_hash: password,
-  role: "admin",
-  is_active: true,
-  profileOnboarded: true,
-});
-
-// Two students with deliberately different vocabulary, so "alpha" can only ever
-// match A and "bravo" can only ever match B.
 const studentA = await User.create({
   name: "Alpha Tester",
   email: `srch.alpha.${stamp}@campuscoin.test`,
@@ -129,6 +119,18 @@ function client() {
   };
   return {
     call,
+    async signInAdmin(password) {
+      const res = await fetch(`${base}/api/admin/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) },
+        body: JSON.stringify({ password }),
+      });
+      for (const raw of res.headers.getSetCookie?.() ?? []) {
+        const pair = raw.split(";")[0];
+        if (pair.startsWith("campuscoin.sid=")) cookie = pair;
+      }
+      return res.status;
+    },
     async signIn(email) {
       const res = await fetch(`${base}/api/auth/login`, {
         method: "POST",
@@ -149,7 +151,7 @@ const alphaApi = client();
 const bravoApi = client();
 const anonApi = client();
 
-await adminApi.signIn(admin.email);
+await adminApi.signInAdmin("SearchPass123");
 await alphaApi.signIn(studentA.email);
 await bravoApi.signIn(studentB.email);
 

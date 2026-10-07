@@ -197,8 +197,21 @@ function withMonth(path, month) {
   return apiFetch(`${path}?month=${encodeURIComponent(month)}`);
 }
 
-export function listTransactions(month) {
-  return withMonth("/transactions", month);
+/**
+ * `month` null/undefined/"" means every month, which the server pages. Pass
+ * `{ page, limit }` to walk it; the server caps limit at 100 and returns
+ * `{ transactions, total, page, limit, paged }`. A month-scoped call ignores
+ * paging and comes back whole.
+ */
+export function listTransactions(month, { page, limit } = {}) {
+  const params = new URLSearchParams();
+  if (month !== null && month !== undefined && month !== "") {
+    params.set("month", month);
+  }
+  if (page !== undefined && page !== null) params.set("page", String(page));
+  if (limit !== undefined && limit !== null) params.set("limit", String(limit));
+  const query = params.toString();
+  return apiFetch(query ? `/transactions?${query}` : "/transactions");
 }
 
 export function createTransaction(body) {

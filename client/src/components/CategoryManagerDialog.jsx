@@ -267,7 +267,7 @@ export default function CategoryManagerDialog({ onClose }) {
             type="button"
             onClick={onClose}
             aria-label="Close categories"
-            className="-mr-1 shrink-0 rounded-lg p-1.5 text-ink-500 transition hover:bg-slate-50 hover:text-ink-900"
+            className="-mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-ink-500 transition hover:bg-slate-50 hover:text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9"
           >
             <Icon name="x" size={18} />
           </button>

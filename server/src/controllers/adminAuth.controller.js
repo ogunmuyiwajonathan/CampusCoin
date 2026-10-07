@@ -1,10 +1,8 @@
+import crypto from "node:crypto";
 import { z } from "zod";
-import bcrypt from "bcryptjs";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
-import { User } from "../models/index.js";
 import { env } from "../config/env.js";
-import { normaliseEmail } from "../services/auth.service.js";
 
 const REMEMBER_TTL_SECONDS = 60 * 60 * 24 * 30;
 const SHORT_TTL_SECONDS = 60 * 60 * 12;
@@ -16,34 +14,36 @@ const adminLoginSchema = z.object({
 
 const GENERIC_FAIL = "Incorrect password.";
 
-const DUMMY_HASH = "$2a$10$abcdefghijklmnopqrstuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu";
+function passwordMatches(password, expected) {
+  const a = Buffer.from(password);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
+function adminName() {
+  const local = env.adminEmail?.split("@")[0]?.trim();
+  return local || "Admin";
+}
 
 export const adminLogin = asyncHandler(async (req, res) => {
   const parsed = adminLoginSchema.safeParse(req.body);
   if (!parsed.success) throw ApiError.badRequest(GENERIC_FAIL);
 
   const { password, rememberMe } = parsed.data;
+  const expected = env.adminSeedPassword || "";
 
-  const adminEmail = env.adminEmail ? normaliseEmail(env.adminEmail) : null;
-  const admin = adminEmail
-    ? await User.findOne({ email: adminEmail, role: "admin", is_active: true }).select("+password_hash")
-    : null;
-
-  if (!admin) {
-    await bcrypt.compare(password, DUMMY_HASH);
-    if (!adminEmail) {
-      console.error("[auth] ADMIN_EMAIL is not set, so no admin can sign in.");
+  if (!expected || !passwordMatches(password, expected)) {
+    if (!expected) {
+      console.error("[auth] ADMIN_SEED_PASSWORD is not set, so no admin can sign in.");
     }
     throw ApiError.unauthorized(GENERIC_FAIL);
   }
 
-  const ok = await bcrypt.compare(password, admin.password_hash);
-  if (!ok) throw ApiError.unauthorized(GENERIC_FAIL);
-
   await new Promise((resolve, reject) => {
     req.session.regenerate((regenErr) => {
       if (regenErr) return reject(regenErr);
-      req.session.userId = admin.user_id;
+      req.session.isAdmin = true;
       req.session.cookie.maxAge =
         (rememberMe ? REMEMBER_TTL_SECONDS : SHORT_TTL_SECONDS) * 1000;
       return req.session.save((saveErr) => (saveErr ? reject(saveErr) : resolve()));
@@ -52,10 +52,10 @@ export const adminLogin = asyncHandler(async (req, res) => {
 
   res.json({
     user: {
-      user_id: admin.user_id,
-      name: admin.name,
-      email: admin.email,
-      role: admin.role,
+      user_id: null,
+      name: adminName(),
+      email: env.adminEmail ?? "admin@campuscoin.test",
+      role: "admin",
     },
   });
 });

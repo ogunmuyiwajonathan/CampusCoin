@@ -103,7 +103,7 @@ export default function ProfileEditor({ initial, onClose, onSave }) {
             onClick={onClose}
             disabled={saving}
             aria-label="Close editor"
-            className="rounded-lg p-1.5 text-ink-500 transition hover:bg-slate-50 hover:text-ink-900 disabled:opacity-50"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-500 transition hover:bg-slate-50 hover:text-ink-900 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9"
           >
             <Icon name="x" size={18} />
           </button>

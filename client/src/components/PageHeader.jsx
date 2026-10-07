@@ -35,7 +35,7 @@ export default function PageHeader({ onMenu }) {
       <div className="flex items-center gap-3">
         <button
           type="button"
-          className="hidden rounded-lg p-2 hover:bg-surface md:inline-flex lg:hidden"
+          className="hidden h-11 w-11 items-center justify-center rounded-lg hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:inline-flex md:h-9 md:w-9 lg:hidden"
           onClick={onMenu}
           aria-label="Open navigation menu"
         >
@@ -60,7 +60,7 @@ export default function PageHeader({ onMenu }) {
         <div className="ml-auto flex items-center gap-3">
           <button
             type="button"
-            className="rounded-lg p-2 transition hover:bg-surface sm:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-lg transition hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 sm:hidden"
             onClick={() => setMobileSearch(true)}
             aria-label="Open search"
           >

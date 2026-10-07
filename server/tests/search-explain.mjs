@@ -74,15 +74,6 @@ const { User, Category, Transaction, Budget, Bookmark, Notification, TipTemplate
   await import("../src/models/index.js");
 const { Announcement } = await import("../src/models/Announcement.js");
 
-const admin = await User.create({
-  name: "Search Admin",
-  email: `explain.admin.${stamp}@campuscoin.test`,
-  password_hash: "x",
-  role: "admin",
-  is_active: true,
-  profileOnboarded: true,
-});
-
 const owner = await User.create({
   name: "Explain Owner",
   email: `explain.owner.${stamp}@campuscoin.test`,
@@ -127,7 +118,7 @@ await Announcement.create({
   title: "Orientation week",
   body: "Come to the faculty orientation.",
   active: true,
-  createdBy: admin._id,
+  createdBy: owner._id,
 });
 
 console.log(`\nSeeded 400+ transactions for one student. Plans for q="food":\n`);
