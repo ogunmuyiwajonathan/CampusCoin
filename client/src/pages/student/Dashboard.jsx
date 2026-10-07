@@ -13,19 +13,17 @@ import AIAssistantCard from "../../components/AIAssistantCard.jsx";
 import PageHeader from "../../components/PageHeader.jsx";
 import ProfileSetupOverlay from "../../components/ProfileSetupOverlay.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
-import {
-  CATEGORY_ICONS,
-  categoryColor,
-  categoryLookup,
-  computeTotals,
-  expenseBreakdown,
-} from "../../data/mockData.js";
-import { useBudgets } from "../../hooks/useBudgets.js";
+import { CATEGORY_ICONS, categoryColor, categoryLookup } from "../../data/mockData.js";
+import { useSummary } from "../../hooks/useSummary.js";
 import { useRecentlyViewed } from "../../hooks/useRecentlyViewed.js";
 import TipsPanel from "../../components/TipsPanel.jsx";
-import { useTransactions } from "../../hooks/useTransactions.js";
-import { currentMonthKey, formatDate, monthLabel } from "../../lib/formatMonth.js";
+import { decorateBreakdown } from "../../lib/insights.js";
+import { currentMonthKey, formatDate, monthLabel, monthOptions } from "../../lib/formatMonth.js";
 import { formatCurrency } from "../../lib/formatCurrency.js";
+
+// The picker offers the current month plus the eleven before it, built from the
+// calendar so a month with no rows is still selectable.
+const MONTH_RANGE = 12;
 
 const AddTransactionLink = () => (
   <Link
@@ -57,7 +55,7 @@ function DashboardSkeleton() {
   return (
     <div className="space-y-4" role="status" aria-live="polite" aria-busy="true">
       <span className="sr-only">Loading dashboard...</span>
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[0, 1, 2, 3].map((index) => (
           <div
             key={index}
@@ -95,37 +93,39 @@ export default function Dashboard() {
   const { user, updateProfile } = useAuth();
   const displayName = user?.name ?? "there";
 
-  const { status, items, error, refresh } = useTransactions();
-  const budgets = useBudgets();
+  const [month, setMonth] = useState(currentMonthKey());
+  // Every figure on this page comes from the server summary for the selected
+  // month. Nothing is summed from a list of rows, so the numbers stay right
+  // once that list is paginated.
+  const { status, summary, error, refresh } = useSummary(month);
   const recently = useRecentlyViewed();
 
-  const totals = computeTotals(items);
-  const balance = totals.income - totals.expense;
+  const totals = summary?.totals ?? { income: 0, expense: 0, net: 0, count: 0 };
+  const balance = totals.net;
   const savingsGoal = user?.monthly_savings_goal ?? null;
-  const breakdown = expenseBreakdown(items);
+  const breakdown = decorateBreakdown(summary?.breakdown ?? []);
   const topCategory = breakdown[0] ?? null;
-  const thisMonth = monthLabel(currentMonthKey());
+  const thisMonth = monthLabel(month);
+  const monthChoices = monthOptions(MONTH_RANGE);
+  const goalProgress =
+    savingsGoal != null && savingsGoal > 0 ? (balance / savingsGoal) * 100 : null;
 
-  const spentByCategory = items.reduce((acc, item) => {
-    if (item.type === "expense") {
-      acc[item.category_id] = (acc[item.category_id] ?? 0) + item.amount;
-    }
-    return acc;
-  }, {});
-  const totalLimit = budgets.items.reduce((sum, budget) => sum + (budget.limit_amount ?? 0), 0);
-  const totalSpent = budgets.items.reduce(
-    (sum, budget) => sum + (spentByCategory[budget.category_id] ?? 0),
-    0,
-  );
+  const budgetRows = summary?.budgets ?? [];
+  const totalLimit = budgetRows.reduce((sum, budget) => sum + (budget.limit_amount ?? 0), 0);
+  const totalSpent = budgetRows.reduce((sum, budget) => sum + (budget.spent ?? 0), 0);
   const ratio = totalLimit > 0 ? totalSpent / totalLimit : 0;
   const usedPct = Math.round(ratio * 100);
   const barWidth = Math.min(Math.max(ratio * 100, 0), 100);
   const isOver = totalLimit > 0 && ratio >= 1;
   const isNear = !isOver && ratio >= 0.95;
 
-  const [yearPart, monthPart] = currentMonthKey().split("-");
+  const liveMonth = currentMonthKey();
+  const [yearPart, monthPart] = month.split("-");
   const monthDays = new Date(Number(yearPart), Number(monthPart), 0).getDate();
-  const daysElapsed = new Date().getDate();
+  // A month that has already closed cannot be paced, so its projection is just
+  // what was actually spent. A future month has no days to pace from yet.
+  const daysElapsed =
+    month === liveMonth ? new Date().getDate() : month < liveMonth ? monthDays : 0;
   const projectedSpend =
     daysElapsed > 0 ? (totals.expense / daysElapsed) * monthDays : totals.expense;
   const forecastTarget =
@@ -139,19 +139,16 @@ export default function Dashboard() {
   const [setupOpen, setSetupOpen] = useState(user?.profileOnboarded === false);
 
   const lookup = categoryLookup();
-  const recent = [...items]
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 5)
-    .map((t) => {
-      const category = lookup[t.category_id];
-      const name = category?.name ?? "Others";
-      return {
-        ...t,
-        category_name: name,
-        icon: CATEGORY_ICONS[name] ?? "ellipsis",
-        color: categoryColor(t.category_id),
-      };
-    });
+  const recent = (summary?.recent ?? []).map((t) => {
+    const category = lookup[t.category_id];
+    const name = category?.name ?? "Others";
+    return {
+      ...t,
+      category_name: name,
+      icon: CATEGORY_ICONS[name] ?? "ellipsis",
+      color: categoryColor(t.category_id),
+    };
+  });
 
   return (
     <div className="min-h-svh">
@@ -206,6 +203,36 @@ export default function Dashboard() {
             </div>
           </section>
 
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-ink-500">
+              Showing <span className="font-bold text-ink-900">{thisMonth}</span>
+            </p>
+            <div className="relative">
+              <Icon
+                name="calendar"
+                size={15}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-500"
+              />
+              <select
+                aria-label="Select dashboard month"
+                value={month}
+                onChange={(event) => setMonth(event.target.value)}
+                className="appearance-none rounded-lg border border-slate-200 bg-surface py-2 pl-8 pr-8 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              >
+                {monthChoices.map((key) => (
+                  <option key={key} value={key}>
+                    {monthLabel(key)}
+                  </option>
+                ))}
+              </select>
+              <Icon
+                name="chevron-down"
+                size={14}
+                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-500"
+              />
+            </div>
+          </div>
+
           {status === "loading" && <DashboardSkeleton />}
 
           {status === "error" && (
@@ -218,7 +245,7 @@ export default function Dashboard() {
 
           {status === "ready" && (
             <>
-              <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+              <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard
                   label="Month Balance"
                   value={formatCurrency(balance)}
@@ -238,11 +265,16 @@ export default function Dashboard() {
                   value={savingsGoal == null ? "Not added" : formatCurrency(savingsGoal)}
                   icon="piggy-bank"
                   tone="purple"
-                  hint={savingsGoal == null ? "Add a goal in Settings" : "Your monthly target"}
+                  hint={
+                    savingsGoal == null
+                      ? "Add a goal in Settings"
+                      : `${formatCurrency(balance)} saved of your goal`
+                  }
+                  progress={goalProgress ?? undefined}
                 />
               </section>
 
-              {items.length === 0 && (
+              {totals.count === 0 && (
                 <section className="rounded-card border border-dashed border-emerald-200 bg-surface p-8 text-center shadow-card dark:border-emerald-500/30">
                   <Icon name="wallet" size={26} className="mx-auto text-ink-500" />
                   <p className="mt-2 text-sm font-semibold text-ink-900">
@@ -258,25 +290,7 @@ export default function Dashboard() {
               )}
 
               <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {budgets.status === "loading" && (
-                  <div
-                    className="h-44 animate-pulse rounded-card bg-surface shadow-card"
-                    role="status"
-                    aria-busy="true"
-                  >
-                    <span className="sr-only">Loading budgets...</span>
-                  </div>
-                )}
-
-                {budgets.status === "error" && (
-                  <div className="rounded-card bg-surface p-5 shadow-card" role="alert">
-                    <CardTitle>Budget vs actual</CardTitle>
-                    <p className="text-sm font-semibold text-red-500">{budgets.error}</p>
-                    <RetryButton onClick={budgets.refresh} />
-                  </div>
-                )}
-
-                {budgets.status === "ready" && totalLimit === 0 && (
+                {totalLimit === 0 && (
                   <div className="rounded-card bg-surface p-5 shadow-card">
                     <CardTitle>Budget vs actual</CardTitle>
                     <Icon name="target" size={26} className="text-ink-500" />
@@ -295,7 +309,7 @@ export default function Dashboard() {
                   </div>
                 )}
 
-                {budgets.status === "ready" && totalLimit > 0 && (
+                {totalLimit > 0 && (
                   <div className="rounded-card bg-surface p-5 shadow-card">
                     <CardTitle
                       action={
@@ -398,8 +412,8 @@ export default function Dashboard() {
                         {formatCurrency(projectedSpend)}
                       </p>
                       <p className="mt-1 text-xs text-ink-500">
-                        Projected for {monthLabel(currentMonthKey())} at this pace, based on{" "}
-                        {daysElapsed} day{daysElapsed === 1 ? "" : "s"} of spending.
+                        Projected for {thisMonth} at this pace, based on {daysElapsed} day
+                        {daysElapsed === 1 ? "" : "s"} of spending.
                       </p>
                       {forecastTarget && (
                         <p

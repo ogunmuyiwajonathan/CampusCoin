@@ -60,7 +60,11 @@ check("content-type is json", (nf.headers.get("content-type") || "").includes("a
 console.log("\n4. auth rate limiter trips on repeated failures");
 const codes = [];
 let limitHeaders = null;
-for (let i = 0; i < 8; i += 1) {
+// The limiter allows 10 failures per 5 minutes (rateLimiters.js authLoginLimiter,
+// with skipSuccessfulRequests so only failures count). The 11th failed attempt is
+// the one that must come back 429, so the loop has to run past that point.
+const LOGIN_FAILURE_LIMIT = 10;
+for (let i = 0; i < LOGIN_FAILURE_LIMIT + 2; i += 1) {
   const res = await fetch(`${base}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -75,7 +79,16 @@ for (let i = 0; i < 8; i += 1) {
   }
 }
 check("a request was throttled with 429", codes.includes(429), JSON.stringify(codes));
-check("throttle kicks in by the 6th attempt", codes.indexOf(429) <= 5, JSON.stringify(codes));
+check(
+  `the 11th failed attempt is throttled (${LOGIN_FAILURE_LIMIT} failures per 5 minutes)`,
+  codes.indexOf(429) === LOGIN_FAILURE_LIMIT,
+  JSON.stringify(codes),
+);
+check(
+  `attempts 1-${LOGIN_FAILURE_LIMIT} were 401, not 429`,
+  codes.slice(0, LOGIN_FAILURE_LIMIT).every((code) => code === 401),
+  JSON.stringify(codes),
+);
 check(
   "every attempt before the limit was a 401, not a 500",
   codes.slice(0, codes.indexOf(429)).every((code) => code === 401),

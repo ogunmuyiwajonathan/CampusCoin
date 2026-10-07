@@ -19,19 +19,18 @@ import Sidebar from "../../components/Sidebar.jsx";
 import SpendingDonut from "../../components/SpendingDonut.jsx";
 import StatCard from "../../components/StatCard.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
-import { useBudgets } from "../../hooks/useBudgets.js";
-import { useTransactions } from "../../hooks/useTransactions.js";
+import { useSummary } from "../../hooks/useSummary.js";
 import {
   buildInsights,
-  HISTORY_MONTHS,
+  emptySummary,
   percentChange,
   WINDOW_MONTHS,
 } from "../../lib/insights.js";
 import { formatCurrency } from "../../lib/formatCurrency.js";
 import {
   currentMonthKey,
-  monthKey,
   monthLabel,
+  monthOptions,
   monthRangeShort,
   shiftMonthKey,
 } from "../../lib/formatMonth.js";
@@ -48,6 +47,10 @@ const SERIES = [
 ];
 
 const RANGE_LOAD_MS = 320;
+
+// The month picker offers the current month plus the eleven before it, built
+// from the calendar so every student sees the same list.
+const MONTH_RANGE = 12;
 
 function withAccent(text, accent, tone) {
   if (!accent || !text.includes(accent)) return text;
@@ -136,7 +139,7 @@ function InsightsSkeleton() {
   return (
     <div className="space-y-4" role="status" aria-live="polite" aria-busy="true">
       <span className="sr-only">Loading insights…</span>
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[0, 1, 2, 3].map((index) => (
           <div key={index} className="h-24 animate-pulse rounded-card bg-surface shadow-card" />
         ))}
@@ -156,21 +159,17 @@ export default function Insights() {
   const [focus, setFocus] = useState("expenses");
 
   const { user } = useAuth();
-  const { status, items, error: txError } = useTransactions();
-  const { items: budgetItems, error: budgetError } = useBudgets();
-
-  const availableMonths = useMemo(
-    () => [...new Set(items.map((item) => monthKey(item.date)))].sort().reverse(),
-    [items],
-  );
-  const [month, setMonth] = useState(() => {
-    const now = currentMonthKey();
-    return availableMonths.includes(now) ? now : (availableMonths[0] ?? now);
-  });
+  // The month picker comes from the calendar, so it is the same list for
+  // everyone; the summary is then fetched for whichever month is picked.
+  const [month, setMonth] = useState(currentMonthKey());
   const [rangeStatus, setRangeStatus] = useState("ready");
+  const [bookmarkError, setBookmarkError] = useState("");
+
+  const { status, summary, error: summaryError, refresh } = useSummary(month);
 
   const now = currentMonthKey();
-  const canGoBack = month > shiftMonthKey(now, -HISTORY_MONTHS);
+  const choices = monthOptions(MONTH_RANGE);
+  const canGoBack = choices.includes(shiftMonthKey(month, -1));
   const canGoForward = month < now;
 
   const goToMonth = (next) => {
@@ -187,18 +186,12 @@ export default function Insights() {
     return () => clearTimeout(timer);
   }, [rangeStatus, month]);
 
-  const monthOptions = useMemo(() => {
-    const keys = new Set(availableMonths);
-    keys.add(month);
-    return [...keys].sort().reverse();
-  }, [availableMonths, month]);
-
   const goal = user?.monthly_savings_goal ?? 0;
-  const error = [txError, budgetError].filter(Boolean).join(" ") || null;
+  const error = [summaryError, bookmarkError].filter(Boolean).join(" ") || null;
 
   const view = useMemo(
-    () => buildInsights({ items, month, budgets: budgetItems, goal }),
-    [items, month, budgetItems, goal],
+    () => buildInsights({ summary: summary ?? emptySummary(month), month, goal }),
+    [summary, month, goal],
   );
 
   const { totals, prevTotals, prev, hasPrev, saved, prevSaved, breakdown, series } = view;
@@ -281,7 +274,7 @@ export default function Insights() {
                 aria-label="Select insights month"
                 className="appearance-none rounded-xl border border-slate-200 bg-surface py-2.5 pl-10 pr-9 text-sm font-semibold text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
               >
-                {monthOptions.map((key) => (
+                {choices.map((key) => (
                   <option key={key} value={key}>
                     {monthLabel(key)}
                   </option>
@@ -296,7 +289,7 @@ export default function Insights() {
             <BookmarkButton
               month={month}
               suggestedNote={view?.narrative ? `${view.narrative}`.slice(0, 200) : ""}
-              onError={(message) => setError(message)}
+              onError={(message) => setBookmarkError(message)}
             />
           </div>
 
@@ -309,9 +302,25 @@ export default function Insights() {
             </p>
           )}
 
+          {status === "error" && (
+            <div className="rounded-card bg-surface p-8 text-center shadow-card" role="alert">
+              <Icon name="triangle-alert" size={28} className="mx-auto text-red-500" />
+              <p className="mt-2 text-sm font-semibold text-ink-900">
+                Those numbers could not be loaded.
+              </p>
+              <button
+                type="button"
+                onClick={refresh}
+                className="mt-3 rounded-lg bg-brand-700 px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-800"
+              >
+                Try again
+              </button>
+            </div>
+          )}
+
           {status === "loading" ? (
             <InsightsSkeleton />
-          ) : items.length === 0 ? (
+          ) : status === "error" ? null : !(summary?.totals?.count > 0) ? (
             <div className="flex flex-col items-center gap-3 rounded-card bg-surface px-5 py-14 text-center shadow-card">
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                 <Icon name="chart-column" size={24} />
@@ -332,7 +341,7 @@ export default function Insights() {
             </div>
           ) : (
             <>
-              <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+              <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard
                   label="Total Saved This Month"
                   value={formatCurrency(saved)}

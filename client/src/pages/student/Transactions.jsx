@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import Icon from "../../components/Icon.jsx";
 import CategoryIcon from "../../components/CategoryIcon.jsx";
@@ -48,23 +49,124 @@ function matchesSearch(item, query, categoryName = "") {
   );
 }
 
+/**
+ * The row action menu, rendered into the page body and positioned against the
+ * trigger's viewport rectangle.
+ *
+ * It used to be an absolutely positioned child of the table cell. The table
+ * sits inside an `overflow-x-auto` wrapper, which establishes a clipping
+ * context, so on the last rows the menu was cut off by the container edge and
+ * the Delete item was unreachable. Portalling it out of that wrapper removes
+ * the clip; `top` flips above the trigger when there is not enough room below,
+ * and a resize or scroll closes it rather than leaving it floating.
+ */
+function RowMenu({ anchorRef, onEdit, onDelete }) {
+  const [position, setPosition] = useState(null);
+  const menuRef = useRef(null);
+  const [size, setSize] = useState({ width: 144, height: 80 });
+
+  useLayoutEffect(() => {
+    const place = () => {
+      const anchor = anchorRef.current;
+      if (!anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      const below = window.innerHeight - rect.bottom;
+      const flip = below < size.height + 16 && rect.top > below;
+      setPosition({
+        top: flip ? rect.top - size.height - 4 : rect.bottom + 4,
+        left: Math.min(Math.max(rect.right - size.width, 8), window.innerWidth - size.width - 8),
+      });
+    };
+    place();
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
+    };
+  }, [anchorRef, size.height, size.width]);
+
+  // Escape is handled by the page, which closes the open menu. RowMenu does
+  // not listen for it: an earlier version called onEdit on Escape, which opened
+  // the edit dialog instead of closing the menu.
+
+  // Once the real box is measured, re-place so the flip decision uses the
+  // menu's true height instead of the estimate.
+  useLayoutEffect(() => {
+    const node = menuRef.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    if (Math.abs(rect.height - size.height) > 1) setSize({ width: rect.width, height: rect.height });
+  }, [size.height, size.width]);
+
+  return createPortal(
+    <div
+      ref={menuRef}
+      role="menu"
+      style={{
+        position: "fixed",
+        top: position?.top ?? -9999,
+        left: position?.left ?? -9999,
+        visibility: position ? "visible" : "hidden",
+        zIndex: 60,
+      }}
+      className="w-36 overflow-hidden rounded-lg border border-slate-200 bg-surface py-1 shadow-card"
+    >
+      <button
+        type="button"
+        role="menuitem"
+        onClick={onEdit}
+        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink-900 transition hover:bg-slate-50 focus:outline-none focus-visible:bg-slate-50"
+      >
+        <Icon name="pencil" size={14} />
+        Edit
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        onClick={onDelete}
+        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-500 transition hover:bg-red-50 focus:outline-none focus-visible:bg-red-50"
+      >
+        <Icon name="trash-2" size={14} />
+        Delete
+      </button>
+    </div>,
+    document.body,
+  );
+}
+
+/**
+ * A skeleton that is the real table, with the bars in the same cells. The old
+ * version drew flex rows of a different width, so the header and columns
+ * jumped sideways the moment real data arrived.
+ */
 function TableSkeleton() {
   return (
-    <div
-      className="flex flex-col gap-3.5 px-5 py-4"
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-    >
-      <span className="sr-only">Loading transactionsÃ¢â‚¬Â¦</span>
-      {Array.from({ length: 5 }, (_, index) => (
-        <div key={index} className="flex animate-pulse items-center gap-4">
-          <div className="h-4 w-24 rounded bg-slate-100" />
-          <div className="hidden h-4 w-16 rounded bg-slate-100 sm:block" />
-          <div className="h-4 flex-1 rounded bg-slate-100" />
-          <div className="h-4 w-20 rounded bg-slate-100" />
-        </div>
-      ))}
+    <div className="px-5 py-4" role="status" aria-live="polite" aria-busy="true">
+      <span className="sr-only">Loading transactions. This may take a moment.</span>
+      <table className="w-full">
+        <tbody>
+          {Array.from({ length: 5 }, (_, index) => (
+            <tr key={index} className="animate-pulse">
+              <td className="px-2 py-3 sm:px-3">
+                <div className="h-4 w-24 rounded bg-slate-100" />
+              </td>
+              <td className="hidden px-2 py-3 sm:table-cell sm:px-3">
+                <div className="h-4 w-16 rounded bg-slate-100" />
+              </td>
+              <td className="px-2 py-3 sm:px-3">
+                <div className="h-4 w-full rounded bg-slate-100" />
+              </td>
+              <td className="whitespace-nowrap px-2 py-3 text-right sm:px-3">
+                <div className="ml-auto h-4 w-20 rounded bg-slate-100" />
+              </td>
+              <td className="px-2 py-3 sm:px-3">
+                <div className="h-6 w-6 rounded bg-slate-100" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -138,6 +240,8 @@ export default function Transactions() {
   const [formOpen, setFormOpen] = useState(() => params.get("new") === "1");
   const [editing, setEditing] = useState(null);
   const [menuId, setMenuId] = useState(null);
+  // The open row's trigger, so RowMenu can position itself against it.
+  const menuAnchorRef = useRef(null);
   const [confirmId, setConfirmId] = useState(null);
   const [importOpen, setImportOpen] = useState(() => params.get("import") === "1");
   const [deletedOpen, setDeletedOpen] = useState(false);
@@ -154,16 +258,36 @@ export default function Transactions() {
 
 
   // "All months" is sent as null so the parameter is left off the request; the
-  // server then returns every row instead of rejecting `?month=all` with a 400.
+  // server then returns a page of every row instead of rejecting `?month=all`
+  // with a 400, or pulling an unbounded history in one response. A month is
+  // already bounded, so it comes back whole and `paged` is false.
+  const PAGE_SIZE = 50;
+  // The page number belongs to a period. Storing the period it belongs to and
+  // deriving the live value means switching period resets to page 1 during
+  // render, so no effect has to fire a second render pass.
+  const [pageState, setPageState] = useState({ period: monthFilter, page: 1 });
+  const allPage = pageState.period === monthFilter ? pageState.page : 1;
+  const setAllPage = (next) =>
+    setPageState((current) => ({
+      period: monthFilter,
+      page: typeof next === "function" ? next(current.page) : next,
+    }));
+  const paged = monthFilter === ALL;
   const {
     status,
     items,
     error,
+    total,
+    paged: serverPaged,
     add: addTx,
     update: updateTx,
     remove: removeTx,
     refresh: refreshRows,
-  } = useTransactions(monthFilter === ALL ? null : monthFilter);
+  } = useTransactions(paged ? null : monthFilter, {
+    page: paged ? allPage : undefined,
+    limit: paged ? PAGE_SIZE : undefined,
+  });
+  const totalPages = paged && serverPaged ? Math.max(Math.ceil(total / PAGE_SIZE), 1) : 1;
 
   // The four cards above the table are server totals for the same period. They
   // are deliberately not summed from `items`, which will be paginated.
@@ -183,7 +307,13 @@ export default function Transactions() {
       }
     };
     const onClick = (event) => {
-      if (!event.target.closest("[data-row-actions]")) {
+      // The menu is portalled to <body>, so it is no longer inside the row's
+      // [data-row-actions] cell. Closing on "click outside" without allowing
+      // for that meant a click on Delete was treated as an outside click and
+      // wiped the confirm step in the same tick, so Delete never happened.
+      const inRow = Boolean(event.target.closest?.("[data-row-actions]"));
+      const inMenu = Boolean(event.target.closest?.('[role="menu"]'));
+      if (!inRow && !inMenu) {
         setMenuId(null);
         setConfirmId(null);
       }
@@ -572,7 +702,12 @@ export default function Transactions() {
                             {formatCurrency(item.amount)}
                           </td>
                           <td className="px-2 py-3 sm:px-3" data-row-actions>
-                            <div className="relative flex justify-end">
+                            {/* The menu is fixed to the viewport rather than
+                                absolutely positioned inside this cell: the table
+                                lives in an overflow-x-auto container, which clips
+                                an absolutely positioned dropdown at its edge and
+                                would cut off the last rows. */}
+                            <div className="relative flex justify-end" ref={menuAnchorRef}>
                               {confirmId === item.transaction_id ? (
                                 <ConfirmDeleteButton
                                   onConfirm={() => remove(item.transaction_id)}
@@ -585,46 +720,34 @@ export default function Transactions() {
                                     aria-label={`Actions for ${item.description || name}`}
                                     aria-haspopup="menu"
                                     aria-expanded={menuId === item.transaction_id}
-                                    onClick={() =>
-                                      setMenuId(
-                                        menuId === item.transaction_id ? null : item.transaction_id,
-                                      )
-                                    }
-                                    className="rounded-lg p-1.5 text-ink-500 transition hover:bg-slate-100 hover:text-ink-900"
+                                    onClick={(event) => {
+                                      if (menuId === item.transaction_id) {
+                                        setMenuId(null);
+                                        return;
+                                      }
+                                      // Point the anchor at this row's button
+                                      // before the menu mounts, so it has something
+                                      // to measure.
+                                      menuAnchorRef.current = event.currentTarget;
+                                      setMenuId(item.transaction_id);
+                                    }}
+                                    className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-500 transition hover:bg-slate-100 hover:text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9"
                                   >
                                     <Icon name="ellipsis" size={18} />
                                   </button>
                                   {menuId === item.transaction_id && (
-                                    <div
-                                      role="menu"
-                                      className="absolute right-0 top-full z-20 mt-1 w-36 overflow-hidden rounded-lg border border-slate-200 bg-surface py-1 shadow-card"
-                                    >
-                                      <button
-                                        type="button"
-                                        role="menuitem"
-                                        onClick={() => {
-                                          setMenuId(null);
-                                          setEditing(item);
-                                          setFormOpen(true);
-                                        }}
-                                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-ink-900 transition hover:bg-slate-50"
-                                      >
-                                        <Icon name="pencil" size={14} />
-                                        Edit
-                                      </button>
-                                      <button
-                                        type="button"
-                                        role="menuitem"
-                                        onClick={() => {
-                                          setMenuId(null);
-                                          setConfirmId(item.transaction_id);
-                                        }}
-                                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 transition hover:bg-red-50"
-                                      >
-                                        <Icon name="trash-2" size={14} />
-                                        Delete
-                                      </button>
-                                    </div>
+                                    <RowMenu
+                                      anchorRef={menuAnchorRef}
+                                      onEdit={() => {
+                                        setMenuId(null);
+                                        setEditing(item);
+                                        setFormOpen(true);
+                                      }}
+                                      onDelete={() => {
+                                        setMenuId(null);
+                                        setConfirmId(item.transaction_id);
+                                      }}
+                                    />
                                   )}
                                 </>
                               )}
@@ -637,7 +760,36 @@ export default function Transactions() {
                 </table>
               </div>
             )}
-          </section>
+
+      {serverPaged && totalPages > 1 ? (
+            <nav
+              className="flex items-center justify-between gap-3 border-t border-slate-100 px-5 py-3"
+              aria-label="Transaction pages"
+            >
+              <p className="text-xs text-ink-500">
+                Page {allPage} of {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAllPage((value) => Math.max(value - 1, 1))}
+                  disabled={allPage <= 1}
+                  className="flex min-h-11 items-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-ink-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 md:min-h-0 md:py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAllPage((value) => Math.min(value + 1, totalPages))}
+                  disabled={allPage >= totalPages}
+                  className="flex min-h-11 items-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-ink-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 md:min-h-0 md:py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                >
+                  Next
+                </button>
+              </div>
+            </nav>
+          ) : null}
+        </section>
         </main>
       </div>
 

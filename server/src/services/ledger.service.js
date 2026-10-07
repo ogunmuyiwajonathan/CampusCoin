@@ -252,17 +252,26 @@ export async function materialiseRecurring(userId) {
 
   for (const row of due) {
     if (touched.has(String(row._id))) continue;
+    const root = row.recurring_root ?? row._id;
     let next = row.next_run_at;
     let steps = 0;
 
     while (next <= today && steps < MAX_CATCH_UP_STEPS) {
       steps += 1;
-      const duplicate = await Transaction.exists({
-        user_id: userId,
-        is_recurring: true,
-        recurring_root: row.recurring_root ?? row._id,
-        date: next,
-      });
+      // The source row already stands in for its own date, and it is the one row
+      // the (user_id, recurring_root, date) unique index cannot cover because its
+      // recurring_root is still null. Without this guard the first catch-up pass
+      // inserted a second copy of the source row - the phantom allowance.
+      // The duplicate lookup also drops the old `is_recurring: true` clause,
+      // which could never match a generated row (those are stored with
+      // is_recurring: false) and so never caught anything.
+      const duplicate =
+        next === row.date ||
+        (await Transaction.exists({
+          user_id: userId,
+          recurring_root: root,
+          date: next,
+        }));
       if (!duplicate) {
         const createdRow = await Transaction.create({
           user_id: userId,
@@ -310,13 +319,55 @@ export async function materialiseRecurring(userId) {
   return created;
 }
 
-export async function listTransactions(userId, month) {
+/** The most rows one unpaged call may return. */
+export const TRANSACTION_PAGE_MAX = 100;
+
+/**
+ * A month-scoped list is already bounded by that month, so it stays whole: the
+ * client renders a table and silently truncating a month would hide rows the
+ * student expects to see. Only the all-months list is paged, because there the
+ * unbounded case is the default and would otherwise pull an entire history.
+ */
+export async function listTransactions(userId, month, { page, limit } = {}) {
   await materialiseRecurring(userId);
   const query = { user_id: userId };
   const window = monthWindow(month);
   if (window) query.date = window;
-  const rows = await Transaction.find(query).sort({ date: -1, createdAt: -1 }).lean();
-  return serializeAll(rows, "transaction_id");
+
+  // date + createdAt + _id is a total order, so a page boundary can never
+  // repeat or skip a row the way a date-only sort can.
+  const sort = { date: -1, createdAt: -1, _id: -1 };
+
+  if (window) {
+    const rows = await Transaction.find(query).sort(sort).lean();
+    const transactions = serializeAll(rows, "transaction_id");
+    return {
+      transactions,
+      total: transactions.length,
+      page: 1,
+      limit: transactions.length,
+      paged: false,
+    };
+  }
+
+  const safeLimit = Math.min(Math.max(Number(limit) || 50, 1), TRANSACTION_PAGE_MAX);
+  const safePage = Math.max(Number(page) || 1, 1);
+  const [rows, total] = await Promise.all([
+    Transaction.find(query)
+      .sort(sort)
+      .skip((safePage - 1) * safeLimit)
+      .limit(safeLimit)
+      .lean(),
+    Transaction.countDocuments(query),
+  ]);
+
+  return {
+    transactions: serializeAll(rows, "transaction_id"),
+    total,
+    page: safePage,
+    limit: safeLimit,
+    paged: true,
+  };
 }
 
 export async function listBudgets(userId, month) {

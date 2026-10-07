@@ -5,6 +5,7 @@ import { useRecentlyViewed } from "../hooks/useRecentlyViewed.js";
 import { useSubmitLock } from "../hooks/useSubmitLock.js";
 import SubmitSpinner from "./SubmitSpinner.jsx";
 import { listTransactions } from "../lib/apiClient.js";
+import { formatAmountInput, parseAmountInput, validateAmount } from "../lib/amount.js";
 import { findDuplicateOf } from "../lib/duplicates.js";
 import { formatCurrency } from "../lib/formatCurrency.js";
 import { formatDate, monthKey, todayISO } from "../lib/formatMonth.js";
@@ -25,7 +26,7 @@ const newRequestId = () =>
 export default function TransactionForm({ initial, onClose, onSave }) {
   const { categories, status } = useCategories();
   const [type, setType] = useState(initial?.type ?? "expense");
-  const [amount, setAmount] = useState(initial ? String(initial.amount) : "");
+  const [amount, setAmount] = useState(initial ? formatAmountInput(initial.amount) : "");
   const [categoryId, setCategoryId] = useState(initial?.category_id ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [date, setDate] = useState(initial?.date ?? todayISO());
@@ -94,12 +95,9 @@ export default function TransactionForm({ initial, onClose, onSave }) {
     event.preventDefault();
     if (locked) return;
     const next = {};
-    const value = Number(amount);
-    if (amount.trim() === "") {
-      next.amount = "Enter an amount.";
-    } else if (!Number.isFinite(value) || value <= 0) {
-      next.amount = "Amount must be greater than ₦0.";
-    }
+    const amountError = validateAmount(amount);
+    if (amountError) next.amount = amountError;
+    const value = parseAmountInput(amount);
     if (status !== "ready") {
       next.category =
         status === "error"
@@ -114,7 +112,7 @@ export default function TransactionForm({ initial, onClose, onSave }) {
     setSaveError("");
     const payload = {
       type,
-      amount: Math.round(value),
+      amount: value,
       category_id: categoryId,
       description: description.trim(),
       date,
@@ -179,7 +177,7 @@ export default function TransactionForm({ initial, onClose, onSave }) {
             type="button"
             onClick={onClose}
             aria-label="Close form"
-            className="-mr-1 shrink-0 rounded-lg p-1.5 text-ink-500 transition hover:bg-slate-50 hover:text-ink-900"
+            className="-mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-ink-500 transition hover:bg-slate-50 hover:text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9"
           >
             <Icon name="x" size={18} />
           </button>
@@ -254,13 +252,12 @@ export default function TransactionForm({ initial, onClose, onSave }) {
               </span>
               <input
                 id="tx-amount"
-                type="number"
-                min="1"
-                step="1"
-                inputMode="numeric"
+                type="text"
+                inputMode="decimal"
+                autoComplete="off"
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}
-                placeholder="e.g. 5000"
+                placeholder="e.g. 2,500.50"
                 aria-invalid={Boolean(errors.amount)}
                 className={`${inputClass} pl-9`}
               />

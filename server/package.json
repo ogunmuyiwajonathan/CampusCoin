@@ -14,8 +14,8 @@
     "test": "node tests/security-baseline.mjs",
     "test:seed": "node tests/seed-idempotency.mjs",
     "seed": "node scripts/seed.js",
-    "test:auth": "node tests/auth.e2e.mjs",
-    "test:budgets": "node tests/budgets-alerts.mjs"
+    "remove-admins": "node scripts/removeAdminUsers.js",
+    "test:auth": "node tests/auth.e2e.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -1,8 +1,15 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 import { connectDb, disconnectDb } from "../src/config/db.js";
 import { env } from "../src/config/env.js";
+import {
+  addMonths,
+  daysInMonth,
+  nextRunFrom,
+  todayString,
+} from "../src/utils/dateMath.js";
 import {
   Budget,
   Category,
@@ -22,16 +29,7 @@ const DEMO_STUDENT = {
   profileOnboarded: true,
 };
 
-const DEMO_ADMINS = [
-  { name: "jonathan", email: "jonathan@campuscoin.test", role: "admin", profileOnboarded: true },
-  { name: "senod", email: "senod@campuscoin.test", role: "admin", profileOnboarded: true },
-];
-
 const DEMO_PASSWORD = "CampusCoin2026!";
-
-function adminLoginPassword() {
-  return env.isProd ? env.adminSeedPassword || "" : "123456789";
-}
 
 const DEMO_LOGIN = {
   name: "Student",
@@ -44,6 +42,18 @@ const DEMO_LOGIN = {
 };
 
 const DEMO_LOGIN_PASSWORD = "12345678";
+
+const SEED_MONTHS = 6;
+const BUDGET_MONTHS = 2;
+
+const MONTH_FACTORS = [1, 0.94, 1.08, 0.88, 1.12, 0.97];
+
+const SEED_DATABASES = [
+  "campuscoin",
+  "campuscoin_dev",
+  "campuscoin_development",
+  "campuscoin_test",
+];
 
 const CATEGORIES = [
   { name: "Allowance", type: "income", is_default: true, color: null, icon: "wallet", icon_key: "wallet" },
@@ -60,62 +70,35 @@ const CATEGORIES = [
 ];
 
 const TRANSACTIONS = [
-  ["Allowance", "income", 20000, "Allowance", "2026-09-20", true],
-  ["Gigs", "income", 30000, "Part-time Gig", "2026-09-15", false],
-  ["Scholarships", "income", 15000, "Scholarship Stipend", "2026-09-05", false],
-  ["Gifts", "income", 10000, "Birthday Gift", "2026-09-01", false],
-  ["Food", "expense", 5000, "Canteen Food", "2026-09-25", false],
-  ["Food", "expense", 4400, "Groceries", "2026-09-18", false],
-  ["Food", "expense", 2000, "Snacks & Drinks", "2026-09-12", false],
-  ["Transport", "expense", 2500, "Uber to class", "2026-09-24", false],
-  ["Transport", "expense", 1300, "Bus fare", "2026-09-17", false],
-  ["Transport", "expense", 1000, "Bike to campus", "2026-09-10", false],
-  ["Hostel/Rent", "expense", 3900, "Hostel share", "2026-09-01", false],
-  ["Academics", "expense", 3000, "Textbook", "2026-09-18", false],
-  ["Subscriptions", "expense", 1200, "Netflix", "2026-09-03", true],
-  ["Subscriptions", "expense", 1200, "Data bundle", "2026-09-08", true],
-  ["Entertainment", "expense", 1100, "Movie night", "2026-09-14", false],
-  ["Entertainment", "expense", 1000, "Game credit", "2026-09-09", false],
-  ["Others", "expense", 900, "Laundry", "2026-09-06", false],
-  ["Others", "expense", 500, "Printing", "2026-09-11", false],
-  ["Others", "expense", 1000, "Misc", "2026-09-16", false],
+  ["Allowance", "income", 20000, "Allowance", 20, true],
+  ["Gigs", "income", 30000, "Part-time Gig", 15, false],
+  ["Scholarships", "income", 15000, "Scholarship Stipend", 5, false],
+  ["Gifts", "income", 10000, "Birthday Gift", 1, false],
+  ["Food", "expense", 5000, "Canteen Food", 25, false],
+  ["Food", "expense", 4400, "Groceries", 18, false],
+  ["Food", "expense", 2000, "Snacks & Drinks", 12, false],
+  ["Transport", "expense", 2500, "Uber to class", 24, false],
+  ["Transport", "expense", 1300, "Bus fare", 17, false],
+  ["Transport", "expense", 1000, "Bike to campus", 10, false],
+  ["Hostel/Rent", "expense", 3900, "Hostel share", 1, false],
+  ["Academics", "expense", 3000, "Textbook", 18, false],
+  ["Subscriptions", "expense", 1200, "Netflix", 3, true],
+  ["Subscriptions", "expense", 1200, "Data bundle", 8, true],
+  ["Entertainment", "expense", 1100, "Movie night", 14, false],
+  ["Entertainment", "expense", 1000, "Game credit", 9, false],
+  ["Others", "expense", 900, "Laundry", 6, false],
+  ["Others", "expense", 500, "Printing", 11, false],
+  ["Others", "expense", 1000, "Misc", 16, false],
 ];
 
-const BUDGETS = {
-  Food: { "2026-09": 12000, "2026-10": 12000 },
-  Transport: { "2026-09": 4000, "2026-10": 4000 },
-  "Hostel/Rent": { "2026-09": 5000, "2026-10": 5000 },
-  Academics: { "2026-09": 6000, "2026-10": 6000 },
-  Subscriptions: { "2026-09": 3000, "2026-10": 3000 },
-  Entertainment: { "2026-09": 5000, "2026-10": 5000 },
-  Others: { "2026-09": 2000, "2026-10": 2000 },
-};
-
-const NOTIFICATIONS = [
-  {
-    title: "New spending insight",
-    body: "Food is your top spending category this month.",
-    icon: "chart-column",
-    to: "/insights",
-    is_read: false,
-    dedupe_key: "seed:insight",
-  },
-  {
-    title: "Allowance received",
-    body: "NGN 20,000 allowance logged on Sep 20.",
-    icon: "wallet",
-    to: "/",
-    is_read: true,
-    dedupe_key: "seed:allowance",
-  },
-  {
-    title: "Fresh tip from Rix",
-    body: "Ask your AI assistant for this week's money tip.",
-    icon: "bot",
-    to: "/assistant",
-    is_read: true,
-    dedupe_key: "seed:rix",
-  },
+const BUDGETS = [
+  ["Food", 12000],
+  ["Transport", 4000],
+  ["Hostel/Rent", 5000],
+  ["Academics", 6000],
+  ["Subscriptions", 3000],
+  ["Entertainment", 5000],
+  ["Others", 2000],
 ];
 
 const TIP_TEMPLATES = [
@@ -141,6 +124,76 @@ const TIP_TEMPLATES = [
   },
 ];
 
+const pad2 = (value) => String(value).padStart(2, "0");
+const round2 = (value) => Math.round(value * 100) / 100;
+
+export function assertSeedAllowed(dbName = mongoose.connection.name) {
+  if (env.useMemoryDb) return dbName;
+  if (process.env.SEED_ALLOW !== "true") {
+    throw new Error(
+      "Refusing to seed: set SEED_ALLOW=true to confirm you mean this database. " +
+        "The seed only creates or updates the demo accounts and their own data, but it " +
+        "does overwrite that demo student's rows every run.",
+    );
+  }
+  if (!SEED_DATABASES.includes(dbName)) {
+    throw new Error(
+      `Refusing to seed database "${dbName}". Expected one of: ${SEED_DATABASES.join(", ")}. ` +
+        "If this really is a CampusCoin database, add its name to SEED_DATABASES in scripts/seed.js.",
+    );
+  }
+  return dbName;
+}
+
+function seedMonthKeys(today = todayString()) {
+  const current = today.slice(0, 7);
+  return Array.from({ length: SEED_MONTHS }, (_, offset) =>
+    addMonths(`${current}-01`, -offset).slice(0, 7),
+  );
+}
+
+function firstRunAfterToday(date, frequency, today) {
+  let next = nextRunFrom(date, frequency);
+  let guard = 0;
+  while (next <= today && guard < 1200) {
+    next = nextRunFrom(next, frequency);
+    guard += 1;
+  }
+  return next;
+}
+
+function buildTransactionRows(monthKeys, userId, categoriesByName, today) {
+  const todayDay = Number(today.slice(8, 10)) || 1;
+  const rows = [];
+
+  monthKeys.forEach((month, monthOffset) => {
+    const [year, monthNumber] = month.split("-").map(Number);
+    const maxDay =
+      monthOffset === 0
+        ? Math.max(1, Math.min(todayDay, daysInMonth(year, monthNumber)))
+        : daysInMonth(year, monthNumber);
+
+    TRANSACTIONS.forEach(([categoryName, type, base, description, day, recurring], index) => {
+      const date = `${month}-${pad2(Math.min(day, maxDay))}`;
+      const frequency = recurring ? "monthly" : null;
+      rows.push({
+        user_id: userId,
+        category_id: categoriesByName.get(categoryName)._id,
+        type,
+        amount: round2(base * MONTH_FACTORS[monthOffset]),
+        description,
+        date,
+        is_recurring: recurring,
+        frequency,
+        next_run_at: recurring ? firstRunAfterToday(date, frequency, today) : null,
+        request_id: `seed:${month}:${index}`,
+      });
+    });
+  });
+
+  return rows;
+}
+
 async function upsertUser(details, password) {
   const passwordHash = await bcrypt.hash(password, 10);
   return User.findOneAndUpdate(
@@ -163,49 +216,102 @@ async function seedCategories() {
   return byName;
 }
 
-async function seedTransactions(userId, categoriesByName) {
-  const existing = await Transaction.countDocuments({ user_id: userId });
-  if (existing > 0) return 0;
-
-  const rows = TRANSACTIONS.map(([categoryName, type, amount, description, date, isRecurring]) => ({
-    user_id: userId,
-    category_id: categoriesByName.get(categoryName)._id,
-    type,
-    amount,
-    description,
-    date,
-    is_recurring: isRecurring,
-    frequency: isRecurring ? "monthly" : null,
-    next_run_at: isRecurring ? date : null,
-  }));
-  await Transaction.insertMany(rows);
-  return rows.length;
+async function seedTransactions(rows) {
+  if (rows.length === 0) return 0;
+  const result = await Transaction.bulkWrite(
+    rows.map((row) => ({
+      updateOne: {
+        filter: { user_id: row.user_id, request_id: row.request_id },
+        update: { $set: row },
+        upsert: true,
+      },
+    })),
+    { ordered: false },
+  );
+  return result.upsertedCount ?? 0;
 }
 
-async function seedBudgets(userId, categoriesByName) {
-  const existing = await Budget.countDocuments({ user_id: userId });
-  if (existing > 0) return 0;
-
+async function seedBudgets(userId, categoriesByName, monthKeys) {
   const rows = [];
-  for (const [categoryName, months] of Object.entries(BUDGETS)) {
-    for (const [month, limitAmount] of Object.entries(months)) {
+  for (const month of monthKeys.slice(0, BUDGET_MONTHS)) {
+    for (const [categoryName, limit] of BUDGETS) {
       rows.push({
         user_id: userId,
         category_id: categoriesByName.get(categoryName)._id,
         month,
-        limit_amount: limitAmount,
+        limit_amount: limit,
       });
     }
   }
-  await Budget.insertMany(rows);
-  return rows.length;
+  const result = await Budget.bulkWrite(
+    rows.map((row) => ({
+      updateOne: {
+        filter: { user_id: row.user_id, category_id: row.category_id, month: row.month },
+        update: { $set: { limit_amount: row.limit_amount } },
+        upsert: true,
+      },
+    })),
+    { ordered: false },
+  );
+  return result.upsertedCount ?? 0;
 }
 
-async function seedNotifications(userId) {
-  const existing = await Notification.countDocuments({ user_id: userId });
-  if (existing > 0) return 0;
-  await Notification.insertMany(NOTIFICATIONS.map((n) => ({ ...n, user_id: userId })));
-  return NOTIFICATIONS.length;
+function shortDate(isoDate) {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+async function seedNotifications(userId, transactionRows, monthKeys) {
+  const currentMonth = monthKeys[0];
+  const allowance = transactionRows.find(
+    (row) => row.description === "Allowance" && row.date.startsWith(currentMonth),
+  );
+  const allowanceDate = allowance ? shortDate(allowance.date) : shortDate(`${currentMonth}-01`);
+
+  const rows = [
+    {
+      title: "New spending insight",
+      body: "Food is your top spending category this month.",
+      icon: "chart-column",
+      to: "/insights",
+      is_read: false,
+      read_at: null,
+      dedupe_key: "seed:insight",
+    },
+    {
+      title: "Allowance received",
+      body: `NGN 20,000 allowance logged on ${allowanceDate}.`,
+      icon: "wallet",
+      to: "/",
+      is_read: true,
+      read_at: new Date(),
+      dedupe_key: "seed:allowance",
+    },
+    {
+      title: "Fresh tip from Rix",
+      body: "Ask your AI assistant for this week's money tip.",
+      icon: "bot",
+      to: "/assistant",
+      is_read: true,
+      read_at: new Date(),
+      dedupe_key: "seed:rix",
+    },
+  ];
+
+  const result = await Notification.bulkWrite(
+    rows.map((row) => ({
+      updateOne: {
+        filter: { user_id: userId, dedupe_key: row.dedupe_key },
+        update: { $set: { ...row, user_id: userId } },
+        upsert: true,
+      },
+    })),
+    { ordered: false },
+  );
+  return result.upsertedCount ?? 0;
 }
 
 async function seedTipTemplates() {
@@ -222,33 +328,43 @@ async function seedTipTemplates() {
 }
 
 export async function runSeed() {
+  assertSeedAllowed();
+
+  const today = todayString();
+  const monthKeys = seedMonthKeys(today);
+
   const student = await upsertUser(DEMO_STUDENT, DEMO_PASSWORD);
-  const admins = [];
-  for (const details of DEMO_ADMINS) {
-    admins.push(await upsertUser(details, adminLoginPassword()));
-  }
   const demoLogin = await upsertUser(DEMO_LOGIN, DEMO_LOGIN_PASSWORD);
   const categoriesByName = await seedCategories();
 
-  const transactions = await seedTransactions(student._id, categoriesByName);
-  const budgets = await seedBudgets(student._id, categoriesByName);
-  const notifications = await seedNotifications(student._id);
+  const rows = buildTransactionRows(monthKeys, student._id, categoriesByName, today);
+  const transactions = await seedTransactions(rows);
+  const budgets = await seedBudgets(student._id, categoriesByName, monthKeys);
+  const notifications = await seedNotifications(student._id, rows, monthKeys);
   const templates = await seedTipTemplates();
 
-  return { student, admins, demoLogin, transactions, budgets, notifications, templates };
+  return {
+    student,
+    demoLogin,
+    transactions,
+    budgets,
+    notifications,
+    templates,
+    monthKeys,
+    totalTransactions: rows.length,
+  };
 }
 
 async function main() {
   await connectDb();
 
-  if (env.isProd) {
-    const pwd = env.adminSeedPassword || "";
-    if (pwd === "123456789" || pwd.length < 12) {
-      console.error("Seed aborted: ADMIN_SEED_PASSWORD must not be '123456789' and must be at least 12 characters in production.");
-      console.error("Set a strong password in your production environment variables before seeding.");
-      await disconnectDb();
-      process.exit(1);
-    }
+  try {
+    assertSeedAllowed();
+  } catch (error) {
+    console.error(`Seed aborted: ${error.message}`);
+    console.error("Run it as:  SEED_ALLOW=true npm run seed");
+    await disconnectDb();
+    process.exit(1);
   }
 
   if (env.useMemoryDb) {
@@ -256,19 +372,27 @@ async function main() {
     console.log("  when this process exits. Set MONGODB_URI to keep it.\n");
   }
 
-  const result = await runSeed();
+  let result;
+  try {
+    result = await runSeed();
+  } catch (error) {
+    console.error(`Seed failed: ${error.message}`);
+    await disconnectDb().catch(() => {});
+    process.exit(1);
+  }
 
   console.log("\nseed summary");
-  console.log(`  users         ${2 + DEMO_ADMINS.length}  (${result.student.email}, ${DEMO_ADMINS.map((a) => a.name).join(", ")}, ${result.demoLogin.email})`);
-  console.log(`  categories       ${CATEGORIES.length}`);
-  console.log(`  transactions     ${result.transactions} inserted this run`);
-  console.log(`  budgets          ${result.budgets} inserted this run`);
-  console.log(`  notifications    ${result.notifications} inserted this run`);
-  console.log(`  tip templates    ${result.templates} created this run`);
+  console.log(`  database        ${mongoose.connection.name}`);
+  console.log(`  months          ${result.monthKeys.join(", ")}`);
+  console.log(`  users           2  (${result.student.email}, ${result.demoLogin.email})`);
+  console.log(`  categories      ${CATEGORIES.length}`);
+  console.log(`  transactions    ${result.transactions} created this run (${result.totalTransactions} seeded rows in total)`);
+  console.log(`  budgets         ${result.budgets} created this run`);
+  console.log(`  notifications   ${result.notifications} created this run`);
+  console.log(`  tip templates   ${result.templates} created this run`);
   console.log("\n  demo credentials");
   console.log(`    student  ${DEMO_STUDENT.email} / ${DEMO_PASSWORD}`);
-  console.log(`    demo     ${DEMO_LOGIN.email} / ${DEMO_LOGIN_PASSWORD}`);
-  console.log(`    admins   ${DEMO_ADMINS.map((a) => a.name).join(", ")} / ${adminLoginPassword()}\n`);
+  console.log(`    demo     ${DEMO_LOGIN.email} / ${DEMO_LOGIN_PASSWORD}\n`);
 
   await disconnectDb();
 }

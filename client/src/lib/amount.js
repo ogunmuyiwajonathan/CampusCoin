@@ -27,6 +27,22 @@ function normaliseAmountInput(raw) {
 }
 
 /**
+ * Puts a stored amount back into the field the way it is read everywhere else:
+ * 2500.5 comes back as "2,500.50" and 2500 as "2,500", so an edit field that is
+ * never touched round-trips to the exact same figure. parseAmountInput accepts
+ * every form this returns, including the separators.
+ */
+export function formatAmountInput(value) {
+  const numeric = parseAmountInput(value);
+  if (numeric === null) return value === null || value === undefined ? "" : String(value);
+  const hasCents = String(numeric).includes(".");
+  return new Intl.NumberFormat("en-NG", {
+    minimumFractionDigits: hasCents ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(numeric);
+}
+
+/**
  * Returns null when the amount is fine, or the message to show under the field.
  * Empty, zero, negative, non-numeric and absurd values are all rejected here and
  * again on the server, so neither side can save a bad figure on its own.

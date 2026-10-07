@@ -5,8 +5,7 @@ useTestDatabaseEnv();
 process.env.CORS_ORIGIN = "http://localhost:5173";
 
 const stamp = Date.now();
-const adminEmail = `admintips-${stamp}@campuscoin.test`;
-process.env.ADMIN_EMAIL = adminEmail;
+process.env.ADMIN_SEED_PASSWORD = "AdminPass!23";
 
 const { connectDb, disconnectDb } = await import("../src/config/db.js");
 const { User, Category, Transaction, TipTemplate, Tip } = await import("../src/models/index.js");
@@ -39,12 +38,6 @@ const json = async (res) => {
 await connectDb();
 
 const bcrypt = (await import("bcryptjs")).default;
-const admin = await User.create({
-  name: `admintips ${stamp}`,
-  email: adminEmail,
-  password_hash: await bcrypt.hash("AdminPass!23", 10),
-  role: "admin",
-});
 const student = await User.create({
   name: `admintips student ${stamp}`,
   email: `admintipsstudent-${stamp}@campuscoin.test`,
@@ -57,13 +50,12 @@ const base = `http://127.0.0.1:${port}`;
 let cookie = "";
 
 const call = async (method, path, body) => {
-  const headers = { ...(cookie ? { Cookie: cookie } : {}) };
-  if (body !== undefined) headers["Content-Type"] = "application/json";
-  const res = await fetch(`${base}${path}`, {
-    method,
-    headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  const headers = cookie ? { Cookie: cookie } : {};
+  const sendBody = body !== undefined && method !== "GET" && method !== "HEAD";
+  if (sendBody) headers["Content-Type"] = "application/json";
+  const request = { method, headers };
+  if (sendBody) request.body = JSON.stringify(body);
+  const res = await fetch(`${base}${path}`, request);
   for (const raw of res.headers.getSetCookie?.() ?? []) {
     const pair = raw.split(";")[0];
     if (pair.startsWith("campuscoin.sid=")) cookie = pair;
@@ -225,7 +217,6 @@ try {
   await Transaction.deleteMany({ user_id: student._id });
   await TipTemplate.deleteMany({ key: { $in: ["probe_share", "probe_unknown_rule", "probe_no_rule", "probe_range"] } });
   await User.deleteOne({ _id: student._id });
-  await User.deleteOne({ _id: admin._id });
   server.closeAllConnections();
   await new Promise((resolve) => server.close(resolve));
   await disconnectDb();

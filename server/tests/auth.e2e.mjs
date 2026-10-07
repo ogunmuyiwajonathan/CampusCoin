@@ -176,7 +176,18 @@ check(
 
 const stored = await ResetToken.findOne({ user_id: jimmy._id }).sort({ createdAt: -1 });
 check("a reset token row was created", Boolean(stored));
-check("only a hash is stored, not the token", stored.token_hash.length === 64 && !/[^a-f0-9]/.test(stored.token_hash));
+// auth.service.js stores `sha256(salt:code)` with a fresh 12-byte salt in front,
+// so the value is 24 hex chars, a "$", then 64 hex chars. The old assertion
+// expected a bare 64-character digest, which is not what the code produces.
+check(
+  "only a salted hash is stored, not the raw code",
+  /^[0-9a-f]{24}\$[0-9a-f]{64}$/.test(stored.token_hash),
+  `${stored.token_hash?.length ?? 0} chars`,
+);
+check(
+  "the stored value is not the six-digit code",
+  !/^\d{6}$/.test(stored.token_hash),
+);
 
 const badReset = await anon("/api/auth/reset-password", {
   method: "POST",

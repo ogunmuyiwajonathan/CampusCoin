@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Icon from "./Icon.jsx";
 import { useCategories } from "../hooks/useCategories.js";
 import { useSubmitLock } from "../hooks/useSubmitLock.js";
+import { formatAmountInput, parseAmountInput, validateAmount } from "../lib/amount.js";
 import SubmitSpinner from "./SubmitSpinner.jsx";
 
 const inputClass =
@@ -10,7 +11,7 @@ const inputClass =
 export default function BudgetForm({ initial, month, budgets, onClose, onSave, onDelete }) {
   const { categories, status } = useCategories();
   const [categoryId, setCategoryId] = useState(initial?.category_id ?? "");
-  const [limit, setLimit] = useState(initial ? String(initial.limit_amount) : "");
+  const [limit, setLimit] = useState(initial ? formatAmountInput(initial.limit_amount) : "");
   const [monthValue, setMonthValue] = useState(initial?.month ?? month);
   const [errors, setErrors] = useState({});
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -40,12 +41,9 @@ export default function BudgetForm({ initial, month, budgets, onClose, onSave, o
     event.preventDefault();
     if (locked) return;
     const next = {};
-    const value = Number(limit);
-    if (limit.trim() === "") {
-      next.limit = "Enter a monthly limit.";
-    } else if (!Number.isFinite(value) || value <= 0) {
-      next.limit = "Limit must be greater than ₦0.";
-    }
+    const limitError = validateAmount(limit, { label: "Limit" });
+    if (limitError) next.limit = limitError;
+    const value = parseAmountInput(limit);
     if (status !== "ready") {
       next.category =
         status === "error"
@@ -75,7 +73,7 @@ export default function BudgetForm({ initial, month, budgets, onClose, onSave, o
           onSave({
             category_id: categoryId,
             month: monthValue,
-            limit_amount: Math.round(value),
+            limit_amount: value,
           }),
         { oneShot: true },
       );
@@ -135,7 +133,7 @@ export default function BudgetForm({ initial, month, budgets, onClose, onSave, o
             type="button"
             onClick={onClose}
             aria-label="Close form"
-            className="-mr-1 shrink-0 rounded-lg p-1.5 text-ink-500 transition hover:bg-slate-50 hover:text-ink-900"
+            className="-mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-ink-500 transition hover:bg-slate-50 hover:text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9"
           >
             <Icon name="x" size={18} />
           </button>
@@ -190,13 +188,12 @@ export default function BudgetForm({ initial, month, budgets, onClose, onSave, o
               </span>
               <input
                 id="budget-limit"
-                type="number"
-                min="1"
-                step="1"
-                inputMode="numeric"
+                type="text"
+                inputMode="decimal"
+                autoComplete="off"
                 value={limit}
                 onChange={(event) => setLimit(event.target.value)}
-                placeholder="e.g. 12000"
+                placeholder="e.g. 12,000"
                 aria-invalid={Boolean(errors.limit)}
                 className={`${inputClass} pl-9`}
               />

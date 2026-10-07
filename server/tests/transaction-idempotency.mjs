@@ -21,7 +21,7 @@ async function call(path, options = {}) {
     headers: {
       ...(options.body ? { "Content-Type": "application/json" } : {}),
       ...(cookie ? { Cookie: cookie } : {}),
-      ...(options.headers ?? {}),
+      ...options.headers,
     },
   });
   const setCookie = res.headers.getSetCookie?.() ?? [];

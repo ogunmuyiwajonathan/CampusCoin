@@ -7,6 +7,7 @@ import { Category } from "../models/Category.js";
 import { TipTemplate } from "../models/TipTemplate.js";
 import { Announcement } from "../models/Announcement.js";
 import { TIP_RULES } from "../validators/admin.schema.js";
+import { escapeRegExp, normaliseSearch } from "../utils/regex.js";
 
 export const getStats = async (req, res) => {
   const activeUsers = await User.countDocuments({ is_active: true, role: 'student' });
@@ -43,14 +44,15 @@ export const getStats = async (req, res) => {
 export const getUsers = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 20;
-  const search = req.query.search || "";
+  const search = normaliseSearch(req.query.search);
   const skip = (page - 1) * limit;
 
   const query = {};
   if (search) {
+    const pattern = escapeRegExp(search);
     query.$or = [
-      { name: { $regex: search, $options: "i" } },
-      { email: { $regex: search, $options: "i" } }
+      { name: { $regex: pattern, $options: "i" } },
+      { email: { $regex: pattern, $options: "i" } }
     ];
   }
 
@@ -187,7 +189,7 @@ export const getAnnouncementsAdmin = async (req, res) => {
 export const createAnnouncement = async (req, res) => {
   const announcement = new Announcement({
     ...req.body,
-    createdBy: req.user._id
+    createdBy: req.user?._id ?? null
   });
   await announcement.save();
   res.status(201).json(announcement);

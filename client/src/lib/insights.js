@@ -1,12 +1,6 @@
-import {
-  CATEGORY_ICONS,
-  categoryColor,
-  categoryLookup,
-  computeTotals,
-  expenseBreakdown,
-} from "../data/mockData.js";
+import { CATEGORY_ICONS, categoryColor } from "../data/mockData.js";
 import { formatCurrency } from "./formatCurrency.js";
-import { monthKey, shiftMonthKey } from "./formatMonth.js";
+import { shiftMonthKey } from "./formatMonth.js";
 
 export const WINDOW_MONTHS = 6;
 export const HISTORY_MONTHS = 24;
@@ -20,84 +14,113 @@ export function percentChange(current, previous) {
   return Math.round(((current - previous) / previous) * 100);
 }
 
+/**
+ * The server reports spending by category id and name; the palette lives on the
+ * client, so colour is added here rather than duplicated in the API.
+ */
+export function decorateBreakdown(rows = []) {
+  return rows.map((entry) => ({ ...entry, color: categoryColor(entry.category_id) }));
+}
+
 function shortMonth(key) {
   const [year, month] = key.split("-").map(Number);
   return new Date(year, month - 1, 1).toLocaleDateString("en-US", { month: "short" });
 }
 
-export function monthSeries(items, endMonth, count = WINDOW_MONTHS) {
-  const income = new Map();
-  const expenses = new Map();
-  for (const item of items) {
-    const bucket = item.type === "income" ? income : expenses;
-    const key = monthKey(item.date);
-    bucket.set(key, (bucket.get(key) ?? 0) + item.amount);
-  }
-
+/**
+ * A zeroed summary for the moment before the first response lands. The page
+ * still renders its chrome during that window, so the view has to be a real
+ * object rather than a null the caller has to unwrap.
+ */
+export function emptySummary(month) {
   const series = [];
-  let cursor = endMonth;
-  for (let index = 0; index < count; index += 1) {
-    series.unshift({
-      key: cursor,
-      label: shortMonth(cursor),
-      income: income.get(cursor) ?? 0,
-      expenses: expenses.get(cursor) ?? 0,
-    });
+  let cursor = month;
+  for (let index = 0; index < WINDOW_MONTHS; index += 1) {
+    series.unshift({ key: cursor, income: 0, expense: 0 });
     cursor = prevMonthKey(cursor);
   }
-  return series;
+  return {
+    scope: "month",
+    month,
+    totals: { income: 0, expense: 0, net: 0, count: 0 },
+    prev: null,
+    breakdown: [],
+    prevBreakdown: [],
+    topCategory: null,
+    series,
+    budgets: [],
+    recent: [],
+  };
 }
 
-export function buildInsights({ items, month, budgets = [], goal = 0 }) {
-  const prev = prevMonthKey(month);
-  const monthTx = items.filter((item) => monthKey(item.date) === month);
-  const prevTx = items.filter((item) => monthKey(item.date) === prev);
+/**
+ * Turns the server summary into everything the Insights page renders.
+ *
+ * Every figure here comes from `summary`, which the server computes with
+ * aggregations over the whole month. Nothing is summed from a list of rows the
+ * browser is holding, so these numbers stay correct once that list is
+ * paginated. The client only adds presentation: colours, icons and wording.
+ */
+export function buildInsights({ summary, month, goal = 0 }) {
+  const prev = summary.prev?.month ?? prevMonthKey(month);
+  const totals = {
+    income: summary.totals.income,
+    expense: summary.totals.expense,
+  };
+  const prevTotals = summary.prev
+    ? { income: summary.prev.income, expense: summary.prev.expense }
+    : { income: 0, expense: 0 };
+  // A previous month that holds no rows is not a comparison worth showing.
+  const hasPrev = Boolean(summary.prev && summary.prev.count > 0);
+  const saved = summary.totals.net;
+  const prevSaved = summary.prev ? summary.prev.net : 0;
 
-  const totals = computeTotals(monthTx);
-  const prevTotals = computeTotals(prevTx);
-  const hasPrev = prevTx.length > 0;
-  const saved = totals.income - totals.expense;
-  const prevSaved = prevTotals.income - prevTotals.expense;
-  const breakdown = expenseBreakdown(monthTx);
+  const prevByCategory = new Map(
+    (summary.prevBreakdown ?? []).map((row) => [row.category_id, row.amount]),
+  );
 
-  const prevByCategory = new Map();
-  for (const item of prevTx) {
-    if (item.type !== "expense") continue;
-    prevByCategory.set(item.category_id, (prevByCategory.get(item.category_id) ?? 0) + item.amount);
-  }
-
-  const stats = breakdown.map((entry) => {
+  const stats = (summary.breakdown ?? []).map((entry) => {
     const previous = prevByCategory.get(entry.category_id) ?? 0;
     return {
       ...entry,
+      color: categoryColor(entry.category_id),
       previous,
       delta: previous > 0 ? Math.round(((entry.amount - previous) / previous) * 100) : null,
       icon: CATEGORY_ICONS[entry.name] ?? "ellipsis",
     };
   });
 
-  const lookup = categoryLookup();
-  const spentByCategory = new Map();
-  for (const item of monthTx) {
-    if (item.type !== "expense") continue;
-    spentByCategory.set(item.category_id, (spentByCategory.get(item.category_id) ?? 0) + item.amount);
-  }
-
-  const budgetRows = budgets
+  const budgetRows = (summary.budgets ?? [])
     .filter((item) => item.month === month)
     .map((item) => {
-      const name = lookup[item.category_id]?.name ?? "Others";
-      const spent = spentByCategory.get(item.category_id) ?? 0;
+      // The server looks the name up for every budget, including categories
+      // with no spending this month — the case the breakdown cannot answer.
+      const name = item.name ?? "Others";
       return {
         ...item,
         name,
-        spent,
-        pct: item.limit_amount > 0 ? Math.round((spent / item.limit_amount) * 100) : 0,
+        pct: item.limit_amount > 0 ? Math.round((item.spent / item.limit_amount) * 100) : 0,
         icon: CATEGORY_ICONS[name] ?? "ellipsis",
         color: categoryColor(item.category_id),
       };
     })
     .sort((a, b) => b.pct - a.pct);
+
+  // The chart series reads `expenses`; the server aggregates call it `expense`.
+  const series = (summary.series ?? []).map((entry) => ({
+    key: entry.key,
+    label: shortMonth(entry.key),
+    income: entry.income,
+    expenses: entry.expense,
+  }));
+
+  const breakdown = stats.map((entry) => ({
+    category_id: entry.category_id,
+    name: entry.name,
+    amount: entry.amount,
+    percentage: entry.percentage,
+    color: entry.color,
+  }));
 
   const top = stats[0];
   const tightest = budgetRows[0];
@@ -325,7 +348,7 @@ export function buildInsights({ items, month, budgets = [], goal = 0 }) {
     saved,
     prevSaved,
     breakdown,
-    series: monthSeries(items, month),
+    series,
     keyInsights,
     recentInsights,
     tipText,

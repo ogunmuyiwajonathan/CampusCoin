@@ -215,7 +215,8 @@ export async function importTransactionsCsv(userId, buffer) {
     }
 
     const type = category.type;
-    const value = Math.abs(amount);
+    // Same rule as the transaction form: money is stored to the kobo.
+    const value = Math.round(Math.abs(amount) * 100) / 100;
     budgetTargets.add(`${category._id}:${monthKey(date)}`);
 
     accepted.push({

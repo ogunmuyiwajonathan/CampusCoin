@@ -474,7 +474,7 @@ export default function Budgets() {
                                 aria-haspopup="menu"
                                 aria-expanded={menuOpen}
                                 onClick={() => (menuOpen ? closeMenu() : (setMenuId(row.item.budget_id), setConfirmDeleteId(null)))}
-                                className="rounded-lg p-1.5 text-ink-500 transition hover:bg-slate-100 hover:text-ink-900"
+                                className="flex h-11 w-11 items-center justify-center rounded-lg text-ink-500 transition hover:bg-slate-100 hover:text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 md:h-9 md:w-9"
                               >
                                 <Icon name="ellipsis" size={18} />
                               </button>

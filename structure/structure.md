@@ -100,14 +100,15 @@ Relations: User 1—M Transactions/Budgets/Insights/Tips/Notifications, Category
 | Area | Where | Notes |
 |---|---|---|
 | Auth + profile | `services/auth.service.js`, `routes/auth.routes.js` | bcrypt, HTTP-only cookie sessions, 6-digit emailed reset code, username and password change (which signs out other devices), avatar upload |
-| Transactions | `services/ledger.service.js` | Add/edit/delete, filters, month selector |
+| Transactions | `services/ledger.service.js`, `services/summary.service.js` | Add/edit/delete, filters, month selector |
+| Summary endpoint | `services/summary.service.js`, `hooks/useSummary.js` | One round trip per month: income, expenses, net, top category, 6-month series and per-budget spend. Dashboard, Transactions and Insights all read from it, so no total is ever summed from a page of rows once the list is paginated |
 | CSV import | `services/import.service.js`, `components/CsvImportDialog.jsx` | Multipart upload, RFC-4180 parser, per-row validation, per-row accepted/rejected report, unknown categories fall back instead of dropping the row, whole-batch undo |
 | Recurring entries | `materialiseRecurring()` in `services/ledger.service.js` | The flag now produces real transactions. Runs on the ledger read rather than a timer, so no second process is needed; catch-up is bounded and idempotent |
 | Delete with history | `models/TransactionHistory.js`, `components/DeletedTransactionsDialog.jsx` | A deleted row is kept and restorable |
 | Categories | `services/ledger.service.js`, `CategoryManagerDialog.jsx` | Full personal CRUD. Defaults are `user_id: null`, so an edit or delete against one matches no row and answers 404 rather than corrupting shared data |
-| Dashboard | `pages/student/Dashboard.jsx` | Greeting, month balance, top category, budget-vs-actual, top tips — all from the database, no mock figures |
-| Budgets + alerts | `services/ledger.service.js` | Limits, progress, near (95%) and over (100%), notifications deduped by key |
-| Insights | `services/insights.service.js` | One stored `Insight` per month, generated on demand, browsable by month. A month already read is left alone; `regenerateInsight` is the forced path |
+| Dashboard | `pages/student/Dashboard.jsx` | Greeting, month balance, top category, budget-vs-actual, month-end forecast, top tips — all from `GET /api/summary`, with a month picker covering the current month and the eleven before it |
+| Budgets + alerts | `services/ledger.service.js` | Limits, progress, near (95%) and over (100%), notifications deduped by key, month picker on the same calendar range |
+| Insights | `services/insights.service.js` | One stored `Insight` per month, generated on demand, browsable by month. A month already read is left alone; `regenerateInsight` is the forced path. The charts read `GET /api/summary`, not the transaction list |
 | Tips engine | `services/tips.service.js`, `hooks/useTips.js` | Reads `TipTemplate`, renders placeholders against the student's own numbers, ranks by savings impact, pin/dismiss per user. An admin edit or deactivation reaches the student on the next read |
 | AI categorisation | `services/categorise.service.js` | Four tiers, cheapest first: what the student taught it, then keyword rules, then the model, then a category-name match, then a fallback. Never returns nothing |
 | Reports | `services/reports.service.js`, `pages/student/Reports.jsx` | Filters, day/week/month buckets, 6-month trend, PDF (jsPDF) and image (html2canvas-pro) export, email share |
@@ -140,6 +141,8 @@ Relations: User 1—M Transactions/Budgets/Insights/Tips/Notifications, Category
 | CSV import | `POST /api/transactions/import` (multipart), `DELETE /api/transactions/import/:batchId` (undo) |
 | Delete history | `GET /api/transactions/history`, `POST /api/transactions/history/:id/restore` |
 | Budgets | `GET/POST /api/budgets`, `PATCH/DELETE /api/budgets/:id` |
+| Summary | `GET /api/summary?month=` (income, expenses, net, breakdown, 6-month series, per-budget spent for one month), `GET /api/summary` (same totals across everything) — the single source for every figure on Dashboard, Transactions and Insights, so no total is ever summed from a page of rows |
+| Search | `GET /api/search?q=` (student), `GET /api/admin/search?q=` (admin only), both behind a per-account limiter |
 | Notifications | `GET /api/notifications`, `PATCH /api/notifications/:id/read`, `PATCH /api/notifications/read-all` |
 | Insights | `GET /api/insights` (history), `GET /api/insights/month?month=`, `POST /api/insights/month?month=` (regenerate) |
 | Tips | `GET /api/tips?month=`, `GET /api/tips/dismissed?month=`, `POST /api/tips/:id/pin`, `/unpin`, `/dismiss`, `/restore` |

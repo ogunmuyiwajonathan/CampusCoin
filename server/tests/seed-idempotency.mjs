@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { closeTestDb, connectTestDb, resetTestDb } from "./helpers/testDb.js";
 import { runSeed } from "../scripts/seed.js";
+import { addMonths, todayString } from "../src/utils/dateMath.js";
 import {
   Budget,
   Category,
@@ -9,6 +10,11 @@ import {
   Transaction,
   User,
 } from "../src/models/index.js";
+
+// The seed refuses to touch a database without an explicit opt-in. The tests run
+// against campuscoin_test, which is on the allowlist, but the flag is still
+// required so the guard itself stays covered.
+process.env.SEED_ALLOW = "true";
 
 const results = [];
 function check(label, passed, detail = "") {
@@ -38,12 +44,23 @@ const third = await runSeed();
 const counts3 = await countAll();
 
 console.log("\n1. the first run inserts the whole demo dataset");
-check("19 transactions", first.transactions === 19, `got ${first.transactions}`);
+const TRANSACTIONS_PER_MONTH = 19;
+const SEEDED_MONTHS = 6;
+const EXPECTED_TRANSACTIONS = TRANSACTIONS_PER_MONTH * SEEDED_MONTHS;
+check(
+  `${TRANSACTIONS_PER_MONTH} transactions x ${SEEDED_MONTHS} months = ${EXPECTED_TRANSACTIONS}`,
+  first.transactions === EXPECTED_TRANSACTIONS,
+  `got ${first.transactions}`,
+);
 check("14 budgets", first.budgets === 14, `got ${first.budgets}`);
 check("3 notifications", first.notifications === 3, `got ${first.notifications}`);
 check("3 tip templates", first.templates === 3, `got ${first.templates}`);
 check("11 categories", counts1.categories === 11, `got ${counts1.categories}`);
-check("2 users", counts1.users === 2, `got ${counts1.users}`);
+check(
+  "2 demo users (student, demo login)",
+  counts1.users === 2,
+  `got ${counts1.users}`,
+);
 
 console.log("\n2. the second and third runs insert nothing");
 check("run 2 inserted no transactions", second.transactions === 0, `got ${second.transactions}`);
@@ -57,19 +74,49 @@ const same = (a, b) => Object.keys(a).every((key) => a[key] === b[key]);
 check("run 1 counts == run 2 counts", same(counts1, counts2), JSON.stringify(counts2));
 check("run 2 counts == run 3 counts", same(counts2, counts3), JSON.stringify(counts3));
 
-console.log("\n4. the seeded numbers match mockData.js");
-const totals = await Transaction.aggregate([
+console.log("\n4. the seeded dates are relative to today and match mockData.js");
+const today = todayString();
+const currentMonth = today.slice(0, 7);
+const monthKeys = [];
+let cursor = currentMonth;
+for (let index = 0; index < SEEDED_MONTHS; index += 1) {
+  monthKeys.push(cursor);
+  cursor = addMonths(`${cursor}-01`, -1).slice(0, 7);
+}
+
+const currentTotals = await Transaction.aggregate([
+  { $match: { date: { $regex: `^${currentMonth}-` } } },
   { $group: { _id: "$type", total: { $sum: "$amount" } } },
 ]);
-const byType = Object.fromEntries(totals.map((row) => [row._id, row.total]));
-check("income is 75000", byType.income === 75000, `got ${byType.income}`);
-check("expenses are 30000", byType.expense === 30000, `got ${byType.expense}`);
+const currentByType = Object.fromEntries(currentTotals.map((row) => [row._id, row.total]));
+check(
+  "current month income is 75000 (month factor 1, matches mockData.js)",
+  currentByType.income === 75000,
+  `got ${currentByType.income}`,
+);
+check(
+  "current month expenses are 30000 (month factor 1, matches mockData.js)",
+  currentByType.expense === 30000,
+  `got ${currentByType.expense}`,
+);
 
-const september = await Transaction.countDocuments({ date: /^2026-09-/ });
-check("all 19 transactions are dated September 2026", september === 19, `got ${september}`);
+const totalRows = await Transaction.countDocuments();
+check("every seeded row is accounted for", totalRows === EXPECTED_TRANSACTIONS, `got ${totalRows}`);
+
+const futureRows = await Transaction.countDocuments({ date: { $gt: today } });
+check("no row is dated in the future", futureRows === 0, `got ${futureRows}`);
+
+for (const month of monthKeys) {
+  const count = await Transaction.countDocuments({ date: { $regex: `^${month}-` } });
+  check(`${month} holds ${TRANSACTIONS_PER_MONTH} transactions`, count === TRANSACTIONS_PER_MONTH, `got ${count}`);
+}
 
 const recurring = await Transaction.countDocuments({ is_recurring: true });
-check("3 transactions are recurring", recurring === 3, `got ${recurring}`);
+check(
+  `${3 * SEEDED_MONTHS} transactions are recurring`,
+  recurring === 3 * SEEDED_MONTHS,
+  `got ${recurring}`,
+);
 
 console.log("\n5. ids are exposed under the snake_case names the client already uses");
 const idContract = [
@@ -88,7 +135,14 @@ for (const [Model, field] of idContract) {
   check(`${Model.modelName} hides __v`, asJson.__v === undefined);
 }
 
-console.log("\n6. the unique constraints the SRS relies on actually reject duplicates");let budgetDuplicateRejected = false;
+// resetTestDb() drops the database, indexes included. Ask mongoose to finish
+// building them before asserting on uniqueness, otherwise this section races the
+// background index build and passes or fails at random.
+await Promise.all([Budget.init(), User.init()]);
+
+console.log("\n6. the unique constraints the SRS relies on actually reject duplicates");
+
+let budgetDuplicateRejected = false;
 const anyBudget = await Budget.findOne();
 try {
   await Budget.create({
