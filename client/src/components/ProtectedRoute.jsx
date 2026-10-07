@@ -26,7 +26,11 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
     return <Navigate to={loginPath} replace state={{ from: location }} />;
   }
 
-  if (requireAdmin && user.role !== "admin") return <Navigate to="/dashboard" replace />;
+  // The admin panel has its own password-only login, so a signed-in student
+  // who asks for /admin is sent there rather than bounced back to the
+  // dashboard with no explanation. /admin/login is not itself guarded, so this
+  // cannot loop.
+  if (requireAdmin && user.role !== "admin") return <Navigate to="/admin/login" replace />;
   if (!requireAdmin && user.role === "admin") return <Navigate to="/admin" replace />;
 
   return children;

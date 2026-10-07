@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
 import SubmitSpinner from "../components/SubmitSpinner.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
@@ -22,9 +22,15 @@ export default function AdminLogin() {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
   const { locked, run, minWidth, measure } = useSubmitLock();
-  const { refresh } = useAuth();
+  const { refresh, user, status } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Already an admin: the password form has nothing left to ask for, and
+  // leaving it up would let /admin -> /admin/login -> /admin ping-pong.
+  if (status !== "loading" && user?.role === "admin") {
+    return <Navigate to="/admin" replace />;
+  }
 
   const submit = async (event) => {
     event.preventDefault();
