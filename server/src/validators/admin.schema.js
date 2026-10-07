@@ -55,13 +55,14 @@ const tipText = z
 
 const RULE_CHOICES = TIP_RULES.map((entry) => entry.label).join(", ");
 
+// zod v4 removed the `errorMap` parameter and ignores it silently, which left
+  // the admin reading "Invalid option: expected one of ..." instead of the
+  // plain-English list below. v4 spells this `error`.
 const tipRule = z.enum(TIP_RULE_NAMES, {
-  errorMap: (issue) => ({
-    message:
-      issue.code === "invalid_type"
-        ? `A rule is required. Choose: ${RULE_CHOICES}.`
-        : `Choose: ${RULE_CHOICES}.`,
-  }),
+  error: (issue) =>
+    issue.code === "invalid_type" || issue.input === undefined
+      ? `A rule is required. Choose: ${RULE_CHOICES}.`
+      : `Choose: ${RULE_CHOICES}.`,
 });
 
 const tipThreshold = z.number().min(0).max(100).nullable();
